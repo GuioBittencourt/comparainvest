@@ -1,4 +1,4 @@
-# compar.ai
+# compara.ai
 
 Comparador de ativos da B3 — Ações e FIIs com indicadores fundamentalistas, ranking automático e análise visual.
 
