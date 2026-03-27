@@ -10,6 +10,7 @@ import { DB_F } from "../data/fiis";
 import ComparatorPage from "../components/ComparatorPage";
 import { BannerFinanceiro, BannerRiqueza } from "../components/Banners";
 import SponsorSlot from "../components/SponsorSlot";
+import AdminDashboard from "../components/AdminDashboard";
 
 function FieldError({ msg }) {
   if (!msg) return null;
@@ -245,17 +246,7 @@ export default function Home() {
             banner={<BannerRiqueza />}
           />
         )}
-        {tab === "admin" && user?.is_admin && (
-          <div style={{ textAlign: "center", padding: 40, color: C.textDim }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>🔐</div>
-            <div style={{ fontSize: 16, fontWeight: 600, color: C.white, marginBottom: 8 }}>Painel Admin</div>
-            <div style={{ fontSize: 13 }}>Acesse via Supabase Dashboard para ver todos os dados dos usuários em tempo real.</div>
-            <a href="https://supabase.com/dashboard/project/odcivnnmxopbjnwueewb" target="_blank" rel="noopener noreferrer"
-              style={{ display: "inline-block", marginTop: 16, padding: "12px 24px", background: C.accentDim, border: `1px solid ${C.accentBorder}`, borderRadius: 12, color: C.accent, fontFamily: MN, fontSize: 13, textDecoration: "none" }}>
-              Abrir Supabase Dashboard →
-            </a>
-          </div>
-        )}
+        {tab === "admin" && user?.is_admin && <AdminDashboard />}
       </div>
 
       {/* Footer */}
