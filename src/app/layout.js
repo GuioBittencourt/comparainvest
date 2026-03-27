@@ -7,14 +7,20 @@ export const metadata = {
   title: "compara.ai — Comparador de Ativos B3",
   description: "Compare ações e FIIs da B3 com indicadores fundamentalistas, ranking automático e análise visual.",
   manifest: "/manifest.json",
+};
+
+export const viewport = {
   themeColor: "#00E5A0",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR" className={`${outfit.variable} ${jetbrains.variable}`}>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
