@@ -27,7 +27,7 @@ async function cardToCanvas(cardRef) {
       canvas.toBlob((blob) => resolve(blob), "image/png")
     );
   } catch (e) {
-    console.log(e);
+    console.log("erro ao gerar imagem:", e);
     return null;
   }
 }
@@ -53,7 +53,7 @@ async function shareImage(blob, text) {
 }
 
 /* ═══════════════════════════════════════
-   FILOSOFIA (mantido)
+   FILOSOFIA
    ═══════════════════════════════════════ */
 export function PhilosophyShareCard({ philosophy, score, onClose }) {
   const cardRef = useRef(null);
@@ -77,24 +77,37 @@ https://comparainvest.vercel.app`;
   }, [p, score]);
 
   return (
-    <Wrapper onClose={onClose}>
-      <div ref={cardRef} style={card}>
-        <div style={title}>MINHA FILOSOFIA</div>
-        <div style={{ fontSize: 42 }}>{p.icon}</div>
-        <div style={{ ...big, color: p.color }}>{p.name}</div>
-        <div style={desc}>{p.desc}</div>
-        <div style={{ marginTop: 10, color: p.color }}>
-          Score: {score}/100
+    <div style={overlay} onClick={onClose}>
+      <div style={box} onClick={(e) => e.stopPropagation()}>
+        <div ref={cardRef} style={card}>
+          <div style={title}>MINHA FILOSOFIA</div>
+
+          <div style={{ fontSize: 42 }}>{p.icon}</div>
+
+          <div style={{ ...big, color: p.color }}>{p.name}</div>
+
+          <div style={desc}>{p.desc}</div>
+
+          <div style={{ marginTop: 10, color: p.color }}>
+            Score: {score}/100
+          </div>
+        </div>
+
+        <div style={buttons}>
+          <button style={btnPrimary} onClick={handleShare}>
+            Compartilhar
+          </button>
+          <button style={btn} onClick={onClose}>
+            Fechar
+          </button>
         </div>
       </div>
-
-      <Buttons onShare={handleShare} onClose={onClose} />
-    </Wrapper>
+    </div>
   );
 }
 
 /* ═══════════════════════════════════════
-   🔥 BATALHA (VOLTA DO PODIUM BONITO)
+   BATALHA (COM TICKER DESTACADO)
    ═══════════════════════════════════════ */
 export function BattleShareCard({ ranked, onClose }) {
   const cardRef = useRef(null);
@@ -121,73 +134,70 @@ https://comparainvest.vercel.app`;
   }, [ranked, winner]);
 
   return (
-    <Wrapper onClose={onClose}>
-      <div ref={cardRef} style={card}>
-        <div style={title}>BATALHA DE ATIVOS</div>
-
-        {/* 🏆 PODIUM */}
-        <div style={{ marginTop: 10 }}>
-          {top3.map((r, i) => (
-            <div
-              key={r.symbol}
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 6,
-                fontFamily: MN,
-              }}
-            >
-              <span style={{ fontSize: 16 }}>
-                {medals[i]} {r.symbol}
-              </span>
-
-              <span style={{ color: C.textDim }}>
-                {r.wins}V
-              </span>
-            </div>
-          ))}
-        </div>
-
-        {/* 🧠 FRASE */}
-        <div style={{ marginTop: 12, fontSize: 12, color: C.textDim }}>
-          Nem sempre o mais popular é o melhor
-        </div>
-
-        {/* 🏆 VENCEDOR */}
-        <div style={{ marginTop: 10, fontSize: 13 }}>
-          <strong>{winner.symbol}</strong> em 1º lugar
-        </div>
-      </div>
-
-      <Buttons onShare={handleShare} onClose={onClose} />
-    </Wrapper>
-  );
-}
-
-/* ═══════════════════════════════════════
-   COMPONENTES AUXILIARES
-   ═══════════════════════════════════════ */
-
-function Wrapper({ children, onClose }) {
-  return (
     <div style={overlay} onClick={onClose}>
       <div style={box} onClick={(e) => e.stopPropagation()}>
-        {children}
-      </div>
-    </div>
-  );
-}
+        <div ref={cardRef} style={card}>
+          {/* Título */}
+          <div style={title}>BATALHA DE ATIVOS</div>
 
-function Buttons({ onShare, onClose }) {
-  return (
-    <div style={buttons}>
-      <button style={btnPrimary} onClick={onShare}>
-        Compartilhar
-      </button>
-      <button style={btn} onClick={onClose}>
-        Fechar
-      </button>
+          {/* 🟢 TICKER GRANDE */}
+          <div
+            style={{
+              marginTop: 12,
+              fontSize: 36,
+              fontWeight: 900,
+              color: C.accent,
+              fontFamily: MN,
+              letterSpacing: "1px",
+            }}
+          >
+            {winner.symbol}
+          </div>
+
+          {/* Subtexto */}
+          <div style={{ fontSize: 11, color: C.textDim, marginTop: 2 }}>
+            Melhor ativo da comparação
+          </div>
+
+          {/* Podium */}
+          <div style={{ marginTop: 16 }}>
+            {top3.map((r, i) => (
+              <div
+                key={r.symbol}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 6,
+                  fontFamily: MN,
+                }}
+              >
+                <span style={{ fontSize: 15 }}>
+                  {medals[i]} {r.symbol}
+                </span>
+
+                <span style={{ color: C.textDim, fontSize: 12 }}>
+                  {r.wins}V
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Frase */}
+          <div style={{ marginTop: 14, fontSize: 12, color: C.textDim }}>
+            Nem sempre o mais popular é o melhor
+          </div>
+        </div>
+
+        <div style={buttons}>
+          <button style={btnPrimary} onClick={handleShare}>
+            Compartilhar
+          </button>
+          <button style={btn} onClick={onClose}>
+            Fechar
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -195,7 +205,6 @@ function Buttons({ onShare, onClose }) {
 /* ═══════════════════════════════════════
    STYLES
    ═══════════════════════════════════════ */
-
 const overlay = {
   position: "fixed",
   inset: 0,
