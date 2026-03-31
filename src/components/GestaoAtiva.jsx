@@ -145,8 +145,8 @@ border: `1px solid ${C.accent}30` }}>Perfil de Gestão →</button>
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 8,
-    padding: "6px 12px",
+    gap: 6,
+    padding: "4px 8px",
     marginBottom: 12,
     borderRadius: 10,
     background: "linear-gradient(90deg, rgba(255,170,0,0.10), rgba(255,120,0,0.05))",
@@ -171,9 +171,9 @@ border: `1px solid ${C.accent}30` }}>Perfil de Gestão →</button>
       window.open("https://buy.stripe.com/cNicN52o39nt9YQ5Xx0Fi00", "_blank")
     }
     style={{
-      padding: "5px 10px",
+      padding: "4px 8px",
       borderRadius: 6,
-      fontSize: 9,
+      fontSize: 8,
       fontFamily: MN,
       fontWeight: 700,
       cursor: "pointer",
