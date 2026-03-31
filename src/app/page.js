@@ -19,12 +19,12 @@ import PhilosophyQuiz, { PHILOSOPHIES } from "../components/PhilosophyQuiz";
 import PhilosophyResult from "../components/PhilosophyResult";
 import EducationHub from "../components/EducationHub";
 import CarteiraFicticia from "../components/CarteiraFicticia";
-
+import { LogoSymbol, IconHome, IconComparar, IconAcoes, IconFIIs, IconRendaFixa, IconCarteira } from "../components/Icons";
+ 
 function FieldError({ msg }) {
   if (!msg) return null;
-  return <div style={{ fontSize: 11, color: C.red, marginTop: 2 }}>{msg}</div>;
 }
-
+ 
 /* ═══════════════════════════════════════════════════════════════════════
    REGISTER
    ═══════════════════════════════════════════════════════════════════════ */
@@ -37,7 +37,7 @@ function RegisterScreen({ onRegistered, onGoLogin }) {
   const [globalErr, setGlobalErr] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
-
+ 
   const validate = () => {
     const e = {};
     if (!form.nome.trim()) e.nome = "Obrigatório";
@@ -53,7 +53,7 @@ function RegisterScreen({ onRegistered, onGoLogin }) {
     setErrors(e);
     return Object.keys(e).length === 0;
   };
-
+ 
   const handleSubmit = async () => {
     if (!validate()) return;
     setSubmitting(true); setGlobalErr(""); setSuccessMsg("");
@@ -75,18 +75,19 @@ function RegisterScreen({ onRegistered, onGoLogin }) {
     } catch (err) { setGlobalErr("Erro: " + err.message); }
     setSubmitting(false);
   };
-
+ 
+  return (
   return (
     <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
       <div style={{ width: "100%", maxWidth: 480, background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, padding: "36px 32px" }}>
         <h1 style={{ fontFamily: MN, fontSize: 22, fontWeight: 800, color: C.white, margin: "0 0 4px", textAlign: "center" }}>compara<span style={{ color: C.accent }}>invest</span></h1>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 4 }}>
+          <LogoSymbol size={40} />
+          <h1 style={{ fontFamily: MN, fontSize: 22, fontWeight: 800, color: C.white, margin: "8px 0 0", textAlign: "center" }}>compara<span style={{ color: C.accent }}>invest</span></h1>
+        </div>
         <p style={{ textAlign: "center", color: C.textDim, fontSize: 13, marginBottom: 28 }}>Crie sua conta gratuita</p>
         {globalErr && <div style={{ padding: "10px 14px", background: `${C.red}15`, border: `1px solid ${C.red}30`, borderRadius: 10, color: C.red, fontSize: 12, marginBottom: 16 }}>{globalErr}</div>}
         {successMsg && <div style={{ padding: "10px 14px", background: `${C.accent}15`, border: `1px solid ${C.accent}30`, borderRadius: 10, color: C.accent, fontSize: 12, marginBottom: 16 }}>{successMsg}</div>}
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
-          <div><label style={labelStyle}>Nome</label><input style={inputStyle} value={form.nome} onChange={(e) => set("nome", e.target.value)} placeholder="João" /><FieldError msg={errors.nome} /></div>
-          <div><label style={labelStyle}>Sobrenome</label><input style={inputStyle} value={form.sobrenome} onChange={(e) => set("sobrenome", e.target.value)} placeholder="Silva" /><FieldError msg={errors.sobrenome} /></div>
         </div>
         <div style={{ marginBottom: 12 }}><label style={labelStyle}>E-mail</label><input style={inputStyle} type="email" value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="joao@email.com" /><FieldError msg={errors.email} /></div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
@@ -115,7 +116,7 @@ function RegisterScreen({ onRegistered, onGoLogin }) {
     </div>
   );
 }
-
+ 
 /* ═══════════════════════════════════════════════════════════════════════
    LOGIN + PASSWORD RECOVERY
    ═══════════════════════════════════════════════════════════════════════ */
@@ -126,7 +127,7 @@ function LoginScreen({ onLoggedIn, onGoRegister }) {
   const [loading, setLoading] = useState(false);
   const [resetMode, setResetMode] = useState(false);
   const [resetMsg, setResetMsg] = useState("");
-
+ 
   const handleLogin = async () => {
     setError(""); setLoading(true);
     const { data, error: authErr } = await supabase.auth.signInWithPassword({ email: email.toLowerCase().trim(), password: senha });
@@ -139,7 +140,7 @@ function LoginScreen({ onLoggedIn, onGoRegister }) {
     } else { setError("Perfil não encontrado."); }
     setLoading(false);
   };
-
+ 
   const handleReset = async () => {
     setError(""); setResetMsg("");
     if (!validateEmail(email)) { setError("Digite um e-mail válido."); return; }
@@ -148,25 +149,26 @@ function LoginScreen({ onLoggedIn, onGoRegister }) {
     if (resetErr) { setError(resetErr.message); } else { setResetMsg("E-mail de recuperação enviado! Verifique sua caixa."); }
     setLoading(false);
   };
-
+ 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
       <div style={{ width: "100%", maxWidth: 400, background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, padding: "36px 32px" }}>
         <h1 style={{ fontFamily: MN, fontSize: 22, fontWeight: 800, color: C.white, margin: "0 0 4px", textAlign: "center" }}>compara<span style={{ color: C.accent }}>invest</span></h1>
+  return (
+    <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div style={{ width: "100%", maxWidth: 400, background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, padding: "36px 32px" }}>
+        <h1 style={{ fontFamily: MN, fontSize: 22, fontWeight: 800, color: C.white, margin: "0 0 4px", textAlign: "center" }}>compara<span style={{ color: C.accent }}>invest</span></h1>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 4 }}>
+          <LogoSymbol size={40} />
+          <h1 style={{ fontFamily: MN, fontSize: 22, fontWeight: 800, color: C.white, margin: "8px 0 0", textAlign: "center" }}>compara<span style={{ color: C.accent }}>invest</span></h1>
+        </div>
         <p style={{ textAlign: "center", color: C.textDim, fontSize: 13, marginBottom: 28 }}>{resetMode ? "Recuperar senha" : "Entrar na sua conta"}</p>
         {error && <div style={{ padding: "10px 14px", background: `${C.red}15`, border: `1px solid ${C.red}30`, borderRadius: 10, color: C.red, fontSize: 12, marginBottom: 16 }}>{error}</div>}
         {resetMsg && <div style={{ padding: "10px 14px", background: `${C.accent}15`, border: `1px solid ${C.accent}30`, borderRadius: 10, color: C.accent, fontSize: 12, marginBottom: 16 }}>{resetMsg}</div>}
-        <div style={{ marginBottom: 14 }}><label style={labelStyle}>E-mail</label><input style={inputStyle} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" onKeyDown={(e) => e.key === "Enter" && (resetMode ? handleReset() : handleLogin())} /></div>
-        {!resetMode && <div style={{ marginBottom: 12 }}><label style={labelStyle}>Senha</label><input style={inputStyle} type="password" value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="Sua senha" onKeyDown={(e) => e.key === "Enter" && handleLogin()} /></div>}
-        {!resetMode && <div style={{ textAlign: "right", marginBottom: 16 }}><button onClick={() => { setResetMode(true); setError(""); setResetMsg(""); }} style={{ background: "none", border: "none", color: C.accent, fontSize: 12, cursor: "pointer", fontFamily: FN, padding: 0 }}>Esqueci minha senha</button></div>}
-        <button style={{ ...btnPrimary, opacity: loading ? 0.6 : 1 }} onClick={resetMode ? handleReset : handleLogin} disabled={loading}>{loading ? "Aguarde..." : resetMode ? "Enviar e-mail de recuperação" : "Entrar"}</button>
-        {resetMode && <div style={{ textAlign: "center", marginTop: 12 }}><button onClick={() => { setResetMode(false); setError(""); setResetMsg(""); }} style={{ background: "none", border: "none", color: C.accent, fontSize: 12, cursor: "pointer", fontFamily: FN }}>← Voltar ao login</button></div>}
-        <div style={{ textAlign: "center", marginTop: 16 }}><button onClick={onGoRegister} style={{ ...btnSecondary, border: "none", width: "auto", padding: "8px 16px" }}>Não tem conta? <span style={{ color: C.accent }}>Cadastre-se</span></button></div>
-      </div>
     </div>
   );
 }
-
+ 
 /* ═══════════════════════════════════════════════════════════════════════
    MAIN APP
    ═══════════════════════════════════════════════════════════════════════ */
@@ -177,7 +179,7 @@ export default function Home() {
   const [quizResult, setQuizResult] = useState(null);
   const [dbAcoes, setDbAcoes] = useState(DB_A);
   const [dbFiis, setDbFiis] = useState(DB_F);
-
+ 
   useEffect(() => {
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -192,7 +194,7 @@ export default function Home() {
     });
     return () => subscription.unsubscribe();
   }, []);
-
+ 
   // Smart Brapi: fetch top 20 tickers once per day during market hours
   useEffect(() => {
     (async () => {
@@ -205,14 +207,14 @@ export default function Home() {
       } catch (e) { console.log("Brapi merge skipped:", e.message); }
     })();
   }, []);
-
+ 
   const handleLogout = async () => { await supabase.auth.signOut(); setUser(null); setScreen("login"); setTab("home"); };
-
+ 
   const trackSearch = async (sym) => {
     if (!user?.id) return;
     await supabase.from("searches").insert({ user_id: user.id, ticker: sym });
   };
-
+ 
   const handleTrack = (track) => {
     if (track === "investimentos") {
       // Check if user already has a philosophy
@@ -225,21 +227,21 @@ export default function Home() {
       setTab("educacao");
     }
   };
-
+ 
   const handleQuizComplete = (result) => {
     setQuizResult(result);
     setUser((prev) => ({ ...prev, philosophy: result.key, philosophy_allocation: result.philosophy }));
     setTab("quiz-result");
   };
-
+ 
   const handleQuizSkip = () => {
     setTab("comparadores");
   };
-
+ 
   if (screen === "loading") return <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center" }}><div style={{ width: 28, height: 28, border: `2.5px solid ${C.border}`, borderTop: `2.5px solid ${C.accent}`, borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /></div>;
   if (screen === "register") return <RegisterScreen onRegistered={(u) => { setUser(u); setScreen("app"); }} onGoLogin={() => setScreen("login")} />;
   if (screen === "login") return <LoginScreen onLoggedIn={(u) => { setUser(u); setScreen("app"); }} onGoRegister={() => setScreen("register")} />;
-
+ 
   // Quiz screens (full screen, no header)
   if (tab === "quiz") return <PhilosophyQuiz user={user} onComplete={handleQuizComplete} onSkip={handleQuizSkip} />;
   if (tab === "quiz-result") return <PhilosophyResult result={quizResult} onContinue={() => setTab("comparadores")} />;
@@ -254,7 +256,7 @@ export default function Home() {
     };
     return <PhilosophyResult result={storedResult} onContinue={() => setTab("comparadores")} onRefazer={() => setTab("quiz")} />;
   }
-
+ 
   return (
     <div style={{ fontFamily: FN, background: C.bg, color: C.text, minHeight: "100vh" }}>
       {/* Header */}
@@ -265,18 +267,19 @@ export default function Home() {
             <p style={{ color: C.textDim, fontSize: 12, margin: "4px 0 0" }}>
               Olá, {user?.nome}!
               {user?.philosophy && <button onClick={() => setTab("my-philosophy")} style={{ marginLeft: 8, fontSize: 10, padding: "2px 8px", borderRadius: 4, background: `${C.accent}15`, color: C.accent, fontFamily: MN, border: `1px solid ${C.accent}30`, cursor: "pointer" }} title="Ver minha filosofia">Filosofia: {user.philosophy} →</button>}
-            </p>
-          </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            {user?.is_admin && (
-              <button onClick={() => setTab("admin")} style={{ padding: "8px 16px", borderRadius: 10, fontSize: 11, fontWeight: 600, fontFamily: MN, cursor: "pointer", background: `${C.purple}15`, color: C.purple, border: `1px solid ${C.purple}30` }}>
-                🔐 Admin
-              </button>
-            )}
-            <button onClick={handleLogout} style={{ padding: "8px 16px", borderRadius: 10, fontSize: 11, fontWeight: 600, fontFamily: MN, cursor: "pointer", background: C.cardAlt, color: C.textDim, border: `1px solid ${C.border}` }}>Sair</button>
-          </div>
+      <div style={{ padding: "24px 28px", borderBottom: `1px solid ${C.border}`, background: `linear-gradient(180deg, rgba(0,229,160,0.03) 0%, transparent 100%)` }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+          <div>
+            <h1 onClick={() => setTab("home")} style={{ fontFamily: MN, fontSize: 24, fontWeight: 800, color: C.white, margin: 0, cursor: "pointer" }}>compara<span style={{ color: C.accent }}>invest</span></h1>
+            <div onClick={() => setTab("home")} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+              <LogoSymbol size={22} />
+              <h1 style={{ fontFamily: MN, fontSize: 24, fontWeight: 800, color: C.white, margin: 0 }}>compara<span style={{ color: C.accent }}>invest</span></h1>
+            </div>
+            <p style={{ color: C.textDim, fontSize: 12, margin: "4px 0 0" }}>
+              Olá, {user?.nome}!
+              {user?.philosophy && <button onClick={() => setTab("my-philosophy")} style={{ marginLeft: 8, fontSize: 10, padding: "2px 8px", borderRadius: 4, background: `${C.accent}15`, color: C.accent, fontFamily: MN, border: `1px solid ${C.accent}30`, cursor: "pointer" }} title="Ver minha filosofia">Filosofia: {user.philosophy} →</button>}
         </div>
-
+ 
         {/* Navigation tabs - only show when not on home */}
         {tab !== "home" && tab !== "educacao" && tab !== "admin" && (
           <div style={{ display: "flex", gap: 0, marginTop: 16 }}>
@@ -288,30 +291,37 @@ export default function Home() {
               { id: "rf", label: "🏦 RF", desc: "8 ind." },
               { id: "carteira", label: "💼 Carteira" },
             ].map((t) => (
+        {tab !== "home" && tab !== "educacao" && tab !== "admin" && (
+          <div style={{ display: "flex", gap: 0, marginTop: 16 }}>
+            {[
+              { id: "home", label: "🏠 Início" },
+              { id: "comparadores", label: "⚔️ Comparar" },
+              { id: "acoes", label: "📈 Ações", desc: "12 ind." },
+              { id: "fiis", label: "🏢 FIIs", desc: "11 ind." },
+              { id: "rf", label: "🏦 RF", desc: "8 ind." },
+              { id: "carteira", label: "💼 Carteira" },
+              { id: "home", icon: <IconHome size={14} />, label: "Início" },
+              { id: "comparadores", icon: <IconComparar size={14} />, label: "Comparar" },
+              { id: "acoes", icon: <IconAcoes size={14} />, label: "Ações", desc: "12 ind." },
+              { id: "fiis", icon: <IconFIIs size={14} />, label: "FIIs", desc: "11 ind." },
+              { id: "rf", icon: <IconRendaFixa size={14} />, label: "RF", desc: "8 ind." },
+              { id: "carteira", icon: <IconCarteira size={14} />, label: "Carteira" },
+            ].map((t) => (
               <button key={t.id} onClick={() => setTab(t.id)} style={{ padding: "11px 16px", fontSize: 12, fontWeight: tab === t.id ? 600 : 400, color: tab === t.id ? C.accent : C.textDim, background: "transparent", border: "none", borderBottom: tab === t.id ? `2px solid ${C.accent}` : "2px solid transparent", cursor: "pointer", fontFamily: FN, transition: "all 0.2s" }}>
                 {t.label} {t.desc && <span style={{ fontSize: 9, color: C.textMuted }}>({t.desc})</span>}
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                  {t.icon}{t.label}
+                </span>
+                {t.desc && <span style={{ fontSize: 9, color: C.textMuted }}> ({t.desc})</span>}
               </button>
             ))}
           </div>
-        )}
-      </div>
-
-      {/* Content */}
-      <div style={{ padding: tab === "home" ? 0 : "24px 28px", maxWidth: tab === "admin" ? 1100 : 960, margin: "0 auto" }}>
-        {tab === "home" && <HomePage user={user} onTrack={handleTrack} />}
-
-        {tab === "educacao" && <EducationHub onBack={() => setTab("home")} user={user} />}
-
-        {tab === "comparadores" && (
-          <div style={{ padding: "32px 0" }}>
-            <h2 style={{ fontFamily: MN, fontSize: 18, fontWeight: 800, color: C.white, margin: "0 0 8px" }}>⚔️ Hub de Comparação</h2>
-            <p style={{ color: C.textDim, fontSize: 13, marginBottom: 24, lineHeight: 1.7 }}>
               Escolha o tipo de ativo que deseja comparar.
               {!user?.philosophy && <span style={{ display: "block", marginTop: 8 }}><button onClick={() => setTab("quiz")} style={{ background: "none", border: "none", color: C.accent, fontSize: 13, cursor: "pointer", fontFamily: FN, padding: 0, textDecoration: "underline" }}>💡 Faça o quiz de filosofia</button> para receber sugestões personalizadas de carteira.</span>}
             </p>
-
+ 
             <BannerRiqueza />
-
+ 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               {[
                 { id: "acoes", icon: "📈", title: "Ações", desc: "12 indicadores R2A", color: C.accent },
@@ -324,28 +334,33 @@ export default function Home() {
                     padding: "24px 20px", borderRadius: 16, textAlign: "center",
                     background: C.card, border: `1px solid ${c.disabled ? C.border : `${c.color}30`}`,
                     cursor: c.disabled ? "not-allowed" : "pointer", opacity: c.disabled ? 0.5 : 1,
-                    transition: "all 0.2s",
-                  }}
-                  onMouseEnter={(e) => { if (!c.disabled) e.currentTarget.style.borderColor = c.color; }}
-                  onMouseLeave={(e) => { if (!c.disabled) e.currentTarget.style.borderColor = `${c.color}30`; }}
-                >
-                  <div style={{ fontSize: 32, marginBottom: 8 }}>{c.icon}</div>
-                  <div style={{ fontFamily: MN, fontSize: 14, fontWeight: 700, color: C.white }}>{c.title}</div>
-                  <div style={{ fontSize: 11, color: C.textDim, marginTop: 4 }}>{c.desc}</div>
-                  {c.disabled && <div style={{ fontSize: 9, color: C.yellow, fontFamily: MN, marginTop: 8 }}>🔒 Em breve</div>}
-                </button>
+ 
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              {[
+                { id: "acoes", icon: "📈", title: "Ações", desc: "12 indicadores R2A", color: C.accent },
+                { id: "fiis", icon: "🏢", title: "Fundos Imobiliários", desc: "11 indicadores", color: C.blue },
+                { id: "rf", icon: "🏦", title: "Renda Fixa", desc: "8 indicadores", color: C.orange },
+                { id: "cripto", icon: "₿", title: "Cripto", desc: "Em breve", color: C.purple, disabled: true },
+                { id: "acoes", icon: <IconAcoes size={32} />, title: "Ações", desc: "12 indicadores R2A", color: C.accent },
+                { id: "fiis", icon: <IconFIIs size={32} />, title: "Fundos Imobiliários", desc: "11 indicadores", color: C.blue },
+                { id: "rf", icon: <IconRendaFixa size={32} />, title: "Renda Fixa", desc: "8 indicadores", color: C.orange },
+                { id: "cripto", icon: <span style={{ fontSize: 32 }}>₿</span>, title: "Cripto", desc: "Em breve", color: C.purple, disabled: true },
+              ].map((c) => (
+                <button key={c.id} onClick={() => !c.disabled && setTab(c.id)}
+                  style={{
               ))}
             </div>
           </div>
         )}
-
-        {tab === "acoes" && (
-          <ComparatorPage
-            db={dbAcoes} indicators={IND_ACOES} assetLabel="ação"
-            searchPlaceholder="Buscar ação... (ex: ITUB4, Petrobras)"
-            shortcuts={["Financeiro", "Energia Elétrica", "Consumo", "Mineração / Siderurgia", "Saúde"]}
-            onSearch={trackSearch}
-            banner={<BannerRiqueza />}
+ 
+                  onMouseEnter={(e) => { if (!c.disabled) e.currentTarget.style.borderColor = c.color; }}
+                  onMouseLeave={(e) => { if (!c.disabled) e.currentTarget.style.borderColor = `${c.color}30`; }}
+                >
+                  <div style={{ fontSize: 32, marginBottom: 8 }}>{c.icon}</div>
+                  <div style={{ marginBottom: 8, display: "flex", justifyContent: "center", color: c.color }}>{c.icon}</div>
+                  <div style={{ fontFamily: MN, fontSize: 14, fontWeight: 700, color: C.white }}>{c.title}</div>
+                  <div style={{ fontSize: 11, color: C.textDim, marginTop: 4 }}>{c.desc}</div>
+                  {c.disabled && <div style={{ fontSize: 9, color: C.yellow, fontFamily: MN, marginTop: 8 }}>🔒 Em breve</div>}
             user={user}
           />
         )}
@@ -363,7 +378,7 @@ export default function Home() {
         {tab === "carteira" && <CarteiraFicticia user={user} onGoCompare={() => setTab("comparadores")} />}
         {tab === "admin" && user?.is_admin && <AdminDashboard />}
       </div>
-
+ 
       {/* Footer */}
       <div style={{ padding: "16px 28px", borderTop: `1px solid ${C.border}`, textAlign: "center", fontSize: 10, color: C.textMuted, fontFamily: MN }}>
         comparainvest v3.0 — Next.js + Supabase + LGPD + Comparador R2A
@@ -371,3 +386,4 @@ export default function Home() {
     </div>
   );
 }
+ 
