@@ -23,7 +23,7 @@ const QUESTIONS = [
       { label: "0% — Ainda não comecei", value: "0", icon: "🔴" },
       { label: "1-30% — Comecei mas falta bastante", value: "30", icon: "🟠" },
       { label: "30-60% — Quase na metade", value: "60", icon: "🟡" },
-      { label: "60-90% — Quase completa", value: "90", icon: "🟢" },
+      { label: "60-100% — Completa ou quase", value: "90", icon: "🟢" },
     ],
   },
   {
@@ -108,45 +108,35 @@ const PHILOSOPHIES = {
 };
 
 function calcPhilosophy(answers) {
-  let score = 50;
+  let score = 40;
 
-  // Ocupação
   if (answers.ocupacao === "publico") score += 15;
   else if (answers.ocupacao === "clt") score += 5;
   else if (answers.ocupacao === "autonomo") score -= 10;
   else if (answers.ocupacao === "estudante") score -= 5;
 
-  // Reserva
   if (answers.reserva === "0") score -= 20;
   else if (answers.reserva === "30") score -= 5;
   else if (answers.reserva === "60") score += 5;
   else if (answers.reserva === "90") score += 10;
 
-  // Responsabilidade
   if (answers.responsabilidade === "sem_contas") score += 15;
   else if (answers.responsabilidade === "divide") score += 5;
-  else if (answers.responsabilidade === "todas") score -= 0;
   else if (answers.responsabilidade === "sustenta") score -= 10;
 
-  // Experiência
   if (answers.experiencia === "nenhuma") score -= 10;
-  else if (answers.experiencia === "rf") score += 0;
   else if (answers.experiencia === "rv") score += 10;
   else if (answers.experiencia === "tudo") score += 15;
 
-  // Reação a perdas
   if (answers.reacao_perda === "vende_tudo") score -= 15;
   else if (answers.reacao_perda === "vende_parte") score -= 5;
   else if (answers.reacao_perda === "espera") score += 5;
   else if (answers.reacao_perda === "compra_mais") score += 15;
 
-  // Objetivo
   if (answers.objetivo === "proteger") score -= 10;
-  else if (answers.objetivo === "renda") score += 0;
   else if (answers.objetivo === "crescer") score += 10;
   else if (answers.objetivo === "agressivo") score += 20;
 
-  // Clamp 0-100
   score = Math.max(0, Math.min(100, score));
 
   if (score <= 25) return { key: "guardiao", score };
@@ -172,30 +162,44 @@ export default function PhilosophyQuiz({ user, onComplete, onSkip }) {
     if (step < QUESTIONS.length - 1) {
       setTimeout(() => setStep(step + 1), 300);
     } else {
-      // Last question - calculate result
       setSaving(true);
+
       const result = calcPhilosophy(newAnswers);
       const philosophy = PHILOSOPHIES[result.key];
 
-      // Adjust percentages based on occupation and reserve
       let adj = { ...philosophy };
       if (newAnswers.ocupacao === "autonomo" && adj.acoes > 20) {
         const diff = adj.acoes - 20;
         adj = { ...adj, acoes: 20, rf: adj.rf + diff };
       }
       if (newAnswers.reserva === "0") {
-        adj = { ...adj, rf: Math.max(adj.rf, 90), fii: Math.min(adj.fii, 5), acoes: Math.min(adj.acoes, 5), cripto: 0 };
+        adj = {
+          ...adj,
+          rf: Math.max(adj.rf, 90),
+          fii: Math.min(adj.fii, 5),
+          acoes: Math.min(adj.acoes, 5),
+          cripto: 0,
+        };
       }
 
-      // Save to Supabase
       try {
-        await supabase.from("profiles").update({
-          philosophy: result.key,
-          philosophy_score: result.score,
-          philosophy_answers: newAnswers,
-          philosophy_allocation: { rf: adj.rf, fii: adj.fii, acoes: adj.acoes, cripto: adj.cripto },
-        }).eq("id", user.id);
-      } catch (e) { console.error(e); }
+        await supabase
+          .from("profiles")
+          .update({
+            philosophy: result.key,
+            philosophy_score: result.score,
+            philosophy_answers: newAnswers,
+            philosophy_allocation: {
+              rf: adj.rf,
+              fii: adj.fii,
+              acoes: adj.acoes,
+              cripto: adj.cripto,
+            },
+          })
+          .eq("id", user.id);
+      } catch (e) {
+        console.error(e);
+      }
 
       setSaving(false);
       onComplete({
@@ -219,65 +223,160 @@ export default function PhilosophyQuiz({ user, onComplete, onSkip }) {
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, display: "flex", flexDirection: "column" }}>
-      {/* Progress bar */}
       <div style={{ padding: "16px 28px 0" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-          <span style={{ fontFamily: MN, fontSize: 11, color: C.textDim }}>Pergunta {step + 1} de {QUESTIONS.length}</span>
-          <button onClick={onSkip} style={{ background: "none", border: "none", color: C.textMuted, fontSize: 11, cursor: "pointer", fontFamily: FN }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 8,
+          }}
+        >
+          <span style={{ fontFamily: MN, fontSize: 11, color: C.textDim }}>
+            Pergunta {step + 1} de {QUESTIONS.length}
+          </span>
+          <button
+            onClick={onSkip}
+            style={{
+              background: `${C.accent}15`,
+              border: `1px solid ${C.accent}30`,
+              color: C.accent,
+              fontSize: 11,
+              cursor: "pointer",
+              fontFamily: FN,
+              fontWeight: 700,
+              padding: "6px 10px",
+              borderRadius: 8,
+            }}
+          >
             Pular quiz →
           </button>
         </div>
+
         <div style={{ height: 4, background: C.border, borderRadius: 4, overflow: "hidden" }}>
-          <div style={{ width: `${progress}%`, height: "100%", background: C.accent, borderRadius: 4, transition: "width 0.4s ease" }} />
+          <div
+            style={{
+              width: `${progress}%`,
+              height: "100%",
+              background: C.accent,
+              borderRadius: 4,
+              transition: "width 0.4s ease",
+            }}
+          />
         </div>
       </div>
 
-      {/* Question */}
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 28px" }}>
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "40px 28px",
+        }}
+      >
         <div style={{ width: "100%", maxWidth: 520 }}>
-          <h2 style={{ fontFamily: FN, fontSize: 20, fontWeight: 700, color: C.white, margin: "0 0 8px", textAlign: "center" }}>
+          <h2
+            style={{
+              fontFamily: FN,
+              fontSize: 20,
+              fontWeight: 700,
+              color: C.white,
+              margin: "0 0 8px",
+              textAlign: "center",
+            }}
+          >
             {q.title}
           </h2>
-          <p style={{ textAlign: "center", color: C.textDim, fontSize: 13, marginBottom: 32, lineHeight: 1.6 }}>
+
+          <p
+            style={{
+              textAlign: "center",
+              color: C.textDim,
+              fontSize: 13,
+              marginBottom: 32,
+              lineHeight: 1.6,
+            }}
+          >
             {q.subtitle}
           </p>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {q.options.map((opt) => {
               const isMulti = q.type === "multi";
-              const isSelected = isMulti ? multiSelected.includes(opt.value) : answers[q.id] === opt.value;
+              const isSelected = isMulti
+                ? multiSelected.includes(opt.value)
+                : answers[q.id] === opt.value;
 
               return (
                 <button
                   key={opt.value}
-                  onClick={() => isMulti ? toggleMulti(opt.value) : selectOption(opt.value)}
+                  onClick={() => (isMulti ? toggleMulti(opt.value) : selectOption(opt.value))}
                   style={{
-                    display: "flex", alignItems: "center", gap: 14,
-                    padding: "16px 20px", borderRadius: 14,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 14,
+                    padding: "16px 20px",
+                    borderRadius: 14,
                     background: isSelected ? C.accentDim : C.card,
                     border: `1px solid ${isSelected ? C.accentBorder : C.border}`,
-                    cursor: "pointer", textAlign: "left",
+                    cursor: "pointer",
+                    textAlign: "left",
                     transition: "all 0.2s",
                   }}
-                  onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.borderColor = C.borderLight; }}
-                  onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.borderColor = C.border; }}
                 >
                   <span style={{ fontSize: 24 }}>{opt.icon}</span>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: isSelected ? C.accent : C.white }}>{opt.label}</div>
-                    {opt.desc && <div style={{ fontSize: 11, color: C.textDim, marginTop: 2 }}>{opt.desc}</div>}
-                    {opt.prazo && <div style={{ fontSize: 10, color: C.textMuted, fontFamily: MN, marginTop: 2 }}>
-                      {opt.prazo === "curto" ? "📅 Curto prazo (1-5 anos)" : opt.prazo === "medio" ? "📆 Médio prazo (5-15 anos)" : "📋 Longo prazo (15-30 anos)"}
-                    </div>}
+                    <div
+                      style={{
+                        fontSize: 14,
+                        fontWeight: 600,
+                        color: isSelected ? C.accent : C.white,
+                      }}
+                    >
+                      {opt.label}
+                    </div>
+                    {opt.desc && (
+                      <div style={{ fontSize: 11, color: C.textDim, marginTop: 2 }}>
+                        {opt.desc}
+                      </div>
+                    )}
+                    {opt.prazo && (
+                      <div
+                        style={{
+                          fontSize: 10,
+                          color: C.textMuted,
+                          fontFamily: MN,
+                          marginTop: 2,
+                        }}
+                      >
+                        {opt.prazo === "curto"
+                          ? "📅 Curto prazo (1-5 anos)"
+                          : opt.prazo === "medio"
+                            ? "📆 Médio prazo (5-15 anos)"
+                            : "📋 Longo prazo (15-30 anos)"}
+                      </div>
+                    )}
                   </div>
+
                   {isMulti && (
-                    <div style={{
-                      width: 20, height: 20, borderRadius: 4,
-                      border: `2px solid ${isSelected ? C.accent : C.border}`,
-                      background: isSelected ? C.accent : "transparent",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                    }}>
-                      {isSelected && <span style={{ color: C.bg, fontSize: 12, fontWeight: 800 }}>✓</span>}
+                    <div
+                      style={{
+                        width: 20,
+                        height: 20,
+                        borderRadius: 4,
+                        border: `2px solid ${isSelected ? C.accent : C.border}`,
+                        background: isSelected ? C.accent : "transparent",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {isSelected && (
+                        <span style={{ color: C.bg, fontSize: 12, fontWeight: 800 }}>
+                          ✓
+                        </span>
+                      )}
                     </div>
                   )}
                 </button>
@@ -290,13 +389,17 @@ export default function PhilosophyQuiz({ user, onComplete, onSkip }) {
               onClick={handleMultiConfirm}
               disabled={multiSelected.length === 0}
               style={{
-                ...{
-                  width: "100%", padding: "14px", marginTop: 16,
-                  background: multiSelected.length > 0 ? C.accent : C.border,
-                  color: multiSelected.length > 0 ? C.bg : C.textMuted,
-                  border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700,
-                  fontFamily: FN, cursor: multiSelected.length > 0 ? "pointer" : "not-allowed",
-                },
+                width: "100%",
+                padding: "14px",
+                marginTop: 16,
+                background: multiSelected.length > 0 ? C.accent : C.border,
+                color: multiSelected.length > 0 ? C.bg : C.textMuted,
+                border: "none",
+                borderRadius: 12,
+                fontSize: 15,
+                fontWeight: 700,
+                fontFamily: FN,
+                cursor: multiSelected.length > 0 ? "pointer" : "not-allowed",
               }}
             >
               Continuar ({multiSelected.length} selecionados)
@@ -305,24 +408,48 @@ export default function PhilosophyQuiz({ user, onComplete, onSkip }) {
 
           {saving && (
             <div style={{ textAlign: "center", marginTop: 20, color: C.textDim, fontSize: 13 }}>
-              <div style={{ width: 24, height: 24, border: `2px solid ${C.border}`, borderTop: `2px solid ${C.accent}`, borderRadius: "50%", animation: "spin 0.7s linear infinite", margin: "0 auto 8px" }} />
+              <div
+                style={{
+                  width: 24,
+                  height: 24,
+                  border: `2px solid ${C.border}`,
+                  borderTop: `2px solid ${C.accent}`,
+                  borderRadius: "50%",
+                  animation: "spin 0.7s linear infinite",
+                  margin: "0 auto 8px",
+                }}
+              />
               Calculando sua filosofia...
             </div>
           )}
         </div>
       </div>
 
-      {/* Back button */}
       {step > 0 && (
         <div style={{ padding: "0 28px 24px", textAlign: "center" }}>
-          <button onClick={() => setStep(step - 1)} style={{ background: "none", border: "none", color: C.textDim, fontSize: 12, cursor: "pointer", fontFamily: FN }}>
+          <button
+            onClick={() => setStep(step - 1)}
+            style={{
+              background: "none",
+              border: "none",
+              color: C.textDim,
+              fontSize: 12,
+              cursor: "pointer",
+              fontFamily: FN,
+            }}
+          >
             ← Voltar à pergunta anterior
           </button>
         </div>
       )}
 
-      {/* Skip CTA at bottom */}
-      <div style={{ padding: "12px 28px 20px", textAlign: "center", borderTop: `1px solid ${C.border}` }}>
+      <div
+        style={{
+          padding: "12px 28px 20px",
+          textAlign: "center",
+          borderTop: `1px solid ${C.border}`,
+        }}
+      >
         <p style={{ fontSize: 11, color: C.textMuted, lineHeight: 1.6 }}>
           💡 Fazer o quiz é importante para personalizar sua experiência e receber sugestões de carteira alinhadas ao seu momento de vida.
         </p>
