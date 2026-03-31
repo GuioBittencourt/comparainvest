@@ -1,10 +1,11 @@
 "use client";
 import { useRef, useCallback } from "react";
 import { C, MN } from "../lib/theme";
+import { LogoSymbol } from "./Icons";
 
 /* ═══════════════════════════════════════
-   CAPTURA (ANTI-IMAGEM PRETA)
-   ═══════════════════════════════════════ */
+   CAPTURA
+═══════════════════════════════════════ */
 function wait(ms) {
   return new Promise((res) => setTimeout(res, ms));
 }
@@ -19,7 +20,7 @@ async function cardToCanvas(cardRef) {
 
     const canvas = await html2canvas(cardRef, {
       backgroundColor: "#06090F",
-      scale: 2.5,
+      scale: 2,
       useCORS: true,
     });
 
@@ -34,7 +35,7 @@ async function cardToCanvas(cardRef) {
 
 /* ═══════════════════════════════════════
    SHARE
-   ═══════════════════════════════════════ */
+═══════════════════════════════════════ */
 async function shareImage(blob, text) {
   if (!blob) {
     await navigator.share?.({ text });
@@ -54,7 +55,7 @@ async function shareImage(blob, text) {
 
 /* ═══════════════════════════════════════
    FILOSOFIA
-   ═══════════════════════════════════════ */
+═══════════════════════════════════════ */
 export function PhilosophyShareCard({ philosophy, score, onClose }) {
   const cardRef = useRef(null);
   const p = philosophy;
@@ -64,13 +65,9 @@ export function PhilosophyShareCard({ philosophy, score, onClose }) {
 
     const text = `Minha Filosofia
 
-Descobri como eu penso como investidor.
-
-Meu perfil: *${p.name}* (${score}/100)
-Faz mais sentido do que eu imaginava.
+Meu perfil: ${p.name} (${score}/100)
 
 Veja o seu:
-
 https://comparainvest.vercel.app`;
 
     await shareImage(blob, text);
@@ -82,17 +79,27 @@ https://comparainvest.vercel.app`;
         <div ref={cardRef} style={card}>
           <div style={title}>MINHA FILOSOFIA</div>
 
-          <div style={{ fontSize: 42 }}>{p.icon}</div>
+          <div style={{ marginTop: 12 }}>
+            {p.iconSm || p.icon}
+          </div>
 
-          <div style={{ ...big, color: p.color }}>{p.name}</div>
-
-          <div style={desc}>{p.desc}</div>
+          <div style={{ ...big, color: p.color, marginTop: 10 }}>
+            {p.name}
+          </div>
 
           <div style={{ marginTop: 10, color: p.color }}>
             Score: {score}/100
           </div>
+
+          <div style={footer}>
+            <LogoSymbol size={13} />
+            <span style={brandText}>
+              compara<span style={{ color: C.accent }}>invest</span>
+            </span>
+          </div>
         </div>
 
+        {/* BOTÕES */}
         <div style={buttons}>
           <button style={btnPrimary} onClick={handleShare}>
             Compartilhar
@@ -107,8 +114,8 @@ https://comparainvest.vercel.app`;
 }
 
 /* ═══════════════════════════════════════
-   BATALHA (COM TICKER DESTACADO)
-   ═══════════════════════════════════════ */
+   BATALHA
+═══════════════════════════════════════ */
 export function BattleShareCard({ ranked, onClose }) {
   const cardRef = useRef(null);
 
@@ -121,74 +128,52 @@ export function BattleShareCard({ ranked, onClose }) {
 
     const text = `Batalha de Ativos
 
-Comparei alguns ações no *COMPARAINVEST* e o resultado chamou atenção:
-
 ${winner.symbol} ficou em primeiro lugar.
-Nem sempre o mais popular é o melhor.
 
-Veja por conta própria:
-
+Veja:
 https://comparainvest.vercel.app`;
 
     await shareImage(blob, text);
-  }, [ranked, winner]);
+  }, [winner]);
 
   return (
     <div style={overlay} onClick={onClose}>
       <div style={box} onClick={(e) => e.stopPropagation()}>
         <div ref={cardRef} style={card}>
-          {/* Título */}
           <div style={title}>BATALHA DE ATIVOS</div>
 
-          {/* 🟢 TICKER GRANDE */}
-          <div
-            style={{
-              marginTop: 12,
-              fontSize: 36,
-              fontWeight: 900,
-              color: C.accent,
-              fontFamily: MN,
-              letterSpacing: "1px",
-            }}
-          >
+          <div style={winnerStyle}>
             {winner.symbol}
           </div>
 
-          {/* Subtexto */}
-          <div style={{ fontSize: 11, color: C.textDim, marginTop: 2 }}>
+          <div style={desc}>
             Melhor ativo da comparação
           </div>
 
-          {/* Podium */}
           <div style={{ marginTop: 16 }}>
             {top3.map((r, i) => (
-              <div
-                key={r.symbol}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: 6,
-                  fontFamily: MN,
-                }}
-              >
-                <span style={{ fontSize: 15 }}>
-                  {medals[i]} {r.symbol}
-                </span>
-
-                <span style={{ color: C.textDim, fontSize: 12 }}>
+              <div key={r.symbol} style={row}>
+                <span>{medals[i]} {r.symbol}</span>
+                <span style={{ color: C.textDim }}>
                   {r.wins}V
                 </span>
               </div>
             ))}
           </div>
 
-          {/* Frase */}
-          <div style={{ marginTop: 14, fontSize: 12, color: C.textDim }}>
+          <div style={desc}>
             Nem sempre o mais popular é o melhor
+          </div>
+
+          <div style={footer}>
+            <LogoSymbol size={13} />
+            <span style={brandText}>
+              compara<span style={{ color: C.accent }}>invest</span>
+            </span>
           </div>
         </div>
 
+        {/* BOTÕES */}
         <div style={buttons}>
           <button style={btnPrimary} onClick={handleShare}>
             Compartilhar
@@ -204,7 +189,7 @@ https://comparainvest.vercel.app`;
 
 /* ═══════════════════════════════════════
    STYLES
-   ═══════════════════════════════════════ */
+═══════════════════════════════════════ */
 const overlay = {
   position: "fixed",
   inset: 0,
@@ -242,7 +227,38 @@ const big = {
 const desc = {
   fontSize: 12,
   color: C.textDim,
-  marginTop: 6,
+  marginTop: 10,
+};
+
+const row = {
+  display: "flex",
+  justifyContent: "space-between",
+  fontFamily: MN,
+  marginBottom: 6,
+};
+
+const winnerStyle = {
+  marginTop: 12,
+  fontSize: 32,
+  fontWeight: 900,
+  color: C.accent,
+  fontFamily: MN,
+};
+
+const footer = {
+  marginTop: 16,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 5,
+  borderTop: `1px solid ${C.border}`,
+  paddingTop: 12,
+};
+
+const brandText = {
+  fontFamily: MN,
+  fontSize: 10,
+  color: C.textMuted,
 };
 
 const buttons = {
@@ -262,6 +278,7 @@ const btnPrimary = {
 };
 
 const btn = {
+  flex: 1,
   padding: 12,
   borderRadius: 10,
   background: C.cardAlt,
