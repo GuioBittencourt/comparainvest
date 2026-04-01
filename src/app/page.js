@@ -267,7 +267,7 @@ export default function Home() {
               {user?.philosophy && <button onClick={() => setTab("my-philosophy")} style={{ marginLeft: 8, fontSize: 10, padding: "2px 8px", borderRadius: 4, background: `${C.accent}15`, color: C.accent, fontFamily: MN, border: `1px solid ${C.accent}30`, cursor: "pointer" }} title="Ver minha filosofia">Filosofia: {user.philosophy} →</button>}
             </p>
           </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
 <div
   style={{
     padding: "4px 8px",
