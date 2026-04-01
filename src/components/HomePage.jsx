@@ -15,7 +15,56 @@ export default function HomePage({ user, onTrack }) {
           O que deseja explorar hoje?
         </p>
       </div>
+      <div
+        style={{
+          background: "linear-gradient(135deg, rgba(0,229,160,0.08) 0%, rgba(13,17,23,1) 100%)",
+          border: `1px solid ${C.accentBorder}`,
+          borderRadius: 18,
+          padding: "22px 20px",
+          marginBottom: 20,
+        }}
+      >
+        <div
+          style={{
+            fontFamily: MN,
+            fontSize: 11,
+            fontWeight: 700,
+            color: C.accent,
+            letterSpacing: "1px",
+            textTransform: "uppercase",
+            marginBottom: 10,
+          }}
+        >
+          Comece por aqui
+        </div>
 
+        <div style={{ fontSize: 14, color: C.white, fontWeight: 700, marginBottom: 10 }}>
+          Em menos de 1 minuto você já entende melhor seu perfil.
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
+          <div style={{ fontSize: 12, color: C.textDim }}>1. Descubra sua filosofia de investidor</div>
+          <div style={{ fontSize: 12, color: C.textDim }}>2. Compare ativos com mais clareza</div>
+          <div style={{ fontSize: 12, color: C.textDim }}>3. Monte sua estratégia com mais confiança</div>
+        </div>
+
+        <button
+          onClick={() => onTrack("investimentos")}
+          style={{
+            padding: "10px 16px",
+            borderRadius: 10,
+            fontSize: 12,
+            fontWeight: 700,
+            fontFamily: MN,
+            cursor: "pointer",
+            background: C.accent,
+            color: C.bg,
+            border: "none",
+          }}
+        >
+          Começar agora
+        </button>
+      </div>
       <SponsorSlot id="home-top" />
 
       {/* Investimentos Track */}
