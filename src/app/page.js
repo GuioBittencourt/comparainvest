@@ -268,6 +268,23 @@ export default function Home() {
             </p>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+<div
+  style={{
+    padding: "5px 10px",
+    borderRadius: 999,
+    fontSize: 10,
+    fontWeight: 700,
+    fontFamily: MN,
+    letterSpacing: "0.4px",
+    background: user?.is_premium ? `${C.accent}15` : `${C.yellow}12`,
+    color: user?.is_premium ? C.accent : C.yellow,
+    border: `1px solid ${user?.is_premium ? `${C.accent}30` : `${C.yellow}25`}`,
+    lineHeight: 1,
+    whiteSpace: "nowrap",
+  }}
+>
+  {user?.is_premium ? "Premium" : "Gratuito"}
+</div>
             {user?.is_admin && (
               <button onClick={() => setTab("admin")} style={{ padding: "8px 16px", borderRadius: 10, fontSize: 11, fontWeight: 600, fontFamily: MN, cursor: "pointer", background: `${C.purple}15`, color: C.purple, border: `1px solid ${C.purple}30` }}>
                 🔐 Admin
