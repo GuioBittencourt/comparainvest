@@ -261,11 +261,19 @@ export default function Home() {
       <div style={{ padding: "24px 28px", borderBottom: `1px solid ${C.border}`, background: `linear-gradient(180deg, rgba(0,229,160,0.03) 0%, transparent 100%)` }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
           <div>
-            <div onClick={() => setTab("home")} style={{ cursor: "pointer", display: "flex", alignItems: "center" }}>
+            <div
+  onClick={() => setTab("home")}
+  style={{
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    marginLeft: -10
+  }}
+>
   <img
     src="/logo-texto.png"
     alt="comparainvest"
-    style={{ height: 26, width: "auto" }}
+    style={{ height: 32, width: "auto" }}
   />
 </div>
             <p style={{ color: C.textDim, fontSize: 12, margin: "4px 0 0" }}>
