@@ -267,7 +267,7 @@ export default function Home() {
     cursor: "pointer",
     display: "flex",
     alignItems: "center",
-    marginLeft: -10
+    marginLeft: -8
   }}
 >
   <img
