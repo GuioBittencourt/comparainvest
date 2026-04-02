@@ -447,6 +447,7 @@ const subItem = {
                 padding: "4px 2px",
                 lineHeight: 1,
                 marginTop: 2,
+                transform: "translateY(-4px)"
               }}
               aria-label="Abrir menu"
               title="Menu"
