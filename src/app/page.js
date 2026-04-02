@@ -270,88 +270,133 @@ export default function Home() {
 
   return (
     <div style={{ fontFamily: FN, background: C.bg, color: C.text, minHeight: "100vh" }}>
-      {/* Header */}
-      <div style={{ padding: "24px 28px", borderBottom: `1px solid ${C.border}`, background: `linear-gradient(180deg, rgba(0,229,160,0.03) 0%, transparent 100%)` }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-  <button
-    onClick={() => setMenuOpen(true)}
-    style={{
-      background: "transparent",
-      border: "none",
-      color: C.white,
-      fontSize: 20,
-      cursor: "pointer",
-      padding: "4px 2px",
-      lineHeight: 1,
-      marginTop: 2,
-    }}
-    aria-label="Abrir menu"
-    title="Menu"
-  >
-    ☰
-  </button>
-
-  <div>
-    <div
-      onClick={() => setTab("home")}
-      style={{ cursor: "pointer", display: "flex", alignItems: "center", marginLeft: -10 }}
-    >
-      <img
-        src="/logo-texto.png"
-        alt="comparainvest"
-        style={{ height: 32, width: "auto" }}
-      />
-    </div>
-
-    <p style={{ color: C.textDim, fontSize: 12, margin: "4px 0 0" }}>
-      Olá, {user?.nome}!
-      {user?.philosophy && (
-        <button
-          onClick={() => setTab("my-philosophy")}
+            {/* Header */}
+      <div
+        style={{
+          padding: "24px 28px",
+          borderBottom: `1px solid ${C.border}`,
+          background: `linear-gradient(180deg, rgba(0,229,160,0.03) 0%, transparent 100%)`,
+        }}
+      >
+        <div
           style={{
-            marginLeft: 8,
-            fontSize: 10,
-            padding: "2px 8px",
-            borderRadius: 4,
-            background: `${C.accent}15`,
-            color: C.accent,
-            fontFamily: MN,
-            border: `1px solid ${C.accent}30`,
-            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 12,
           }}
-          title="Ver minha filosofia"
         >
-          Filosofia: {user.philosophy} →
-        </button>
-      )}
-    </p>
-  </div>
-</div>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+            <button
+              onClick={() => setMenuOpen(true)}
+              style={{
+                background: "transparent",
+                border: "none",
+                color: C.white,
+                fontSize: 20,
+                cursor: "pointer",
+                padding: "4px 2px",
+                lineHeight: 1,
+                marginTop: 2,
+              }}
+              aria-label="Abrir menu"
+              title="Menu"
+            >
+              ☰
+            </button>
+
+            <div>
+              <div
+                onClick={() => setTab("home")}
+                style={{ cursor: "pointer", display: "flex", alignItems: "center", marginLeft: -10 }}
+              >
+                <img
+                  src="/logo-texto.png"
+                  alt="comparainvest"
+                  style={{ height: 32, width: "auto" }}
+                />
+              </div>
+
+              <p style={{ color: C.textDim, fontSize: 12, margin: "4px 0 0" }}>
+                Olá, {user?.nome}!
+                {user?.philosophy && (
+                  <button
+                    onClick={() => setTab("my-philosophy")}
+                    style={{
+                      marginLeft: 8,
+                      fontSize: 10,
+                      padding: "2px 8px",
+                      borderRadius: 4,
+                      background: `${C.accent}15`,
+                      color: C.accent,
+                      fontFamily: MN,
+                      border: `1px solid ${C.accent}30`,
+                      cursor: "pointer",
+                    }}
+                    title="Ver minha filosofia"
+                  >
+                    Filosofia: {user.philosophy} →
+                  </button>
+                )}
+              </p>
+            </div>
+          </div>
+
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
-<div
-  style={{
-    padding: "4px 8px",
-    borderRadius: 999,
-    fontSize: 9,
-    fontWeight: 700,
-    fontFamily: MN,
-    letterSpacing: "0.2px",
-    background: user?.is_premium ? `${C.accent}15` : `${C.yellow}12`,
-    color: user?.is_premium ? C.accent : C.yellow,
-    border: `1px solid ${user?.is_premium ? `${C.accent}30` : `${C.yellow}25`}`,
-    lineHeight: 1,
-    whiteSpace: "nowrap",
-  }}
->
-  {user?.is_premium ? "Premium" : "Gratuito"}
-</div>
+            <div
+              style={{
+                padding: "4px 8px",
+                borderRadius: 999,
+                fontSize: 9,
+                fontWeight: 700,
+                fontFamily: MN,
+                letterSpacing: "0.2px",
+                background: user?.is_premium ? `${C.accent}15` : `${C.yellow}12`,
+                color: user?.is_premium ? C.accent : C.yellow,
+                border: `1px solid ${user?.is_premium ? `${C.accent}30` : `${C.yellow}25`}`,
+                lineHeight: 1,
+                whiteSpace: "nowrap",
+              }}
+            >
+              {user?.is_premium ? "Premium" : "Gratuito"}
+            </div>
+
             {user?.is_admin && (
-              <button onClick={() => setTab("admin")} style={{ padding: "8px 16px", borderRadius: 10, fontSize: 11, fontWeight: 600, fontFamily: MN, cursor: "pointer", background: `${C.purple}15`, color: C.purple, border: `1px solid ${C.purple}30` }}>
+              <button
+                onClick={() => setTab("admin")}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: 10,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  fontFamily: MN,
+                  cursor: "pointer",
+                  background: `${C.purple}15`,
+                  color: C.purple,
+                  border: `1px solid ${C.purple}30`,
+                }}
+              >
                 🔐 Admin
               </button>
             )}
-            <button onClick={handleLogout} style={{ padding: "8px 16px", borderRadius: 10, fontSize: 11, fontWeight: 600, fontFamily: MN, cursor: "pointer", background: C.cardAlt, color: C.textDim, border: `1px solid ${C.border}` }}>Sair</button>
+
+            <button
+              onClick={handleLogout}
+              style={{
+                padding: "8px 16px",
+                borderRadius: 10,
+                fontSize: 11,
+                fontWeight: 600,
+                fontFamily: MN,
+                cursor: "pointer",
+                background: C.cardAlt,
+                color: C.textDim,
+                border: `1px solid ${C.border}`,
+              }}
+            >
+              Sair
+            </button>
           </div>
         </div>
 
@@ -366,7 +411,22 @@ export default function Home() {
               { id: "rf", label: "🏦 RF", desc: "8 ind." },
               { id: "carteira", label: "💼 Carteira" },
             ].map((t) => (
-              <button key={t.id} onClick={() => setTab(t.id)} style={{ padding: "11px 16px", fontSize: 12, fontWeight: tab === t.id ? 600 : 400, color: tab === t.id ? C.accent : C.textDim, background: "transparent", border: "none", borderBottom: tab === t.id ? `2px solid ${C.accent}` : "2px solid transparent", cursor: "pointer", fontFamily: FN, transition: "all 0.2s" }}>
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                style={{
+                  padding: "11px 16px",
+                  fontSize: 12,
+                  fontWeight: tab === t.id ? 600 : 400,
+                  color: tab === t.id ? C.accent : C.textDim,
+                  background: "transparent",
+                  border: "none",
+                  borderBottom: tab === t.id ? `2px solid ${C.accent}` : "2px solid transparent",
+                  cursor: "pointer",
+                  fontFamily: FN,
+                  transition: "all 0.2s",
+                }}
+              >
                 {t.label} {t.desc && <span style={{ fontSize: 9, color: C.textMuted }}>({t.desc})</span>}
               </button>
             ))}
