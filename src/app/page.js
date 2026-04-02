@@ -261,7 +261,13 @@ export default function Home() {
       <div style={{ padding: "24px 28px", borderBottom: `1px solid ${C.border}`, background: `linear-gradient(180deg, rgba(0,229,160,0.03) 0%, transparent 100%)` }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
           <div>
-            <h1 onClick={() => setTab("home")} style={{ fontFamily: MN, fontSize: 24, fontWeight: 800, color: C.white, margin: 0, cursor: "pointer" }}>compara<span style={{ color: C.accent }}>invest</span></h1>
+            <div onClick={() => setTab("home")} style={{ cursor: "pointer", display: "flex", alignItems: "center" }}>
+  <img
+    src="/logo-texto.png"
+    alt="comparainvest"
+    style={{ height: 26, width: "auto" }}
+  />
+</div>
             <p style={{ color: C.textDim, fontSize: 12, margin: "4px 0 0" }}>
               Olá, {user?.nome}!
               {user?.philosophy && <button onClick={() => setTab("my-philosophy")} style={{ marginLeft: 8, fontSize: 10, padding: "2px 8px", borderRadius: 4, background: `${C.accent}15`, color: C.accent, fontFamily: MN, border: `1px solid ${C.accent}30`, cursor: "pointer" }} title="Ver minha filosofia">Filosofia: {user.philosophy} →</button>}
