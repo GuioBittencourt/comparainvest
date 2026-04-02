@@ -270,6 +270,58 @@ export default function Home() {
 
   return (
     <div style={{ fontFamily: FN, background: C.bg, color: C.text, minHeight: "100vh" }}>
+    {menuOpen && (
+  <div
+    style={{
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100%",
+      background: "rgba(0,0,0,0.4)",
+      zIndex: 1000,
+    }}
+    onClick={() => setMenuOpen(false)}
+  >
+    <div
+      style={{
+        width: 260,
+        height: "100%",
+        background: C.card,
+        padding: 20,
+        boxShadow: "4px 0 20px rgba(0,0,0,0.4)",
+      }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div style={{ fontFamily: MN, fontSize: 16, marginBottom: 20 }}>
+        Menu
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <button onClick={() => { setTab("home"); setMenuOpen(false); }}>Home</button>
+        <button onClick={() => { setTab("comparadores"); setMenuOpen(false); }}>Comparar</button>
+        <button onClick={() => { setTab("acoes"); setMenuOpen(false); }}>Ações</button>
+        <button onClick={() => { setTab("fiis"); setMenuOpen(false); }}>FIIs</button>
+        <button onClick={() => { setTab("rf"); setMenuOpen(false); }}>Renda Fixa</button>
+        <button onClick={() => { setTab("carteira"); setMenuOpen(false); }}>Carteira</button>
+
+        {user?.philosophy && (
+          <button onClick={() => { setTab("my-philosophy"); setMenuOpen(false); }}>
+            Minha Filosofia
+          </button>
+        )}
+
+        {user?.is_admin && (
+          <button onClick={() => { setTab("admin"); setMenuOpen(false); }}>
+            Admin
+          </button>
+        )}
+
+        <button onClick={handleLogout}>Sair</button>
+      </div>
+    </div>
+  </div>
+)}
             {/* Header */}
       <div
         style={{
