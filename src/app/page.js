@@ -274,7 +274,7 @@ const item = {
   cursor: "pointer",
   fontSize: 14,
   color: C.white,
-  transition: "all 0.2s"
+  transition: "all 0.2s",
 };
 
 const subItem = {
@@ -317,7 +317,12 @@ const subItem = {
 
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
 
-  <div onClick={() => { setTab("home"); setMenuOpen(false); }} style={item}>
+  <div
+    onClick={() => { setTab("home"); setMenuOpen(false); }}
+    style={item}
+    onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt}
+    onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+  >
     Home
   </div>
 
@@ -325,38 +330,74 @@ const subItem = {
     Comparar
   </div>
 
-  <div onClick={() => { setTab("acoes"); setMenuOpen(false); }} style={subItem}>
+  <div
+    onClick={() => { setTab("acoes"); setMenuOpen(false); }}
+    style={subItem}
+    onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt}
+    onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+  >
     Ações
   </div>
 
-  <div onClick={() => { setTab("fiis"); setMenuOpen(false); }} style={subItem}>
+  <div
+    onClick={() => { setTab("fiis"); setMenuOpen(false); }}
+    style={subItem}
+    onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt}
+    onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+  >
     FIIs
   </div>
 
-  <div onClick={() => { setTab("rf"); setMenuOpen(false); }} style={subItem}>
+  <div
+    onClick={() => { setTab("rf"); setMenuOpen(false); }}
+    style={subItem}
+    onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt}
+    onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+  >
     Renda Fixa
   </div>
 
-  <div onClick={() => { setTab("carteira"); setMenuOpen(false); }} style={item}>
+  <div
+    onClick={() => { setTab("carteira"); setMenuOpen(false); }}
+    style={item}
+    onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt}
+    onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+  >
     Carteira
   </div>
 
-        {user?.philosophy && (
-  <div onClick={() => { setTab("my-philosophy"); setMenuOpen(false); }} style={item}>
-    Minha Filosofia
-  </div>
-)}
+  {user?.philosophy && (
+    <div
+      onClick={() => { setTab("my-philosophy"); setMenuOpen(false); }}
+      style={item}
+      onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt}
+      onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+    >
+      Minha Filosofia
+    </div>
+  )}
 
-{user?.is_admin && (
-  <div onClick={() => { setTab("admin"); setMenuOpen(false); }} style={item}>
-    Admin
-  </div>
-)}
+  {user?.is_admin && (
+    <div
+      onClick={() => { setTab("admin"); setMenuOpen(false); }}
+      style={item}
+      onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt}
+      onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+    >
+      Admin
+    </div>
+  )}
 
-<div onClick={handleLogout} style={{ ...item, marginTop: 10 }}>
-  Sair
+  <div
+    onClick={handleLogout}
+    style={{ ...item, marginTop: 10 }}
+    onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt}
+    onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+  >
+    Sair
+  </div>
+
 </div>
-      </div>
     </div>
   </div>
 )}
