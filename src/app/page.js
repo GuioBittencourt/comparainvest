@@ -268,6 +268,24 @@ export default function Home() {
     return <PhilosophyResult result={storedResult} onContinue={() => setTab("comparadores")} onRefazer={() => setTab("quiz")} />;
   }
 
+const item = {
+  padding: "10px 8px",
+  borderRadius: 8,
+  cursor: "pointer",
+  fontSize: 14,
+  color: C.white,
+  transition: "all 0.2s"
+};
+
+const subItem = {
+  padding: "8px 8px 8px 16px",
+  borderRadius: 8,
+  cursor: "pointer",
+  fontSize: 13,
+  color: C.textDim,
+  transition: "all 0.2s"
+};
+
   return (
     <div style={{ fontFamily: FN, background: C.bg, color: C.text, minHeight: "100vh" }}>
     {menuOpen && (
@@ -297,27 +315,47 @@ export default function Home() {
         Menu
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        <button onClick={() => { setTab("home"); setMenuOpen(false); }}>Home</button>
-        <button onClick={() => { setTab("comparadores"); setMenuOpen(false); }}>Comparar</button>
-        <button onClick={() => { setTab("acoes"); setMenuOpen(false); }}>Ações</button>
-        <button onClick={() => { setTab("fiis"); setMenuOpen(false); }}>FIIs</button>
-        <button onClick={() => { setTab("rf"); setMenuOpen(false); }}>Renda Fixa</button>
-        <button onClick={() => { setTab("carteira"); setMenuOpen(false); }}>Carteira</button>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+
+  <div onClick={() => { setTab("home"); setMenuOpen(false); }} style={item}>
+    Home
+  </div>
+
+  <div style={{ marginTop: 10, fontSize: 11, color: C.textDim }}>
+    Comparar
+  </div>
+
+  <div onClick={() => { setTab("acoes"); setMenuOpen(false); }} style={subItem}>
+    Ações
+  </div>
+
+  <div onClick={() => { setTab("fiis"); setMenuOpen(false); }} style={subItem}>
+    FIIs
+  </div>
+
+  <div onClick={() => { setTab("rf"); setMenuOpen(false); }} style={subItem}>
+    Renda Fixa
+  </div>
+
+  <div onClick={() => { setTab("carteira"); setMenuOpen(false); }} style={item}>
+    Carteira
+  </div>
 
         {user?.philosophy && (
-          <button onClick={() => { setTab("my-philosophy"); setMenuOpen(false); }}>
-            Minha Filosofia
-          </button>
-        )}
+  <div onClick={() => { setTab("my-philosophy"); setMenuOpen(false); }} style={item}>
+    Minha Filosofia
+  </div>
+)}
 
-        {user?.is_admin && (
-          <button onClick={() => { setTab("admin"); setMenuOpen(false); }}>
-            Admin
-          </button>
-        )}
+{user?.is_admin && (
+  <div onClick={() => { setTab("admin"); setMenuOpen(false); }} style={item}>
+    Admin
+  </div>
+)}
 
-        <button onClick={handleLogout}>Sair</button>
+<div onClick={handleLogout} style={{ ...item, marginTop: 10 }}>
+  Sair
+</div>
       </div>
     </div>
   </div>
