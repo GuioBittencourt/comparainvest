@@ -473,61 +473,7 @@ const subItem = {
             </div>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
-            <div
-              style={{
-                padding: "4px 8px",
-                borderRadius: 999,
-                fontSize: 9,
-                fontWeight: 700,
-                fontFamily: MN,
-                letterSpacing: "0.2px",
-                background: user?.is_premium ? `${C.accent}15` : `${C.yellow}12`,
-                color: user?.is_premium ? C.accent : C.yellow,
-                border: `1px solid ${user?.is_premium ? `${C.accent}30` : `${C.yellow}25`}`,
-                lineHeight: 1,
-                whiteSpace: "nowrap",
-              }}
-            >
-              {user?.is_premium ? "Premium" : "Gratuito"}
-            </div>
-
-            {user?.is_admin && (
-              <button
-                onClick={() => setTab("admin")}
-                style={{
-                  padding: "8px 16px",
-                  borderRadius: 10,
-                  fontSize: 11,
-                  fontWeight: 600,
-                  fontFamily: MN,
-                  cursor: "pointer",
-                  background: `${C.purple}15`,
-                  color: C.purple,
-                  border: `1px solid ${C.purple}30`,
-                }}
-              >
-                🔐 Admin
-              </button>
-            )}
-
-            <button
-              onClick={handleLogout}
-              style={{
-                padding: "8px 16px",
-                borderRadius: 10,
-                fontSize: 11,
-                fontWeight: 600,
-                fontFamily: MN,
-                cursor: "pointer",
-                background: C.cardAlt,
-                color: C.textDim,
-                border: `1px solid ${C.border}`,
-              }}
-            >
-              Sair
-                        </button>
-          </div>
+          <div />
         </div>
       </div>
 
