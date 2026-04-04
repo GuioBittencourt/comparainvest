@@ -29,21 +29,19 @@ function getCategory(symbol) {
 }
 
 export default function CarteiraFicticia({ user, onGoCompare }) {
-  const [assets, setAssets] = useState([]);
-  const [showAdd, setShowAdd] = useState(false);
-  const [searchQ, setSearchQ] = useState("");
-  const [showUpgrade, setShowUpgrade] = useState(false);
-
-  // Load cart from localStorage (populated by long press in comparator)
-  useState(() => {
-    try {
-      const cart = JSON.parse(localStorage.getItem("comparai_cart") || "[]");
-      if (cart.length > 0) setAssets(cart);
-    } catch {}
-  });
-  const [rfManual, setRfManual] = useState([]);
-  const [rfName, setRfName] = useState("");
-  const [rfValue, setRfValue] = useState("");
+  const [assets, setAssets] = useState(() => {
+  try {
+    return JSON.parse(localStorage.getItem("comparai_cart") || "[]");
+  } catch {
+    return [];
+  }
+});
+const [showAdd, setShowAdd] = useState(false);
+const [searchQ, setSearchQ] = useState("");
+const [showUpgrade, setShowUpgrade] = useState(false);
+const [rfManual, setRfManual] = useState([]);
+const [rfName, setRfName] = useState("");
+const [rfValue, setRfValue] = useState("");
 
   const isPremium = user?.is_premium || user?.is_admin;
 
