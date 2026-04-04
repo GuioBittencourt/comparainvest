@@ -414,13 +414,22 @@ export default function ComparadorRF({ user, onSearch }) {
       )}
 
       {ranked.length >= 2 && (
-        <RankingResults
-          ranked={ranked}
-          selected={selected}
-          indicators={IND_RF}
-          label="título"
-        />
-      )}
+  <RankingResults
+    ranked={ranked}
+    selected={selected}
+    indicators={IND_RF}
+    label="título"
+    onAddToCart={(symbol) => {
+      try {
+        const cart = JSON.parse(localStorage.getItem("comparai_cart") || "[]");
+        if (!cart.find((c) => c.symbol === symbol)) {
+          cart.push({ symbol, value: 0, category: "rf" });
+          localStorage.setItem("comparai_cart", JSON.stringify(cart));
+        }
+      } catch {}
+    }}
+  />
+)}
 
       <SponsorSlot id="rf-bottom" />
     </div>
