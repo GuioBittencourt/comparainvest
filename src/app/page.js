@@ -502,11 +502,11 @@ const subItem = {
       style={{
         fontSize: 13,
         fontFamily: MN,
-        color: C.accent,
-        background: `${C.accent}10`,
+        color: C.white,
+        background: "rgba(255,255,255,0.06)",
         padding: "6px 14px",
         borderRadius: 999,
-        border: `1px solid ${C.accent}30`,
+        border: `1px solid ${C.border}`,
         letterSpacing: "0.8px",
       }}
     >
