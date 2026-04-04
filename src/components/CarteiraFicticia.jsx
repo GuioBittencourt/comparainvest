@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { C, MN, FN, PAL } from "../lib/theme";
 import { fmtBRL, numFmt } from "../lib/utils";
 import { ResponsiveContainer, PieChart, Pie, Cell, Legend, Tooltip as RTooltip, BarChart, Bar, XAxis, YAxis } from "recharts";
@@ -42,6 +42,11 @@ const [showUpgrade, setShowUpgrade] = useState(false);
 const [rfManual, setRfManual] = useState([]);
 const [rfName, setRfName] = useState("");
 const [rfValue, setRfValue] = useState("");
+  useEffect(() => {
+  try {
+    localStorage.setItem("comparai_cart", JSON.stringify(assets));
+  } catch {}
+}, [assets]);
 
   const isPremium = user?.is_premium || user?.is_admin;
 
