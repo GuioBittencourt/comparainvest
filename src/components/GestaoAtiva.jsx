@@ -162,7 +162,7 @@ border: `1px solid ${C.accent}30` }}>Perfil de Gestão →</button>
         color: "#FFB020",
       }}
     >
-      Conta gratuita — máximo de 4 categorias
+      Plano Atual — Limite de 4 categorias
     </span>
   </div>
 
@@ -183,7 +183,7 @@ border: `1px solid ${C.accent}30` }}>Perfil de Gestão →</button>
       whiteSpace: "nowrap",
     }}
   >
-    Quero me tornar Premium
+    ⚡Quero me tornar Premium!
   </button>
 </div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}><span style={{ fontFamily: MN, fontSize: 10, color: C.textDim }}>CATEGORIAS ({categories.length})</span><div style={{ display: "flex", gap: 6 }}>{categories.length > 0 && <button onClick={() => setData((p) => ({ ...p, expenses: [] }))} style={{ padding: "3px 8px", borderRadius: 5, fontSize: 9, fontFamily: MN, cursor: "pointer", background: `${C.red}15`, color: C.red, border: `1px solid ${C.red}30` }}>Resetar</button>}<button onClick={() => { if (!isPremium && categories.length >= FREE_MAX) { alert("Conta gratuita: máx. 4 categorias."); return; } setShowAddCat(true); }} style={{ padding: "3px 8px", borderRadius: 5, fontSize: 9, fontFamily: MN, cursor: "pointer", background: `${C.accent}15`, color: C.accent, border: `1px solid ${C.accent}30` }}>+ Categoria</button></div></div>
