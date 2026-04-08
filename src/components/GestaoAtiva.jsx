@@ -168,7 +168,7 @@ border: `1px solid ${C.accent}30` }}>Perfil de Gestão →</button>
 
   <button
     onClick={() =>
-      window.open("https://buy.stripe.com/cNicN52o39nt9YQ5Xx0Fi00", "_blank")
+      window.open("/premium", "_blank")
     }
     style={{
       padding: "4px 8px",
