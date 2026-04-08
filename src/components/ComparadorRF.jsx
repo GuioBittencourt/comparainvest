@@ -51,7 +51,7 @@ export default function ComparadorRF({ user, onSearch }) {
 
     if (!isPremium && selected.length >= FREE_MAX_ASSETS) {
       setUpgradeMsg(
-        `Usuários gratuitos podem comparar até ${FREE_MAX_ASSETS} títulos por batalha. Desbloqueie o Premium para comparar mais ativos.`
+        `Seu Plano Atual pode comparar até ${FREE_MAX_ASSETS} títulos por batalha. Desbloqueie o Premium para comparar mais ativos.`
       );
       setShowUpgrade(true);
       return;
@@ -61,7 +61,7 @@ export default function ComparadorRF({ user, onSearch }) {
       const battleCount = getBattleCount15d();
       if (battleCount >= FREE_MAX_BATTLES_15D) {
         setUpgradeMsg(
-          `Sua conta gratuita permite até ${FREE_MAX_BATTLES_15D} batalhas a cada 15 dias. Desbloqueie o Premium para comparar sem limites.`
+          `Seu Plano Atual permite até ${FREE_MAX_BATTLES_15D} batalhas a cada 15 dias. Desbloqueie o Premium para comparar sem limites.`
         );
         setShowUpgrade(true);
         return;
@@ -214,7 +214,7 @@ export default function ComparadorRF({ user, onSearch }) {
           }}
         >
           <span style={{ fontSize: 11, color: C.yellow }}>
-            ⚡ Conta gratuita — {battlesRemaining} batalhas restantes em 15 dias | Máx. {FREE_MAX_ASSETS} títulos por batalha
+            ⚡ Plano Atual — {battlesRemaining} batalhas restantes em 15 dias | Máx. {FREE_MAX_ASSETS} títulos por batalha
           </span>
 
           <a
@@ -236,7 +236,7 @@ export default function ComparadorRF({ user, onSearch }) {
                 border: `1px solid ${C.accent}30`,
               }}
             >
-              Quero me tornar Premium
+              Quero me tornar Premium!
             </button>
           </a>
         </div>
