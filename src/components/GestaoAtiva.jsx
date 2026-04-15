@@ -172,7 +172,8 @@ border: `1px solid ${C.accent}30` }}>Perfil de Gestão →</button>
         whiteSpace: "nowrap",
       }}
     >
-      R${numFmt(renda, 0)}
+      <span style={{ fontSize: isMobile ? 9 : 10 }}>R$</span>
+  <span>{numFmt(renda, 0)}</span>
     </div>
   </div>
 
@@ -189,7 +190,8 @@ border: `1px solid ${C.accent}30` }}>Perfil de Gestão →</button>
         whiteSpace: "nowrap",
       }}
     >
-      R${numFmt(fixas, 0)}
+      <span style={{ fontSize: isMobile ? 9 : 10 }}>R$</span>
+  <span>{numFmt(fixas, 0)}</span>
     </div>
   </div>
 
@@ -204,7 +206,8 @@ border: `1px solid ${C.accent}30` }}>Perfil de Gestão →</button>
         whiteSpace: "nowrap",
       }}
     >
-      R${numFmt(variavel, 0)}
+      <span style={{ fontSize: isMobile ? 9 : 10 }}>R$</span>
+  <span>{numFmt(variavel, 0)}</span>
     </div>
   </div>
 </div>
