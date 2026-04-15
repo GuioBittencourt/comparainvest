@@ -157,7 +157,7 @@ border: `1px solid ${C.accent}30` }}>Perfil de Gestão →</button>
       </div>
     </div>
 
-    <div style={{ textAlign: "right", minWidth: 0 }}>
+    <div style={{ textAlign: "center", minWidth: 0 }}>
       <div style={{ fontSize: 9, color: C.textMuted, marginBottom: 4 }}>Renda</div>
       <div
         style={{
@@ -189,7 +189,7 @@ border: `1px solid ${C.accent}30` }}>Perfil de Gestão →</button>
       </div>
     </div>
 
-    <div style={{ textAlign: "right", minWidth: 0 }}>
+    <div style={{ textAlign: "center", minWidth: 0 }}>
       <div style={{ fontSize: 9, color: C.textMuted, marginBottom: 4 }}>Disponível</div>
       <div
         style={{
