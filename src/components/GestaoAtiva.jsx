@@ -167,30 +167,38 @@ border: `1px solid ${C.accent}30` }}>Perfil de Gestão →</button>
       border: "1px solid rgba(255,170,0,0.25)",
     }}
   >
-      Plano Atual — Limite de 4 categorias
-    </span>
-  </div>
+    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      <span style={{ fontSize: 12 }}>⚡</span>
+      <span
+        style={{
+          fontSize: 10,
+          fontFamily: MN,
+          color: "#FFB020",
+        }}
+      >
+        Plano Atual — Limite de 4 categorias
+      </span>
+    </div>
 
-  <button
-    onClick={() =>
-      window.open("/premium", "_blank")
-    }
-    style={{
-      padding: "4px 8px",
-      borderRadius: 6,
-      fontSize: 8,
-      fontFamily: MN,
-      fontWeight: 700,
-      cursor: "pointer",
-      background: "rgba(0,229,160,0.08)",
-      color: C.accent,
-      border: `1px solid ${C.accent}40`,
-      whiteSpace: "nowrap",
-    }}
-  >
-    ⚡Quero me tornar Premium!
-  </button>
-</div>
+    <button
+      onClick={() => window.open("/premium", "_blank")}
+      style={{
+        padding: "4px 8px",
+        borderRadius: 6,
+        fontSize: 8,
+        fontFamily: MN,
+        fontWeight: 700,
+        cursor: "pointer",
+        background: "rgba(0,229,160,0.08)",
+        color: C.accent,
+        border: `1px solid ${C.accent}40`,
+        whiteSpace: "nowrap",
+      }}
+    >
+      ⚡Quero me tornar Premium!
+    </button>
+  </div>
+)}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}><span style={{ fontFamily: MN, fontSize: 10, color: C.textDim }}>CATEGORIAS ({categories.length})</span><div style={{ display: "flex", gap: 6 }}>{categories.length > 0 && <button onClick={() => setData((p) => ({ ...p, expenses: [] }))} style={{ padding: "3px 8px", borderRadius: 5, fontSize: 9, fontFamily: MN, cursor: "pointer", background: `${C.red}15`, color: C.red, border: `1px solid ${C.red}30` }}>Resetar</button>}<button onClick={() => { if (!isPremium && categories.length >= FREE_MAX) { alert("Conta gratuita: máx. 4 categorias."); return; } setShowAddCat(true); }} style={{ padding: "3px 8px", borderRadius: 5, fontSize: 9, fontFamily: MN, cursor: "pointer", background: `${C.accent}15`, color: C.accent, border: `1px solid ${C.accent}30` }}>+ Categoria</button></div></div>
       {categories.map((cat) => { const spent = catTotals[cat.id] || 0; const rem = cat.limit - spent; const pct = cat.limit > 0 ? (spent/cat.limit)*100 : 0; const exps = expenses.filter((e) => e.categoryId === cat.id).sort((a, b) => new Date(b.date) - new Date(a.date)); return (<div key={cat.id} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: 14, marginBottom: 6 }}><div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}><div style={{ display: "flex", alignItems: "center", gap: 6 }}><span style={{ fontSize: 16 }}>{cat.icon}</span><div><div style={{ fontFamily: MN, fontSize: 11, fontWeight: 700, color: C.white }}>{cat.label}</div><div style={{ fontSize: 9, color: C.textMuted }}>Limite: R$ {numFmt(cat.limit, 2)}</div></div></div><div style={{ textAlign: "right" }}><div style={{ fontFamily: MN, fontSize: 14, fontWeight: 800, color: rem >= 0 ? cat.color : C.red }}>R$ {numFmt(Math.abs(rem), 2)}</div><div style={{ fontSize: 8, color: rem >= 0 ? C.textMuted : C.red }}>{rem >= 0 ? "restante" : "estourado"}</div></div></div><div style={{ height: 3, background: C.border, borderRadius: 2, marginBottom: 6, overflow: "hidden" }}><div style={{ width: `${Math.min(100, pct)}%`, height: "100%", borderRadius: 2, background: pct > 90 ? C.red : pct > 70 ? C.yellow : cat.color }} /></div><div style={{ display: "flex", gap: 6, marginBottom: exps.length > 0 ? 6 : 0 }}><button onClick={() => { setSelectedCat(cat.id); setShowAddExp(true); }} style={{ padding: "4px 10px", borderRadius: 5, fontSize: 9, fontFamily: MN, cursor: "pointer", background: `${cat.color}15`, color: cat.color, border: `1px solid ${cat.color}30` }}>+ Gasto</button><button onClick={() => setData((p) => ({ ...p, categories: p.categories.filter((c) => c.id !== cat.id), expenses: p.expenses.filter((e) => e.categoryId !== cat.id) }))} style={{ padding: "4px 8px", borderRadius: 5, fontSize: 9, cursor: "pointer", background: "transparent", color: C.textMuted, border: `1px solid ${C.border}` }}>Remover</button></div>{exps.map((exp) => (<div key={exp.id} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", borderTop: `1px solid ${C.border}` }}><span style={{ fontSize: 10, color: C.text }}>{exp.desc || "Gasto"} <span style={{ color: C.textMuted, fontSize: 8 }}>{new Date(exp.date).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}</span></span><div style={{ display: "flex", gap: 4, alignItems: "center" }}><span style={{ fontFamily: MN, fontSize: 10, color: C.red }}>-R$ {numFmt(exp.value, 2)}</span><button onClick={() => setData((p) => ({ ...p, expenses: p.expenses.filter((e) => e.id !== exp.id) }))} style={{ background: "none", border: "none", color: C.textMuted, cursor: "pointer", fontSize: 10 }}>×</button></div></div>))}</div>); })}
       {categories.length === 0 && (<div style={{ textAlign: "center", padding: "30px 16px", background: C.card, border: `1px solid ${C.border}`, borderRadius: 12 }}><div style={{ fontSize: 32, marginBottom: 8 }}>💰</div><div style={{ fontSize: 13, fontWeight: 600, color: C.white, marginBottom: 6 }}>Comece sua gestão ativa</div><div style={{ fontSize: 11, color: C.textDim, lineHeight: 1.6, marginBottom: 14 }}>Adicione categorias de despesas variáveis e controle seus gastos.</div><button onClick={() => setShowAddCat(true)} style={{ padding: "10px 18px", borderRadius: 10, fontSize: 12, fontFamily: MN, cursor: "pointer", background: C.accent, color: C.bg, border: "none", fontWeight: 700 }}>+ Adicionar categoria</button></div>)}
