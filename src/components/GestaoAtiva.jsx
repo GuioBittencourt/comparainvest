@@ -97,6 +97,7 @@ export default function GestaoAtiva({ user }) {
   const [customLimit, setCustomLimit] = useState("");
   const [editProfile, setEditProfile] = useState(false);
   const isPremium = user?.is_premium || user?.is_admin;
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
   const FREE_MAX = 4;
   useEffect(() => { saveData(data); }, [data]);
   const profile = data.profile;
@@ -165,7 +166,7 @@ border: `1px solid ${C.accent}30` }}>Perfil de Gestão →</button>
     <div
       style={{
         fontFamily: MN,
-        fontSize: 14,
+        fontSize: isMobile ? 12 : 14,
         fontWeight: 800,
         color: C.accent,
         whiteSpace: "nowrap",
@@ -182,7 +183,7 @@ border: `1px solid ${C.accent}30` }}>Perfil de Gestão →</button>
     <div
       style={{
         fontFamily: MN,
-        fontSize: 14,
+        fontSize: isMobile ? 12 : 14,
         fontWeight: 700,
         color: fixasPct > 60 ? C.red : C.blue,
         whiteSpace: "nowrap",
@@ -197,7 +198,7 @@ border: `1px solid ${C.accent}30` }}>Perfil de Gestão →</button>
     <div
       style={{
         fontFamily: MN,
-        fontSize: 14,
+        fontSize: isMobile ? 12 : 14,
         fontWeight: 800,
         color: C.accent,
         whiteSpace: "nowrap",
