@@ -14,7 +14,7 @@ export function BannerFinanceiro() {
         <span style={{ fontSize: 28 }}>💰</span>
         <div style={{ flex: 1 }}>
           <div style={{ fontFamily: MN, fontSize: 13, fontWeight: 700, color: C.accent }}>
-            Diagnóstico Financeiro Gratuito
+            Diagnóstico Financeiro ⚡
           </div>
           <div style={{ fontSize: 11, color: C.textDim, marginTop: 2 }}>
             Saúde financeira + sobrar grana todo mês — fale com um especialista
@@ -39,7 +39,7 @@ export function BannerRiqueza() {
         <span style={{ fontSize: 28 }}>🚀</span>
         <div style={{ flex: 1 }}>
           <div style={{ fontFamily: MN, fontSize: 13, fontWeight: 700, color: C.purple }}>
-            Diagnóstico da Riqueza Gratuito
+            Diagnóstico da Riqueza 💰
           </div>
           <div style={{ fontSize: 11, color: C.textDim, marginTop: 2 }}>
             Alavanque seu patrimônio já existente — consultoria gratuita
