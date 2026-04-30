@@ -24,7 +24,7 @@
 
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
-import { detectarPlano, calcularExpiracao } from "../../../../lib/stripe";
+import { detectarPlano, calcularExpiracao } from "../lib/stripe";
 
 // Stripe e Supabase clients (instanciados 1x por cold start)
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
