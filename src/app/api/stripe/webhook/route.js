@@ -36,7 +36,7 @@ const supabase = createClient(
 
 // Webhook precisa do raw body (não pode ser parsed JSON) pra validar assinatura.
 // Esse export força o Next.js a entregar o body cru.
-export const config = { api: { bodyParser: false } };
+
 
 /* ══════════════════════════════════════════════════════════
    IDEMPOTÊNCIA
