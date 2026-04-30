@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
-import { C, FN, MN, premiumButton, btnSecondary, heroStyle } from "../../lib/theme";
-import { LogoSymbol } from "../../components/Icons";
-import { supabase } from "../../lib/supabase";
+import { C, FN, MN, premiumButton, btnSecondary, heroStyle } from "../lib/theme";
+import { LogoSymbol } from "../components/Icons";
+import { supabase } from "../lib/supabase";
 
 /**
  * /premium — página de seleção de plano Premium.
