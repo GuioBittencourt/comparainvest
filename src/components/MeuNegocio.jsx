@@ -70,6 +70,7 @@ export default function MeuNegocio({ user }) {
   const [showModal, setShowModal] = useState(null);
   const [newItem, setNewItem] = useState({ desc: "", valor: "", categoria: "" });
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [editData, setEditData] = useState({ nome: "", meta: "", segmento: null, faturamento: null });
   const [loaded, setLoaded] = useState(false);
   const [viewMonth, setViewMonth] = useState(curMonth()); // for browsing other months
 
@@ -418,6 +419,81 @@ export default function MeuNegocio({ user }) {
   }
 
   /* ═══════════════════════════════════════════════════════════════
+     EDITAR NEGÓCIO (Premium)
+     ═══════════════════════════════════════════════════════════════ */
+  if (view === "editar" && active && isPremium) {
+    const seg = SEGMENTOS.find((s) => s.id === editData.segmento);
+    return (
+      <div>
+        <button onClick={() => setView("dashboard")} style={{ background: "none", border: "none", color: C.textDim, fontSize: 12, cursor: "pointer", fontFamily: FN, marginBottom: 12 }}>← Voltar ao dashboard</button>
+        <h2 style={heroStyle}>Editar negócio</h2>
+        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 20, marginTop: 16, display: "grid", gap: 14 }}>
+
+          <div>
+            <label style={{ fontSize: 11, color: C.textMuted, fontFamily: MN, display: "block", marginBottom: 4 }}>NOME DO NEGÓCIO</label>
+            <input value={editData.nome} onChange={(e) => setEditData((p) => ({ ...p, nome: e.target.value }))}
+              placeholder="Ex: Delivery da Maria"
+              style={{ width: "100%", padding: "10px 12px", background: C.cardAlt, border: `1px solid ${C.border}`, borderRadius: 10, color: C.white, fontSize: 14, fontFamily: FN, outline: "none", boxSizing: "border-box" }} />
+          </div>
+
+          <div>
+            <label style={{ fontSize: 11, color: C.textMuted, fontFamily: MN, display: "block", marginBottom: 4 }}>META DE FATURAMENTO MENSAL (R$)</label>
+            <input type="number" value={editData.meta} onChange={(e) => setEditData((p) => ({ ...p, meta: e.target.value }))}
+              placeholder="Ex: 5000"
+              style={{ width: "100%", padding: "10px 12px", background: C.cardAlt, border: `1px solid ${C.border}`, borderRadius: 10, color: C.white, fontSize: 14, fontFamily: MN, outline: "none", boxSizing: "border-box" }} />
+          </div>
+
+          <div>
+            <label style={{ fontSize: 11, color: C.textMuted, fontFamily: MN, display: "block", marginBottom: 8 }}>FAIXA DE FATURAMENTO</label>
+            <div style={{ display: "grid", gap: 6 }}>
+              {FAIXAS.map((f) => (
+                <button key={f.id} onClick={() => setEditData((p) => ({ ...p, faturamento: f.id }))}
+                  style={{ textAlign: "left", padding: "10px 14px", borderRadius: 10, fontSize: 13, cursor: "pointer", fontFamily: FN, border: `1px solid ${editData.faturamento === f.id ? C.accentBorder : C.border}`, background: editData.faturamento === f.id ? `${C.accent}10` : C.cardAlt, color: editData.faturamento === f.id ? C.accent : C.textDim }}>
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label style={{ fontSize: 11, color: C.textMuted, fontFamily: MN, display: "block", marginBottom: 8 }}>SEGMENTO</label>
+            <div style={{ display: "grid", gap: 6 }}>
+              {SEGMENTOS.map((s) => (
+                <button key={s.id} onClick={() => setEditData((p) => ({ ...p, segmento: s.id }))}
+                  style={{ textAlign: "left", padding: "10px 14px", borderRadius: 10, fontSize: 13, cursor: "pointer", fontFamily: FN, border: `1px solid ${editData.segmento === s.id ? C.accentBorder : C.border}`, background: editData.segmento === s.id ? `${C.accent}10` : C.cardAlt, color: editData.segmento === s.id ? C.accent : C.textDim }}>
+                  {s.label}
+                  <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>{s.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <button
+            onClick={() => {
+              if (!editData.nome.trim()) return;
+              updateActive((n) => ({
+                ...n,
+                nome: editData.nome.trim(),
+                meta: parseFloat(editData.meta) || n.meta,
+                segmento: editData.segmento || n.segmento,
+                faturamento: editData.faturamento || n.faturamento,
+              }));
+              setView("dashboard");
+            }}
+            style={{ padding: "13px", borderRadius: 12, background: `linear-gradient(135deg, ${C.accent}, #059669)`, border: "none", color: "#03130D", fontFamily: FN, fontSize: 14, fontWeight: 800, cursor: "pointer" }}>
+            Salvar alterações
+          </button>
+
+          <button onClick={() => setView("dashboard")}
+            style={{ padding: "10px", borderRadius: 12, background: "transparent", border: `1px solid ${C.border}`, color: C.textDim, fontFamily: FN, fontSize: 13, cursor: "pointer" }}>
+            Cancelar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
      DASHBOARD
      ═══════════════════════════════════════════════════════════════ */
   if (!active) { setView("list"); return null; }
@@ -437,6 +513,10 @@ export default function MeuNegocio({ user }) {
           <div style={{ display: "flex", gap: 6 }}>
             <button onClick={() => setView("historico")}
               style={{ padding: "6px 14px", borderRadius: 8, fontSize: 10, fontFamily: MN, cursor: "pointer", background: "rgba(255,255,255,0.030)", color: C.textDim, border: `1px solid ${C.border}` }}>Histórico</button>
+            {isPremium && (
+              <button onClick={() => { setEditData({ nome: active.nome, meta: active.meta || "", segmento: active.segmento, faturamento: active.faturamento }); setView("editar"); }}
+                style={{ padding: "6px 14px", borderRadius: 8, fontSize: 10, fontFamily: MN, cursor: "pointer", background: `${C.accent}12`, color: C.accent, border: `1px solid ${C.accentBorder}` }}>Editar</button>
+            )}
             <button onClick={() => { if (confirm(`Excluir "${active.nome}"?`)) deleteNegocio(active.id); }}
               style={{ padding: "6px 14px", borderRadius: 8, fontSize: 10, fontFamily: MN, cursor: "pointer", background: `${C.red}12`, color: C.red, border: `1px solid ${C.red}25` }}>Excluir</button>
           </div>
