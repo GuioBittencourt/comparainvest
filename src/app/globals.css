@@ -1,0 +1,125 @@
+* { box-sizing: border-box; }
+html { background: #071018; }
+body {
+  background: radial-gradient(circle at top right, rgba(0,212,126,0.075), transparent 34%), #071018;
+  color: rgba(235,241,248,0.88);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}
+button, input, textarea, select { font: inherit; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.28); border-radius: 999px; }
+::selection { background: rgba(0,212,126,0.22); color: #F8FAFC; }
+
+/* ── Layout de conteúdo principal ─────────────────────────────────────────── */
+/* Mobile: padding mínimo, ocupa tela toda */
+.page-content {
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 12px 86px;
+}
+.page-content-wide {
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 12px 98px;
+}
+
+/* Desktop: maxWidth centralizado, padding confortável */
+@media (min-width: 768px) {
+  .page-content {
+    max-width: 960px;
+    padding: 24px 28px 98px;
+  }
+  .page-content-wide {
+    max-width: 1100px;
+    padding: 24px 28px 98px;
+  }
+  .page-content-admin {
+    max-width: 1100px;
+    padding: 24px 28px 98px;
+  }
+}
+
+/* Home não tem padding top */
+.page-content-home {
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 0 86px;
+}
+@media (min-width: 768px) {
+  .page-content-home {
+    max-width: 960px;
+  }
+}
+
+/* ── Admin dashboard responsivo ─────────────────────────────────────────── */
+.page-content-admin {
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 12px 98px;
+}
+
+.admin-dashboard {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.admin-date-filter {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.admin-date-input {
+  min-width: 145px;
+}
+
+.admin-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 520px) {
+  .admin-date-filter {
+    display: grid;
+    grid-template-columns: 1fr 28px 1fr;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .admin-date-label {
+    grid-column: 1 / -1;
+  }
+
+  .admin-date-input {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .admin-date-separator {
+    text-align: center;
+  }
+
+  .admin-date-clear {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+}
+
+@media (min-width: 768px) {
+  .admin-dashboard {
+    max-width: 1100px;
+  }
+
+  .admin-charts-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
