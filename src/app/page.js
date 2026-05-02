@@ -20,7 +20,6 @@ import PhilosophyResult from "../components/PhilosophyResult";
 import EducationHub from "../components/EducationHub";
 import CarteiraFicticia from "../components/CarteiraFicticia";
 import MeuNegocio from "../components/MeuNegocio";
-import SaudeFinanceira from "../components/SaudeFinanceira";
 import { IconHome, IconCarteira, IconAcoes, IconProteger, IconNegocio, IconControle, IconMais } from "../components/Icons";
 
 function FieldError({ msg }) {
@@ -188,13 +187,12 @@ function LoginScreen({ onLoggedIn, onGoRegister }) {
 export default function Home() {
   const [screen, setScreen] = useState("loading");
   const [user, setUser] = useState(null);
-  const [tab, setTab] = useState(() => { try { return sessionStorage.getItem("comparai_tab") || "home"; } catch { return "home"; } });
+  const [tab, setTab] = useState("home");
   const [menuOpen, setMenuOpen] = useState(false);
   const [quizResult, setQuizResult] = useState(null);
   const [dbAcoes, setDbAcoes] = useState(DB_A);
   const [dbFiis, setDbFiis] = useState(DB_F);
   const [compareOpen, setCompareOpen] = useState(false);
-  const [navStack, setNavStack] = useState(["home"]);
 
   useEffect(() => {
     (async () => {
@@ -211,91 +209,79 @@ export default function Home() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Smart Brapi: fetch top 20 tickers once per day during market hours
+  // Smart Brapi: atualiza os tickers mais buscados em ciclos curtos durante o pregão
   useEffect(() => {
-    (async () => {
+    let mounted = true;
+    let intervalId = null;
+
+    const atualizarBrapi = async (force = false) => {
       try {
-        const brapiData = await smartBrapiFetch();
-        if (brapiData) {
+        const brapiData = await smartBrapiFetch({ force });
+        if (mounted && brapiData) {
           setDbAcoes(mergeWithBrapi(DB_A, brapiData));
           setDbFiis(mergeWithBrapi(DB_F, brapiData));
         }
-      } catch (e) { console.log("Brapi merge skipped:", e.message); }
-    })();
-  }, []);
-
-  const handleLogout = async () => { await supabase.auth.signOut(); setUser(null); setScreen("login"); setTab("home"); setNavStack(["home"]); try { sessionStorage.removeItem("comparai_tab"); } catch {} };
-
-  // Navega para uma tab registrando no histórico do browser
-  const navegarPara = (novaTab) => {
-    setNavStack((prev) => {
-      // Não empilha a mesma tab duas vezes seguidas
-      if (prev[prev.length - 1] === novaTab) return prev;
-      return [...prev, novaTab];
-    });
-    setTab(novaTab);
-    try { sessionStorage.setItem("comparai_tab", novaTab); } catch {}
-    // Registra no histórico do browser
-    window.history.pushState({ tab: novaTab }, "", window.location.pathname);
-  };
-
-  // Intercepta botão voltar do browser
-  useEffect(() => {
-    const handlePopState = (e) => {
-      setNavStack((prev) => {
-        if (prev.length <= 1) {
-          // Está na raiz — empurra de volta pra não sair do site
-          window.history.pushState({ tab: "home" }, "", window.location.pathname);
-          setTab("home");
-          try { sessionStorage.setItem("comparai_tab", "home"); } catch {}
-          return ["home"];
-        }
-        const novaStack = prev.slice(0, -1);
-        const tabAnterior = novaStack[novaStack.length - 1];
-        setTab(tabAnterior);
-        try { sessionStorage.setItem("comparai_tab", tabAnterior); } catch {}
-        return novaStack;
-      });
+      } catch (e) {
+        console.log("Brapi merge skipped:", e.message);
+      }
     };
-    window.addEventListener("popstate", handlePopState);
-    // Registra estado inicial no histórico
-    window.history.replaceState({ tab: "home" }, "", window.location.pathname);
-    return () => window.removeEventListener("popstate", handlePopState);
+
+    atualizarBrapi(false);
+    intervalId = window.setInterval(() => atualizarBrapi(false), 15 * 60 * 1000);
+
+    return () => {
+      mounted = false;
+      if (intervalId) window.clearInterval(intervalId);
+    };
   }, []);
+
+  const handleLogout = async () => { await supabase.auth.signOut(); setUser(null); setScreen("login"); setTab("home"); };
 
   const trackSearch = async (sym) => {
-    if (!user?.id) return;
-    await supabase.from("searches").insert({ user_id: user.id, ticker: sym });
+    const ticker = String(sym || "").trim().toUpperCase();
+    if (!ticker) return;
+
+    if (user?.id) {
+      await supabase.from("searches").insert({ user_id: user.id, ticker });
+    }
+
+    try {
+      const brapiData = await smartBrapiFetch({ force: true, extraTickers: [ticker] });
+      if (brapiData) {
+        setDbAcoes(mergeWithBrapi(DB_A, brapiData));
+        setDbFiis(mergeWithBrapi(DB_F, brapiData));
+      }
+    } catch (e) {
+      console.log("Brapi search refresh skipped:", e.message);
+    }
   };
 
   const handleTrack = (track) => {
     if (track === "quiz") {
-      navegarPara("quiz");
+      setTab("quiz");
     } else if (track === "carteira") {
-      navegarPara("carteira");
+      setTab("carteira");
     } else if (track === "comparadores" || track === "investimentos") {
       if (user?.philosophy) {
-        navegarPara("comparadores");
+        setTab("comparadores");
       } else {
-        navegarPara("quiz");
+        setTab("quiz");
       }
     } else if (track === "meu-negocio") {
-      navegarPara("meu-negocio");
-    } else if (track === "saude-financeira") {
-      navegarPara("saude-financeira");
+      setTab("meu-negocio");
     } else {
-      navegarPara("educacao");
+      setTab("educacao");
     }
   };
 
   const handleQuizComplete = (result) => {
     setQuizResult(result);
     setUser((prev) => ({ ...prev, philosophy: result.key, philosophy_allocation: result.philosophy }));
-    navegarPara("quiz-result");
+    setTab("quiz-result");
   };
 
   const handleQuizSkip = () => {
-    navegarPara("comparadores");
+    setTab("comparadores");
   };
 
   if (screen === "loading") return <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center" }}><div style={{ width: 28, height: 28, border: `2.5px solid ${C.border}`, borderTop: `2.5px solid ${C.accent}`, borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /></div>;
@@ -304,7 +290,7 @@ export default function Home() {
 
   // Quiz screens (full screen, no header)
   if (tab === "quiz") return <PhilosophyQuiz user={user} onComplete={handleQuizComplete} onSkip={handleQuizSkip} />;
-  if (tab === "quiz-result") return <PhilosophyResult result={quizResult} onContinue={() => navegarPara("comparadores")} />;
+  if (tab === "quiz-result") return <PhilosophyResult result={quizResult} onContinue={() => setTab("comparadores")} />;
   if (tab === "my-philosophy" && user?.philosophy) {
     const key = user.philosophy.toLowerCase();
     const philo = PHILOSOPHIES[key] || PHILOSOPHIES[Object.keys(PHILOSOPHIES).find(k => PHILOSOPHIES[k].name.toLowerCase() === key)] || PHILOSOPHIES.estrategista;
@@ -314,7 +300,7 @@ export default function Home() {
       score: user.philosophy_score || 50,
       philosophy: { ...philo, rf: allocation.rf, fii: allocation.fii, acoes: allocation.acoes, cripto: allocation.cripto },
     };
-    return <PhilosophyResult result={storedResult} onContinue={() => navegarPara("comparadores")} onRefazer={() => navegarPara("quiz")} />;
+    return <PhilosophyResult result={storedResult} onContinue={() => setTab("comparadores")} onRefazer={() => setTab("quiz")} />;
   }
 
 const item = {
@@ -392,7 +378,7 @@ const navItems = [
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
 
   <div
-    onClick={() => { navegarPara("home"); setMenuOpen(false); }}
+    onClick={() => { setTab("home"); setMenuOpen(false); }}
     style={item}
     onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt}
     onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
@@ -419,7 +405,7 @@ const navItems = [
 {compareOpen && (
   <>
     <div
-      onClick={() => { navegarPara("acoes"); setMenuOpen(false); }}
+      onClick={() => { setTab("acoes"); setMenuOpen(false); }}
       style={subItem}
       onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt}
       onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
@@ -428,7 +414,7 @@ const navItems = [
     </div>
 
     <div
-      onClick={() => { navegarPara("fiis"); setMenuOpen(false); }}
+      onClick={() => { setTab("fiis"); setMenuOpen(false); }}
       style={subItem}
       onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt}
       onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
@@ -437,7 +423,7 @@ const navItems = [
     </div>
 
     <div
-      onClick={() => { navegarPara("rf"); setMenuOpen(false); }}
+      onClick={() => { setTab("rf"); setMenuOpen(false); }}
       style={subItem}
       onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt}
       onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
@@ -448,7 +434,7 @@ const navItems = [
 )}
 
   <div
-    onClick={() => { navegarPara("carteira"); setMenuOpen(false); }}
+    onClick={() => { setTab("carteira"); setMenuOpen(false); }}
     style={item}
     onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt}
     onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
@@ -457,7 +443,7 @@ const navItems = [
   </div>
 
   <div
-    onClick={() => { navegarPara("meu-negocio"); setMenuOpen(false); }}
+    onClick={() => { setTab("meu-negocio"); setMenuOpen(false); }}
     style={item}
     onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt}
     onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
@@ -467,7 +453,7 @@ const navItems = [
 
   {user?.philosophy && (
     <div
-      onClick={() => { navegarPara("my-philosophy"); setMenuOpen(false); }}
+      onClick={() => { setTab("my-philosophy"); setMenuOpen(false); }}
       style={item}
       onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt}
       onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
@@ -478,7 +464,7 @@ const navItems = [
 
   {user?.is_admin && (
     <div
-      onClick={() => { navegarPara("admin"); setMenuOpen(false); }}
+      onClick={() => { setTab("admin"); setMenuOpen(false); }}
       style={item}
       onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt}
       onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
@@ -521,7 +507,7 @@ const navItems = [
 
             <div>
               <div
-                onClick={() => navegarPara("home")}
+                onClick={() => setTab("home")}
                 style={{ cursor: "pointer", display: "flex", alignItems: "center" }}
               >
                 <img
@@ -542,14 +528,9 @@ const navItems = [
       </div>
 
       {/* Content */}
-      <div className={
-        tab === "home" ? "page-content-home" :
-        tab === "admin" ? "page-content-admin" :
-        tab === "saude-financeira" ? "page-content-wide" :
-        "page-content"
-      }>
+      <div style={{ padding: tab === "home" ? "0 0 86px" : "24px 28px 98px", maxWidth: tab === "admin" ? 1100 : 960, margin: "0 auto" }}>
         {(() => {
-          const pillLabel = {comparadores:"Comparar",acoes:"Ações",fiis:"FIIs",rf:"Renda Fixa",carteira:"Carteira",educacao:"Educação Financeira","saude-financeira":"Saúde Financeira","meu-negocio":"Meu Negócio","my-philosophy":"Minha Filosofia",admin:"Admin"}[tab];
+          const pillLabel = {comparadores:"Comparar",acoes:"Ações",fiis:"FIIs",rf:"Renda Fixa",carteira:"Carteira",educacao:"Educação Financeira","meu-negocio":"Meu Negócio","my-philosophy":"Minha Filosofia",admin:"Admin"}[tab];
           return pillLabel ? (
   <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
     <div
@@ -571,21 +552,14 @@ const navItems = [
         })()}
 {tab === "home" && <HomePage user={user} onTrack={handleTrack} />}
 
-        {tab === "educacao" && <EducationHub onBack={() => navegarPara("home")} user={user} onTrack={handleTrack} />}
-
-        {tab === "saude-financeira" && (
-          <SaudeFinanceira
-            user={user}
-            onBack={() => navegarPara("educacao")}
-          />
-        )}
+        {tab === "educacao" && <EducationHub onBack={() => setTab("home")} user={user} />}
 
         {tab === "comparadores" && (
           <div style={{ padding: "32px 0" }}>
             <h2 style={{ fontFamily: FN, fontSize: 28, fontWeight: 600, letterSpacing: "-0.04em", color: C.white, margin: "0 0 8px" }}>Hub de Comparação</h2>
             <p style={{ color: C.textDim, fontSize: 13, marginBottom: 24, lineHeight: 1.7 }}>
               Escolha o tipo de ativo que deseja comparar.
-              {!user?.philosophy && <span style={{ display: "block", marginTop: 8 }}><button onClick={() => navegarPara("quiz")} style={{ background: "none", border: "none", color: C.accent, fontSize: 13, cursor: "pointer", fontFamily: FN, padding: 0, textDecoration: "underline" }}>Faça o quiz de filosofia</button> para receber sugestões personalizadas de carteira.</span>}
+              {!user?.philosophy && <span style={{ display: "block", marginTop: 8 }}><button onClick={() => setTab("quiz")} style={{ background: "none", border: "none", color: C.accent, fontSize: 13, cursor: "pointer", fontFamily: FN, padding: 0, textDecoration: "underline" }}>Faça o quiz de filosofia</button> para receber sugestões personalizadas de carteira.</span>}
             </p>
 
             <BannerRiqueza />
@@ -597,7 +571,7 @@ const navItems = [
                 { id: "rf", title: "Renda Fixa", desc: "8 indicadores", color: C.accent },
                 { id: "cripto", title: "Cripto", desc: "Em breve", color: C.textDim, disabled: true },
               ].map((c) => (
-                <button key={c.id} onClick={() => !c.disabled && navegarPara(c.id)}
+                <button key={c.id} onClick={() => !c.disabled && setTab(c.id)}
                   style={{
                     padding: "24px 20px", borderRadius: 16, textAlign: "center",
                     background: C.card, border: `1px solid ${c.disabled ? C.border : `${c.color}30`}`,
@@ -638,7 +612,7 @@ const navItems = [
           />
         )}
         {tab === "rf" && <ComparadorRF user={user} onSearch={trackSearch} />}
-        {tab === "carteira" && <CarteiraFicticia user={user} onGoCompare={() => navegarPara("comparadores")} />}
+        {tab === "carteira" && <CarteiraFicticia user={user} onGoCompare={() => setTab("comparadores")} />}
         {tab === "meu-negocio" && <MeuNegocio user={user} />}
         {tab === "admin" && user?.is_admin && <AdminDashboard />}
       </div>
@@ -668,7 +642,7 @@ const navItems = [
             return (
               <button
                 key={id}
-                onClick={() => id === "more" ? setMenuOpen(true) : navegarPara(id)}
+                onClick={() => id === "more" ? setMenuOpen(true) : setTab(id)}
                 style={{
                   background: "transparent",
                   border: "none",
