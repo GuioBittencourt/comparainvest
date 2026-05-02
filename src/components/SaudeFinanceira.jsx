@@ -36,8 +36,7 @@ export default function SaudeFinanceira({ onBack, user }) {
     return <SaudeFinanceiraResumo data={data} setData={setData} onBack={back} user={user} />;
   }, [blocoAtual, data, user]);
 
-  return <div style={{ padding: "24px 28px", width: "100%", boxSizing: "border-box", fontFamily: FN }}>
-    <div style={{ maxWidth: 1400, margin: "0 auto" }}>
+  return <div style={{ fontFamily: FN }}>
       <button onClick={onBack} style={{ background: "none", border: "none", color: C.textDim, fontSize: 12, cursor: "pointer", fontFamily: FN, marginBottom: 20 }}>← Voltar para Educação Financeira</button>
       <div style={{ marginBottom: 18 }}>
         <h2 style={heroStyle}>Saúde Financeira</h2>
@@ -64,6 +63,5 @@ export default function SaudeFinanceira({ onBack, user }) {
         {conteudo}
       </>
     )}
-    </div>
   </div>;
 }
