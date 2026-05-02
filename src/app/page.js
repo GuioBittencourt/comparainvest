@@ -188,12 +188,13 @@ function LoginScreen({ onLoggedIn, onGoRegister }) {
 export default function Home() {
   const [screen, setScreen] = useState("loading");
   const [user, setUser] = useState(null);
-  const [tab, setTab] = useState("home");
+  const [tab, setTab] = useState(() => { try { return sessionStorage.getItem("comparai_tab") || "home"; } catch { return "home"; } });
   const [menuOpen, setMenuOpen] = useState(false);
   const [quizResult, setQuizResult] = useState(null);
   const [dbAcoes, setDbAcoes] = useState(DB_A);
   const [dbFiis, setDbFiis] = useState(DB_F);
   const [compareOpen, setCompareOpen] = useState(false);
+  const [navStack, setNavStack] = useState(["home"]);
 
   useEffect(() => {
     (async () => {
@@ -223,7 +224,44 @@ export default function Home() {
     })();
   }, []);
 
-  const handleLogout = async () => { await supabase.auth.signOut(); setUser(null); setScreen("login"); setTab("home"); };
+  const handleLogout = async () => { await supabase.auth.signOut(); setUser(null); setScreen("login"); setTab("home"); setNavStack(["home"]); try { sessionStorage.removeItem("comparai_tab"); } catch {} };
+
+  // Navega para uma tab registrando no histórico do browser
+  const navegarPara = (novaTab) => {
+    setNavStack((prev) => {
+      // Não empilha a mesma tab duas vezes seguidas
+      if (prev[prev.length - 1] === novaTab) return prev;
+      return [...prev, novaTab];
+    });
+    setTab(novaTab);
+    try { sessionStorage.setItem("comparai_tab", novaTab); } catch {}
+    // Registra no histórico do browser
+    window.history.pushState({ tab: novaTab }, "", window.location.pathname);
+  };
+
+  // Intercepta botão voltar do browser
+  useEffect(() => {
+    const handlePopState = (e) => {
+      setNavStack((prev) => {
+        if (prev.length <= 1) {
+          // Está na raiz — empurra de volta pra não sair do site
+          window.history.pushState({ tab: "home" }, "", window.location.pathname);
+          setTab("home");
+          try { sessionStorage.setItem("comparai_tab", "home"); } catch {}
+          return ["home"];
+        }
+        const novaStack = prev.slice(0, -1);
+        const tabAnterior = novaStack[novaStack.length - 1];
+        setTab(tabAnterior);
+        try { sessionStorage.setItem("comparai_tab", tabAnterior); } catch {}
+        return novaStack;
+      });
+    };
+    window.addEventListener("popstate", handlePopState);
+    // Registra estado inicial no histórico
+    window.history.replaceState({ tab: "home" }, "", window.location.pathname);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   const trackSearch = async (sym) => {
     if (!user?.id) return;
@@ -232,32 +270,32 @@ export default function Home() {
 
   const handleTrack = (track) => {
     if (track === "quiz") {
-      setTab("quiz");
+      navegarPara("quiz");
     } else if (track === "carteira") {
-      setTab("carteira");
+      navegarPara("carteira");
     } else if (track === "comparadores" || track === "investimentos") {
       if (user?.philosophy) {
-        setTab("comparadores");
+        navegarPara("comparadores");
       } else {
-        setTab("quiz");
+        navegarPara("quiz");
       }
     } else if (track === "meu-negocio") {
-      setTab("meu-negocio");
+      navegarPara("meu-negocio");
     } else if (track === "saude-financeira") {
-      setTab("saude-financeira");
+      navegarPara("saude-financeira");
     } else {
-      setTab("educacao");
+      navegarPara("educacao");
     }
   };
 
   const handleQuizComplete = (result) => {
     setQuizResult(result);
     setUser((prev) => ({ ...prev, philosophy: result.key, philosophy_allocation: result.philosophy }));
-    setTab("quiz-result");
+    navegarPara("quiz-result");
   };
 
   const handleQuizSkip = () => {
-    setTab("comparadores");
+    navegarPara("comparadores");
   };
 
   if (screen === "loading") return <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center" }}><div style={{ width: 28, height: 28, border: `2.5px solid ${C.border}`, borderTop: `2.5px solid ${C.accent}`, borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /></div>;
@@ -266,7 +304,7 @@ export default function Home() {
 
   // Quiz screens (full screen, no header)
   if (tab === "quiz") return <PhilosophyQuiz user={user} onComplete={handleQuizComplete} onSkip={handleQuizSkip} />;
-  if (tab === "quiz-result") return <PhilosophyResult result={quizResult} onContinue={() => setTab("comparadores")} />;
+  if (tab === "quiz-result") return <PhilosophyResult result={quizResult} onContinue={() => navegarPara("comparadores")} />;
   if (tab === "my-philosophy" && user?.philosophy) {
     const key = user.philosophy.toLowerCase();
     const philo = PHILOSOPHIES[key] || PHILOSOPHIES[Object.keys(PHILOSOPHIES).find(k => PHILOSOPHIES[k].name.toLowerCase() === key)] || PHILOSOPHIES.estrategista;
@@ -276,7 +314,7 @@ export default function Home() {
       score: user.philosophy_score || 50,
       philosophy: { ...philo, rf: allocation.rf, fii: allocation.fii, acoes: allocation.acoes, cripto: allocation.cripto },
     };
-    return <PhilosophyResult result={storedResult} onContinue={() => setTab("comparadores")} onRefazer={() => setTab("quiz")} />;
+    return <PhilosophyResult result={storedResult} onContinue={() => navegarPara("comparadores")} onRefazer={() => navegarPara("quiz")} />;
   }
 
 const item = {
@@ -354,7 +392,7 @@ const navItems = [
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
 
   <div
-    onClick={() => { setTab("home"); setMenuOpen(false); }}
+    onClick={() => { navegarPara("home"); setMenuOpen(false); }}
     style={item}
     onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt}
     onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
@@ -381,7 +419,7 @@ const navItems = [
 {compareOpen && (
   <>
     <div
-      onClick={() => { setTab("acoes"); setMenuOpen(false); }}
+      onClick={() => { navegarPara("acoes"); setMenuOpen(false); }}
       style={subItem}
       onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt}
       onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
@@ -390,7 +428,7 @@ const navItems = [
     </div>
 
     <div
-      onClick={() => { setTab("fiis"); setMenuOpen(false); }}
+      onClick={() => { navegarPara("fiis"); setMenuOpen(false); }}
       style={subItem}
       onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt}
       onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
@@ -399,7 +437,7 @@ const navItems = [
     </div>
 
     <div
-      onClick={() => { setTab("rf"); setMenuOpen(false); }}
+      onClick={() => { navegarPara("rf"); setMenuOpen(false); }}
       style={subItem}
       onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt}
       onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
@@ -410,7 +448,7 @@ const navItems = [
 )}
 
   <div
-    onClick={() => { setTab("carteira"); setMenuOpen(false); }}
+    onClick={() => { navegarPara("carteira"); setMenuOpen(false); }}
     style={item}
     onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt}
     onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
@@ -419,7 +457,7 @@ const navItems = [
   </div>
 
   <div
-    onClick={() => { setTab("meu-negocio"); setMenuOpen(false); }}
+    onClick={() => { navegarPara("meu-negocio"); setMenuOpen(false); }}
     style={item}
     onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt}
     onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
@@ -429,7 +467,7 @@ const navItems = [
 
   {user?.philosophy && (
     <div
-      onClick={() => { setTab("my-philosophy"); setMenuOpen(false); }}
+      onClick={() => { navegarPara("my-philosophy"); setMenuOpen(false); }}
       style={item}
       onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt}
       onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
@@ -440,7 +478,7 @@ const navItems = [
 
   {user?.is_admin && (
     <div
-      onClick={() => { setTab("admin"); setMenuOpen(false); }}
+      onClick={() => { navegarPara("admin"); setMenuOpen(false); }}
       style={item}
       onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt}
       onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
@@ -483,7 +521,7 @@ const navItems = [
 
             <div>
               <div
-                onClick={() => setTab("home")}
+                onClick={() => navegarPara("home")}
                 style={{ cursor: "pointer", display: "flex", alignItems: "center" }}
               >
                 <img
@@ -533,12 +571,12 @@ const navItems = [
         })()}
 {tab === "home" && <HomePage user={user} onTrack={handleTrack} />}
 
-        {tab === "educacao" && <EducationHub onBack={() => setTab("home")} user={user} onTrack={handleTrack} />}
+        {tab === "educacao" && <EducationHub onBack={() => navegarPara("home")} user={user} onTrack={handleTrack} />}
 
         {tab === "saude-financeira" && (
           <SaudeFinanceira
             user={user}
-            onBack={() => setTab("educacao")}
+            onBack={() => navegarPara("educacao")}
           />
         )}
 
@@ -547,7 +585,7 @@ const navItems = [
             <h2 style={{ fontFamily: FN, fontSize: 28, fontWeight: 600, letterSpacing: "-0.04em", color: C.white, margin: "0 0 8px" }}>Hub de Comparação</h2>
             <p style={{ color: C.textDim, fontSize: 13, marginBottom: 24, lineHeight: 1.7 }}>
               Escolha o tipo de ativo que deseja comparar.
-              {!user?.philosophy && <span style={{ display: "block", marginTop: 8 }}><button onClick={() => setTab("quiz")} style={{ background: "none", border: "none", color: C.accent, fontSize: 13, cursor: "pointer", fontFamily: FN, padding: 0, textDecoration: "underline" }}>Faça o quiz de filosofia</button> para receber sugestões personalizadas de carteira.</span>}
+              {!user?.philosophy && <span style={{ display: "block", marginTop: 8 }}><button onClick={() => navegarPara("quiz")} style={{ background: "none", border: "none", color: C.accent, fontSize: 13, cursor: "pointer", fontFamily: FN, padding: 0, textDecoration: "underline" }}>Faça o quiz de filosofia</button> para receber sugestões personalizadas de carteira.</span>}
             </p>
 
             <BannerRiqueza />
@@ -559,7 +597,7 @@ const navItems = [
                 { id: "rf", title: "Renda Fixa", desc: "8 indicadores", color: C.accent },
                 { id: "cripto", title: "Cripto", desc: "Em breve", color: C.textDim, disabled: true },
               ].map((c) => (
-                <button key={c.id} onClick={() => !c.disabled && setTab(c.id)}
+                <button key={c.id} onClick={() => !c.disabled && navegarPara(c.id)}
                   style={{
                     padding: "24px 20px", borderRadius: 16, textAlign: "center",
                     background: C.card, border: `1px solid ${c.disabled ? C.border : `${c.color}30`}`,
@@ -600,7 +638,7 @@ const navItems = [
           />
         )}
         {tab === "rf" && <ComparadorRF user={user} onSearch={trackSearch} />}
-        {tab === "carteira" && <CarteiraFicticia user={user} onGoCompare={() => setTab("comparadores")} />}
+        {tab === "carteira" && <CarteiraFicticia user={user} onGoCompare={() => navegarPara("comparadores")} />}
         {tab === "meu-negocio" && <MeuNegocio user={user} />}
         {tab === "admin" && user?.is_admin && <AdminDashboard />}
       </div>
@@ -630,7 +668,7 @@ const navItems = [
             return (
               <button
                 key={id}
-                onClick={() => id === "more" ? setMenuOpen(true) : setTab(id)}
+                onClick={() => id === "more" ? setMenuOpen(true) : navegarPara(id)}
                 style={{
                   background: "transparent",
                   border: "none",
