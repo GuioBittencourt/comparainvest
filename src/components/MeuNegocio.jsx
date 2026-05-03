@@ -202,10 +202,10 @@ export default function MeuNegocio({ user }) {
     }, { totalR: 0, totalD: 0, lucro: 0 }) : null;
 
     return (
-      <div>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+      <div style={{ maxWidth: 1040, margin: "0 auto" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, gap: 12, flexWrap: "wrap" }}>
           <h2 style={heroStyle}>Meu Negócio</h2>
-          <button onClick={() => setView("quiz")} style={{ padding: "8px 16px", borderRadius: 10, fontSize: 12, fontWeight: 600, fontFamily: MN, cursor: "pointer", background: "rgba(255,255,255,0.030)", color: C.textDim, border: `1px solid ${C.border}` }}>+ Novo negócio</button>
+          <button onClick={() => setView("quiz")} style={{ padding: "8px 14px", borderRadius: 12, fontSize: 12, fontWeight: 800, fontFamily: MN, cursor: "pointer", background: "rgba(255,255,255,0.035)", color: C.gold || C.textDim, border: `1px solid ${C.borderGold || C.border}` }}>+ Novo negócio</button>
         </div>
 
         <BannerNegocio />
@@ -213,7 +213,7 @@ export default function MeuNegocio({ user }) {
 
         {/* Consolidated view */}
         {consolidated && (
-          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 20, marginBottom: 16 }}>
+          <div style={{ background: "linear-gradient(180deg, rgba(11,24,38,0.94), rgba(7,16,25,0.94))", border: `1px solid ${C.border}`, borderRadius: 18, padding: 16, marginBottom: 14, boxShadow: "0 14px 42px rgba(0,0,0,0.20)" }}>
             <div style={{ fontSize: 11, color: C.textMuted, fontFamily: MN, letterSpacing: "1px", marginBottom: 12 }}>VISÃO CONSOLIDADA — {negocios.length} NEGÓCIOS</div>
             <div style={{ display: "flex", gap: 10 }}>
               <div style={{ flex: 1, padding: 10, background: C.cardAlt, borderRadius: 10, textAlign: "center", border: `1px solid ${C.border}` }}>
@@ -266,7 +266,7 @@ export default function MeuNegocio({ user }) {
           const segLabel = SEGMENTOS.find((s) => s.id === n.segmento)?.label || "Negócio";
           return (
             <button key={n.id} onClick={() => { setActiveId(n.id); setView("dashboard"); }}
-              style={{ display: "block", width: "100%", textAlign: "left", padding: "18px 20px", background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, cursor: "pointer", marginBottom: 10, transition: "border-color 0.2s" }}
+              style={{ display: "block", width: "100%", textAlign: "left", padding: "15px 16px", background: "linear-gradient(180deg, rgba(11,24,38,0.94), rgba(7,16,25,0.94))", border: `1px solid ${C.border}`, borderRadius: 16, cursor: "pointer", marginBottom: 10, transition: "border-color 0.2s", boxShadow: "0 10px 30px rgba(0,0,0,0.16)" }}
               onMouseEnter={(e) => e.currentTarget.style.borderColor = C.accentBorder} onMouseLeave={(e) => e.currentTarget.style.borderColor = C.border}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
@@ -294,7 +294,7 @@ export default function MeuNegocio({ user }) {
         })}
 
         {negocios.length === 0 && (
-          <div style={{ textAlign: "center", padding: "40px 20px" }}>
+          <div style={{ textAlign: "center", padding: "34px 20px", background: "linear-gradient(180deg, rgba(11,24,38,0.78), rgba(7,16,25,0.82))", border: `1px solid ${C.border}`, borderRadius: 18 }}>
             <div style={{ fontSize: 15, color: C.white, fontWeight: 600, marginBottom: 8 }}>Nenhum negócio cadastrado</div>
             <div style={{ fontSize: 12, color: C.textDim, lineHeight: 1.7, marginBottom: 20 }}>Adicione seu primeiro negócio para começar a controlar receitas, despesas e margem de lucro.</div>
             <button onClick={() => setView("quiz")} style={{ padding: "12px 28px", borderRadius: 12, fontSize: 14, fontWeight: 700, fontFamily: FN, cursor: "pointer", background: "linear-gradient(180deg, #20C982, #0E9F6E)", color: "#06110C", border: "none" }}>Adicionar negócio</button>
