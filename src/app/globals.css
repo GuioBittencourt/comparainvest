@@ -55,49 +55,19 @@ button, input, textarea, select { font: inherit; }
   }
 }
 
-/* Fase 1.5 — densidade premium: mobile confortável, desktop como dashboard. */
-.ci-home-wrap {
-  width: 100%;
-  margin: 0 auto;
-  padding: 24px 14px 20px;
-}
-.ci-home-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 14px;
-  width: 100%;
-  margin: 0 auto;
-}
-.ci-home-main,
-.ci-home-aside { min-width: 0; }
-.ci-quick-card,
-.ci-track-card,
-.ci-sponsor-slot { will-change: transform; }
-
-@media (min-width: 768px) {
-  .page-content-home { max-width: 1120px; }
-  .ci-home-wrap { max-width: 1120px; padding: 26px 24px 24px; }
-  .ci-home-grid { grid-template-columns: minmax(0, 1.65fr) minmax(280px, 0.85fr); align-items: start; gap: 18px; }
-  .ci-home-aside { position: sticky; top: 18px; }
-}
-
-@media (min-width: 1180px) {
-  .page-content-home { max-width: 1180px; }
-  .ci-home-wrap { max-width: 1180px; }
-  .ci-home-grid { grid-template-columns: minmax(0, 1.7fr) 330px; }
-}
-
-@media (max-width: 480px) {
-  .ci-home-wrap { padding: 20px 12px 18px; }
-  .ci-quick-grid { grid-template-columns: 1fr 1fr !important; }
-}
-
-@media (min-width: 768px) {
-  .ci-bottom-nav-compact {
-    max-width: 640px !important;
-    bottom: 12px !important;
-    padding: 5px 6px !important;
-    border-radius: 17px !important;
+/* Fase 2.1 — grids responsivos para hubs internos */
+@media (max-width: 767px) {
+  .ci-responsive-2col,
+  .ci-responsive-grid,
+  .ci-responsive-grid-3 {
+    grid-template-columns: 1fr !important;
   }
-  .ci-bottom-nav-compact button { min-height: 44px; }
+}
+@media (min-width: 768px) {
+  .ci-responsive-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .ci-responsive-grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
 }
