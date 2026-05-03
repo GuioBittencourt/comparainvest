@@ -173,3 +173,19 @@ export const premiumButton = {
   cursor: "pointer",
   boxShadow: "0 16px 36px rgba(19,185,129,0.10)",
 };
+
+
+export const btnGradientBlue = {
+  width: "100%",
+  padding: "11px 16px",
+  minHeight: 42,
+  background: "linear-gradient(135deg, #081B33 0%, #123A63 54%, #13B981 100%)",
+  color: "#F8FAFC",
+  border: "none",
+  borderRadius: 14,
+  fontSize: 13,
+  fontWeight: 800,
+  fontFamily: FN,
+  cursor: "pointer",
+  boxShadow: "0 14px 34px rgba(18,58,99,0.20)",
+};

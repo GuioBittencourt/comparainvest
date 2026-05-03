@@ -209,51 +209,24 @@ export default function Home() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Smart Brapi: atualiza os tickers mais buscados em ciclos curtos durante o pregão
+  // Smart Brapi: fetch top 20 tickers once per day during market hours
   useEffect(() => {
-    let mounted = true;
-    let intervalId = null;
-
-    const atualizarBrapi = async (force = false) => {
+    (async () => {
       try {
-        const brapiData = await smartBrapiFetch({ force });
-        if (mounted && brapiData) {
+        const brapiData = await smartBrapiFetch();
+        if (brapiData) {
           setDbAcoes(mergeWithBrapi(DB_A, brapiData));
           setDbFiis(mergeWithBrapi(DB_F, brapiData));
         }
-      } catch (e) {
-        console.log("Brapi merge skipped:", e.message);
-      }
-    };
-
-    atualizarBrapi(false);
-    intervalId = window.setInterval(() => atualizarBrapi(false), 15 * 60 * 1000);
-
-    return () => {
-      mounted = false;
-      if (intervalId) window.clearInterval(intervalId);
-    };
+      } catch (e) { console.log("Brapi merge skipped:", e.message); }
+    })();
   }, []);
 
   const handleLogout = async () => { await supabase.auth.signOut(); setUser(null); setScreen("login"); setTab("home"); };
 
   const trackSearch = async (sym) => {
-    const ticker = String(sym || "").trim().toUpperCase();
-    if (!ticker) return;
-
-    if (user?.id) {
-      await supabase.from("searches").insert({ user_id: user.id, ticker });
-    }
-
-    try {
-      const brapiData = await smartBrapiFetch({ force: true, extraTickers: [ticker] });
-      if (brapiData) {
-        setDbAcoes(mergeWithBrapi(DB_A, brapiData));
-        setDbFiis(mergeWithBrapi(DB_F, brapiData));
-      }
-    } catch (e) {
-      console.log("Brapi search refresh skipped:", e.message);
-    }
+    if (!user?.id) return;
+    await supabase.from("searches").insert({ user_id: user.id, ticker: sym });
   };
 
   const handleTrack = (track) => {
@@ -619,21 +592,22 @@ const navItems = [
 
       {tab !== "admin" && (
         <div
+          className="ci-bottom-nav-compact"
           style={{
             position: "fixed",
-            left: 16,
-            right: 16,
-            bottom: 14,
+            left: 14,
+            right: 14,
+            bottom: 10,
             zIndex: 900,
             background: "linear-gradient(180deg, rgba(15,25,38,0.94), rgba(7,16,24,0.96))",
             border: `1px solid ${C.borderLight}`,
-            borderRadius: 20,
-            boxShadow: "0 18px 60px rgba(0,0,0,0.40)",
+            borderRadius: 18,
+            boxShadow: "0 14px 46px rgba(0,0,0,0.36)",
             backdropFilter: "blur(14px)",
             display: "grid",
             gridTemplateColumns: "repeat(5, 1fr)",
-            padding: "8px 8px",
-            maxWidth: 760,
+            padding: "6px 6px",
+            maxWidth: 680,
             margin: "0 auto",
           }}
         >
@@ -648,9 +622,9 @@ const navItems = [
                   border: "none",
                   color: active ? C.accent : C.textDim,
                   fontFamily: FN,
-                  fontSize: 10,
+                  fontSize: 9.5,
                   cursor: "pointer",
-                  padding: "7px 4px 5px",
+                  padding: "5px 3px 4px",
                   borderRadius: 14,
                   display: "flex",
                   flexDirection: "column",
@@ -660,7 +634,7 @@ const navItems = [
                   transition: "color .18s ease, transform .18s ease, background .18s ease",
                 }}
               >
-                <span style={{ color: active ? C.accent : C.textDim }}><Icon size={19} /></span>
+                <span style={{ color: active ? C.accent : C.textDim }}><Icon size={17} /></span>
                 <span>{label}</span>
                 {active && <span style={{ position: "absolute", left: "28%", right: "28%", bottom: 0, height: 2, borderRadius: 2, background: C.accent }} />}
               </button>
@@ -670,7 +644,7 @@ const navItems = [
       )}
 
       {/* Footer */}
-      <div style={{ padding: "16px 28px 96px", borderTop: `1px solid ${C.border}`, textAlign: "center", fontSize: 10, color: C.textMuted, fontFamily: MN }}>
+      <div style={{ padding: "12px 24px 82px", borderTop: `1px solid ${C.border}`, textAlign: "center", fontSize: 10, color: C.textMuted, fontFamily: MN }}>
         COMPARAINVEST © • Desde 2026 — LGPD • Comparador B3 
       </div>
     </div>

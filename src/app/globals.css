@@ -1,99 +1,103 @@
 * { box-sizing: border-box; }
-:root {
-  --ci-bg: #061019;
-  --ci-bg-soft: #081522;
-  --ci-card: rgba(9, 20, 32, 0.94);
-  --ci-card-alt: rgba(13, 27, 43, 0.92);
-  --ci-navy: #081B33;
-  --ci-royal: #123A63;
-  --ci-gold: #C8A45D;
-  --ci-accent: #13B981;
-  --ci-border: rgba(216, 222, 232, 0.075);
-  --ci-border-light: rgba(216, 222, 232, 0.13);
-  --ci-text: rgba(235, 241, 248, 0.88);
-  --ci-muted: rgba(148, 163, 184, 0.48);
-}
-html { background: var(--ci-bg); }
+html { background: #071018; }
 body {
-  background:
-    radial-gradient(circle at 18% 0%, rgba(18,58,99,0.32), transparent 28%),
-    radial-gradient(circle at 86% 4%, rgba(200,164,93,0.075), transparent 26%),
-    linear-gradient(180deg, #061019 0%, #041018 100%);
-  color: var(--ci-text);
+  background: radial-gradient(circle at top right, rgba(0,212,126,0.075), transparent 34%), #071018;
+  color: rgba(235,241,248,0.88);
   -webkit-font-smoothing: antialiased;
   text-rendering: geometricPrecision;
 }
 button, input, textarea, select { font: inherit; }
-button { -webkit-tap-highlight-color: transparent; }
-button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
-  outline: 2px solid rgba(200,164,93,0.48);
-  outline-offset: 2px;
-}
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes softGlow { 0%, 100% { opacity: .56; } 50% { opacity: .92; } }
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.26); border-radius: 999px; }
-::selection { background: rgba(200,164,93,0.22); color: #F8FAFC; }
+::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.28); border-radius: 999px; }
+::selection { background: rgba(0,212,126,0.22); color: #F8FAFC; }
 
-/* Layout principal — mobile primeiro, desktop diferente de mobile. */
-.page-content,
-.page-content-wide,
-.page-content-admin {
+/* ── Layout de conteúdo principal ─────────────────────────────────────────── */
+/* Mobile: padding mínimo, ocupa tela toda */
+.page-content {
   width: 100%;
   margin: 0 auto;
-  padding: 14px 12px 92px;
+  padding: 0 12px 86px;
 }
-.page-content-home {
+.page-content-wide {
   width: 100%;
   margin: 0 auto;
-  padding: 0 0 92px;
+  padding: 0 12px 98px;
 }
+
+/* Desktop: maxWidth centralizado, padding confortável */
 @media (min-width: 768px) {
   .page-content {
     max-width: 960px;
-    padding: 26px 28px 104px;
+    padding: 24px 28px 98px;
   }
   .page-content-wide {
-    max-width: 1180px;
-    padding: 26px 28px 104px;
+    max-width: 1100px;
+    padding: 24px 28px 98px;
   }
   .page-content-admin {
-    max-width: 1180px;
-    padding: 26px 28px 104px;
+    max-width: 1100px;
+    padding: 24px 28px 98px;
   }
+}
+
+/* Home não tem padding top */
+.page-content-home {
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 0 86px;
+}
+@media (min-width: 768px) {
   .page-content-home {
     max-width: 960px;
   }
 }
-@media (min-width: 1280px) {
-  .page-content-admin,
-  .page-content-wide { max-width: 1240px; }
+
+/* Fase 1.5 — densidade premium: mobile confortável, desktop como dashboard. */
+.ci-home-wrap {
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px 14px 20px;
+}
+.ci-home-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  width: 100%;
+  margin: 0 auto;
+}
+.ci-home-main,
+.ci-home-aside { min-width: 0; }
+.ci-quick-card,
+.ci-track-card,
+.ci-sponsor-slot { will-change: transform; }
+
+@media (min-width: 768px) {
+  .page-content-home { max-width: 1120px; }
+  .ci-home-wrap { max-width: 1120px; padding: 26px 24px 24px; }
+  .ci-home-grid { grid-template-columns: minmax(0, 1.65fr) minmax(280px, 0.85fr); align-items: start; gap: 18px; }
+  .ci-home-aside { position: sticky; top: 18px; }
 }
 
-/* Classes base para a nova fundação visual. Componentes podem adotar aos poucos. */
-.ci-card {
-  background: linear-gradient(180deg, rgba(11,24,38,0.94), rgba(7,16,25,0.94));
-  border: 1px solid var(--ci-border);
-  border-radius: 20px;
-  box-shadow: 0 18px 54px rgba(0,0,0,0.24);
+@media (min-width: 1180px) {
+  .page-content-home { max-width: 1180px; }
+  .ci-home-wrap { max-width: 1180px; }
+  .ci-home-grid { grid-template-columns: minmax(0, 1.7fr) 330px; }
 }
-.ci-card-gold {
-  background: linear-gradient(135deg, rgba(8,27,51,0.94), rgba(7,16,25,0.96));
-  border: 1px solid rgba(200,164,93,0.22);
-  box-shadow: 0 18px 54px rgba(0,0,0,0.28);
+
+@media (max-width: 480px) {
+  .ci-home-wrap { padding: 20px 12px 18px; }
+  .ci-quick-grid { grid-template-columns: 1fr 1fr !important; }
 }
-.ci-kicker {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
-  color: var(--ci-gold);
-}
-.ci-scroll-x {
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+
+@media (min-width: 768px) {
+  .ci-bottom-nav-compact {
+    max-width: 640px !important;
+    bottom: 12px !important;
+    padding: 5px 6px !important;
+    border-radius: 17px !important;
+  }
+  .ci-bottom-nav-compact button { min-height: 44px; }
 }
