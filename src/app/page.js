@@ -20,6 +20,7 @@ import PhilosophyResult from "../components/PhilosophyResult";
 import EducationHub from "../components/EducationHub";
 import CarteiraFicticia from "../components/CarteiraFicticia";
 import MeuNegocio from "../components/MeuNegocio";
+import SaudeFinanceira from "../components/SaudeFinanceira";
 import { IconHome, IconCarteira, IconAcoes, IconProteger, IconNegocio, IconControle, IconMais } from "../components/Icons";
 
 function FieldError({ msg }) {
@@ -242,6 +243,8 @@ export default function Home() {
       }
     } else if (track === "meu-negocio") {
       setTab("meu-negocio");
+    } else if (track === "saude-financeira") {
+      setTab("saude-financeira");
     } else {
       setTab("educacao");
     }
@@ -503,7 +506,7 @@ const navItems = [
       {/* Content */}
       <div style={{ padding: tab === "home" ? "0 0 86px" : "24px 28px 98px", maxWidth: tab === "admin" ? 1100 : 960, margin: "0 auto" }}>
         {(() => {
-          const pillLabel = {comparadores:"Comparar",acoes:"Ações",fiis:"FIIs",rf:"Renda Fixa",carteira:"Carteira",educacao:"Educação Financeira","meu-negocio":"Meu Negócio","my-philosophy":"Minha Filosofia",admin:"Admin"}[tab];
+          const pillLabel = {comparadores:"Comparar",acoes:"Ações",fiis:"FIIs",rf:"Renda Fixa",carteira:"Carteira",educacao:"Educação Financeira","saude-financeira":"Saúde Financeira","meu-negocio":"Meu Negócio","my-philosophy":"Minha Filosofia",admin:"Admin"}[tab];
           return pillLabel ? (
   <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
     <div
@@ -525,7 +528,14 @@ const navItems = [
         })()}
 {tab === "home" && <HomePage user={user} onTrack={handleTrack} />}
 
-        {tab === "educacao" && <EducationHub onBack={() => setTab("home")} user={user} />}
+        {tab === "educacao" && <EducationHub onBack={() => setTab("home")} user={user} onTrack={handleTrack} />}
+
+        {tab === "saude-financeira" && (
+          <SaudeFinanceira
+            user={user}
+            onBack={() => setTab("educacao")}
+          />
+        )}
 
         {tab === "comparadores" && (
           <div style={{ padding: "32px 0" }}>
@@ -592,22 +602,21 @@ const navItems = [
 
       {tab !== "admin" && (
         <div
-          className="ci-bottom-nav-compact"
           style={{
             position: "fixed",
-            left: 14,
-            right: 14,
-            bottom: 10,
+            left: 16,
+            right: 16,
+            bottom: 14,
             zIndex: 900,
             background: "linear-gradient(180deg, rgba(15,25,38,0.94), rgba(7,16,24,0.96))",
             border: `1px solid ${C.borderLight}`,
-            borderRadius: 18,
-            boxShadow: "0 14px 46px rgba(0,0,0,0.36)",
+            borderRadius: 20,
+            boxShadow: "0 18px 60px rgba(0,0,0,0.40)",
             backdropFilter: "blur(14px)",
             display: "grid",
             gridTemplateColumns: "repeat(5, 1fr)",
-            padding: "6px 6px",
-            maxWidth: 680,
+            padding: "8px 8px",
+            maxWidth: 760,
             margin: "0 auto",
           }}
         >
@@ -622,9 +631,9 @@ const navItems = [
                   border: "none",
                   color: active ? C.accent : C.textDim,
                   fontFamily: FN,
-                  fontSize: 9.5,
+                  fontSize: 10,
                   cursor: "pointer",
-                  padding: "5px 3px 4px",
+                  padding: "7px 4px 5px",
                   borderRadius: 14,
                   display: "flex",
                   flexDirection: "column",
@@ -634,7 +643,7 @@ const navItems = [
                   transition: "color .18s ease, transform .18s ease, background .18s ease",
                 }}
               >
-                <span style={{ color: active ? C.accent : C.textDim }}><Icon size={17} /></span>
+                <span style={{ color: active ? C.accent : C.textDim }}><Icon size={19} /></span>
                 <span>{label}</span>
                 {active && <span style={{ position: "absolute", left: "28%", right: "28%", bottom: 0, height: 2, borderRadius: 2, background: C.accent }} />}
               </button>
@@ -644,7 +653,7 @@ const navItems = [
       )}
 
       {/* Footer */}
-      <div style={{ padding: "12px 24px 82px", borderTop: `1px solid ${C.border}`, textAlign: "center", fontSize: 10, color: C.textMuted, fontFamily: MN }}>
+      <div style={{ padding: "16px 28px 96px", borderTop: `1px solid ${C.border}`, textAlign: "center", fontSize: 10, color: C.textMuted, fontFamily: MN }}>
         COMPARAINVEST © • Desde 2026 — LGPD • Comparador B3 
       </div>
     </div>
