@@ -1,4 +1,5 @@
 "use client";
+// page.js completo — correção Saúde Financeira aplicada
 import { useState, useEffect } from "react";
 import { supabase, ADMIN_EMAIL } from "../lib/supabase";
 import { C, MN, FN, TN, PAL, inputStyle, labelStyle, btnPrimary, btnSecondary } from "../lib/theme";
