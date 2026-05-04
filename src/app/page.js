@@ -18,6 +18,7 @@ import HomePage from "../components/HomePage";
 import PhilosophyQuiz, { PHILOSOPHIES } from "../components/PhilosophyQuiz";
 import PhilosophyResult from "../components/PhilosophyResult";
 import EducationHub from "../components/EducationHub";
+import SaudeFinanceira from "../components/SaudeFinanceira";
 import CarteiraFicticia from "../components/CarteiraFicticia";
 import MeuNegocio from "../components/MeuNegocio";
 import { IconHome, IconCarteira, IconAcoes, IconProteger, IconNegocio, IconControle, IconMais } from "../components/Icons";
@@ -503,7 +504,7 @@ const navItems = [
       {/* Content */}
       <div style={{ padding: tab === "home" ? "0 0 86px" : "24px 28px 98px", maxWidth: tab === "admin" ? 1100 : 960, margin: "0 auto" }}>
         {(() => {
-          const pillLabel = {comparadores:"Comparar",acoes:"Ações",fiis:"FIIs",rf:"Renda Fixa",carteira:"Carteira",educacao:"Educação Financeira","meu-negocio":"Meu Negócio","my-philosophy":"Minha Filosofia",admin:"Admin"}[tab];
+          const pillLabel = {comparadores:"Comparar",acoes:"Ações",fiis:"FIIs",rf:"Renda Fixa",carteira:"Carteira",educacao:"Educação Financeira","meu-negocio":"Meu Negócio","saude-financeira":"Saúde Financeira","my-philosophy":"Minha Filosofia",admin:"Admin"}[tab];
           return pillLabel ? (
   <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
     <div
@@ -525,144 +526,39 @@ const navItems = [
         })()}
 {tab === "home" && <HomePage user={user} onTrack={handleTrack} />}
 
-        {tab === "educacao" && <EducationHub onBack={() => setTab("home")} user={user} />}
+        {tab === "educacao" && <EducationHub onBack={() => setTab("home")} user={user} onTrack={handleTrack} />}
 
         {tab === "comparadores" && (
-          <div style={{ padding: "8px 0 20px" }}>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "minmax(0, 1.2fr) minmax(280px, 0.8fr)",
-                gap: 14,
-                alignItems: "stretch",
-                marginBottom: 14,
-              }}
-              className="ci-responsive-2col"
-            >
-              <div
-                style={{
-                  background: "linear-gradient(135deg, rgba(8,27,51,0.95), rgba(7,16,25,0.97))",
-                  border: `1px solid ${C.borderGold}`,
-                  borderRadius: 22,
-                  padding: "20px 20px",
-                  boxShadow: "0 18px 54px rgba(0,0,0,0.24)",
-                  position: "relative",
-                  overflow: "hidden",
-                }}
-              >
-                <div
-                  style={{
-                    position: "absolute",
-                    right: -42,
-                    bottom: -50,
-                    width: 180,
-                    height: 180,
-                    borderRadius: "50%",
-                    background: "radial-gradient(circle, rgba(200,164,93,0.12), transparent 64%)",
-                    pointerEvents: "none",
-                  }}
-                />
-                <div style={{ fontFamily: MN, fontSize: 10, fontWeight: 900, color: C.gold, letterSpacing: "1.1px", textTransform: "uppercase", marginBottom: 8 }}>
-                  Investimentos
-                </div>
-                <h2 style={{ fontFamily: FN, fontSize: 25, lineHeight: 1.16, fontWeight: 800, letterSpacing: "-0.45px", color: C.white, margin: 0 }}>Hub de Comparação</h2>
-                <p style={{ color: C.textDim, fontSize: 13, margin: "8px 0 0", lineHeight: 1.65, maxWidth: 560 }}>
-                  Compare ativos, renda fixa e oportunidades com mais clareza antes de decidir.
-                  {!user?.philosophy && (
-                    <span style={{ display: "block", marginTop: 8 }}>
-                      <button onClick={() => setTab("quiz")} style={{ background: "none", border: "none", color: C.gold, fontSize: 13, cursor: "pointer", fontFamily: FN, padding: 0, textDecoration: "underline" }}>
-                        Faça o quiz de filosofia
-                      </button>{" "}
-                      para receber sugestões personalizadas de carteira.
-                    </span>
-                  )}
-                </p>
-              </div>
-
-              <SponsorSlot id="invest-top" />
-            </div>
+          <div style={{ padding: "32px 0" }}>
+            <h2 style={{ fontFamily: FN, fontSize: 28, fontWeight: 600, letterSpacing: "-0.04em", color: C.white, margin: "0 0 8px" }}>Hub de Comparação</h2>
+            <p style={{ color: C.textDim, fontSize: 13, marginBottom: 24, lineHeight: 1.7 }}>
+              Escolha o tipo de ativo que deseja comparar.
+              {!user?.philosophy && <span style={{ display: "block", marginTop: 8 }}><button onClick={() => setTab("quiz")} style={{ background: "none", border: "none", color: C.accent, fontSize: 13, cursor: "pointer", fontFamily: FN, padding: 0, textDecoration: "underline" }}>Faça o quiz de filosofia</button> para receber sugestões personalizadas de carteira.</span>}
+            </p>
 
             <BannerRiqueza />
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                gap: 12,
-                marginTop: 14,
-              }}
-              className="ci-responsive-grid"
-            >
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               {[
-                { id: "acoes", title: "Ações", desc: "Compare empresas da B3 com indicadores e ranking.", color: C.accent, mark: "AC", disabled: false },
-                { id: "fiis", title: "Fundos Imobiliários", desc: "Analise FIIs por renda, risco e fundamentos.", color: C.blue, mark: "FI", disabled: false },
-                { id: "rf", title: "Renda Fixa", desc: "Veja títulos lado a lado com leitura de cenário.", color: C.gold, mark: "RF", disabled: false },
-                { id: "cripto", title: "Cripto", desc: "Módulo futuro para ativos digitais.", color: C.textDim, mark: "CR", disabled: true },
+                { id: "acoes", title: "Ações", desc: "12 indicadores R2A", color: C.accent },
+                { id: "fiis", title: "Fundos Imobiliários", desc: "11 indicadores", color: C.blue },
+                { id: "rf", title: "Renda Fixa", desc: "8 indicadores", color: C.accent },
+                { id: "cripto", title: "Cripto", desc: "Em breve", color: C.textDim, disabled: true },
               ].map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => !c.disabled && setTab(c.id)}
+                <button key={c.id} onClick={() => !c.disabled && setTab(c.id)}
                   style={{
-                    minHeight: 96,
-                    padding: "16px 17px",
-                    borderRadius: 18,
-                    textAlign: "left",
-                    background: c.disabled
-                      ? "linear-gradient(180deg, rgba(11,24,38,0.65), rgba(7,16,25,0.72))"
-                      : "linear-gradient(180deg, rgba(11,24,38,0.94), rgba(7,16,25,0.94))",
-                    border: `1px solid ${c.disabled ? C.border : `${c.color}24`}`,
-                    cursor: c.disabled ? "not-allowed" : "pointer",
-                    opacity: c.disabled ? 0.62 : 1,
+                    padding: "24px 20px", borderRadius: 16, textAlign: "center",
+                    background: C.card, border: `1px solid ${c.disabled ? C.border : `${c.color}30`}`,
+                    cursor: c.disabled ? "not-allowed" : "pointer", opacity: c.disabled ? 0.5 : 1,
                     transition: "all 0.2s",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 13,
-                    position: "relative",
-                    overflow: "hidden",
                   }}
                   onMouseEnter={(e) => { if (!c.disabled) e.currentTarget.style.borderColor = c.color; }}
-                  onMouseLeave={(e) => { if (!c.disabled) e.currentTarget.style.borderColor = `${c.color}24`; }}
+                  onMouseLeave={(e) => { if (!c.disabled) e.currentTarget.style.borderColor = `${c.color}30`; }}
                 >
-                  <div
-                    style={{
-                      position: "absolute",
-                      right: -28,
-                      top: -34,
-                      width: 128,
-                      height: 128,
-                      borderRadius: "50%",
-                      background: `radial-gradient(circle, ${c.color}10, transparent 66%)`,
-                      pointerEvents: "none",
-                    }}
-                  />
-                  <div
-                    style={{
-                      width: 38,
-                      height: 38,
-                      borderRadius: 14,
-                      display: "grid",
-                      placeItems: "center",
-                      background: `${c.color}10`,
-                      border: `1px solid ${c.color}24`,
-                      color: c.color,
-                      fontFamily: MN,
-                      fontSize: 12,
-                      fontWeight: 900,
-                      flexShrink: 0,
-                      position: "relative",
-                      zIndex: 1,
-                    }}
-                  >
-                    {c.mark}
-                  </div>
-                  <div style={{ flex: 1, position: "relative", zIndex: 1 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                      <span style={{ fontFamily: FN, fontSize: 15, fontWeight: 800, color: C.white }}>{c.title}</span>
-                      {c.disabled && <span style={{ fontSize: 9, color: C.yellow, fontFamily: MN, padding: "3px 8px", borderRadius: 999, background: `${C.yellow}12`, border: `1px solid ${C.yellow}22` }}>Em breve</span>}
-                    </div>
-                    <div style={{ fontSize: 12, color: C.textDim, marginTop: 5, lineHeight: 1.48 }}>{c.desc}</div>
-                  </div>
-                  {!c.disabled && <span style={{ color: c.color, fontSize: 17, position: "relative", zIndex: 1 }}>→</span>}
+                  
+                  <div style={{ fontFamily: FN, fontSize: 14, fontWeight: 600, color: C.white }}>{c.title}</div>
+                  <div style={{ fontSize: 11, color: C.textDim, marginTop: 4 }}>{c.desc}</div>
+                  {c.disabled && <div style={{ fontSize: 9, color: C.yellow, fontFamily: MN, marginTop: 8 }}>Em breve</div>}
                 </button>
               ))}
             </div>
@@ -697,22 +593,21 @@ const navItems = [
 
       {tab !== "admin" && (
         <div
-          className="ci-bottom-nav-compact"
           style={{
             position: "fixed",
-            left: 14,
-            right: 14,
-            bottom: 10,
+            left: 16,
+            right: 16,
+            bottom: 14,
             zIndex: 900,
             background: "linear-gradient(180deg, rgba(15,25,38,0.94), rgba(7,16,24,0.96))",
             border: `1px solid ${C.borderLight}`,
-            borderRadius: 18,
-            boxShadow: "0 14px 46px rgba(0,0,0,0.36)",
+            borderRadius: 20,
+            boxShadow: "0 18px 60px rgba(0,0,0,0.40)",
             backdropFilter: "blur(14px)",
             display: "grid",
             gridTemplateColumns: "repeat(5, 1fr)",
-            padding: "6px 6px",
-            maxWidth: 680,
+            padding: "8px 8px",
+            maxWidth: 760,
             margin: "0 auto",
           }}
         >
@@ -727,9 +622,9 @@ const navItems = [
                   border: "none",
                   color: active ? C.accent : C.textDim,
                   fontFamily: FN,
-                  fontSize: 9.5,
+                  fontSize: 10,
                   cursor: "pointer",
-                  padding: "5px 3px 4px",
+                  padding: "7px 4px 5px",
                   borderRadius: 14,
                   display: "flex",
                   flexDirection: "column",
@@ -739,7 +634,7 @@ const navItems = [
                   transition: "color .18s ease, transform .18s ease, background .18s ease",
                 }}
               >
-                <span style={{ color: active ? C.accent : C.textDim }}><Icon size={17} /></span>
+                <span style={{ color: active ? C.accent : C.textDim }}><Icon size={19} /></span>
                 <span>{label}</span>
                 {active && <span style={{ position: "absolute", left: "28%", right: "28%", bottom: 0, height: 2, borderRadius: 2, background: C.accent }} />}
               </button>
@@ -749,7 +644,7 @@ const navItems = [
       )}
 
       {/* Footer */}
-      <div style={{ padding: "12px 24px 82px", borderTop: `1px solid ${C.border}`, textAlign: "center", fontSize: 10, color: C.textMuted, fontFamily: MN }}>
+      <div style={{ padding: "16px 28px 96px", borderTop: `1px solid ${C.border}`, textAlign: "center", fontSize: 10, color: C.textMuted, fontFamily: MN }}>
         COMPARAINVEST © • Desde 2026 — LGPD • Comparador B3 
       </div>
     </div>
