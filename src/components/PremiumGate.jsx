@@ -7,7 +7,7 @@ const CONTEXTS = {
   comparador: {
     accent: C.gold || C.blue,
     badge: "ANÁLISE PREMIUM",
-    title: "Comparação sem limites",
+    title: "Compare sem limites",
     subtitle: "Veja mais ativos, mais indicadores e mais combinações para decidir com clareza.",
     bullets: [
       ["Comparações avançadas", "Compare múltiplos ativos e indicadores com profundidade profissional."],
@@ -116,37 +116,8 @@ const CONTEXTS = {
 
 function BenefitItem({ item, accent }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        gap: 12,
-        alignItems: "flex-start",
-        padding: "12px 13px",
-        background: "rgba(255,255,255,0.028)",
-        border: `1px solid ${C.border}`,
-        borderLeft: `2px solid ${accent}`,
-        borderRadius: 14,
-      }}
-    >
-      <div
-        style={{
-          width: 32,
-          height: 32,
-          borderRadius: 12,
-          background: "rgba(200,164,93,0.075)",
-          border: `1px solid ${C.borderGold || "rgba(200,164,93,0.24)"}`,
-          color: accent,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontFamily: MN,
-          fontSize: 12,
-          fontWeight: 900,
-          flexShrink: 0,
-        }}
-      >
-        ✓
-      </div>
+    <div style={{ display: "flex", gap: 12, alignItems: "flex-start", padding: "12px 13px", background: "rgba(255,255,255,0.028)", border: `1px solid ${C.border}`, borderLeft: `2px solid ${accent}`, borderRadius: 14 }}>
+      <div style={{ width: 32, height: 32, borderRadius: 12, background: "rgba(200,164,93,0.075)", border: `1px solid ${C.borderGold || "rgba(200,164,93,0.24)"}`, color: accent, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: MN, fontSize: 12, fontWeight: 900, flexShrink: 0 }}>✓</div>
       <div style={{ textAlign: "left" }}>
         <div style={{ color: C.white, fontSize: 13.5, fontWeight: 800, marginBottom: 3 }}>{item[0]}</div>
         <div style={{ color: C.textDim, fontSize: 12, lineHeight: 1.45 }}>{item[1]}</div>
@@ -160,169 +131,21 @@ export default function PremiumGate({ onClose, context = "default", message }) {
   const accent = copy.accent || C.gold || C.accent;
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(2, 7, 13, 0.78)",
-        backdropFilter: "blur(14px)",
-        WebkitBackdropFilter: "blur(14px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 9999,
-        padding: 16,
-      }}
-      onClick={onClose}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          width: "100%",
-          maxWidth: 470,
-          maxHeight: "90vh",
-          overflowY: "auto",
-          background: "linear-gradient(135deg, rgba(8,27,51,0.985) 0%, rgba(6,16,25,0.99) 58%, rgba(12,24,37,0.985) 100%)",
-          border: `1px solid ${C.borderGold || "rgba(200,164,93,0.26)"}`,
-          borderRadius: 26,
-          padding: "28px 22px 20px",
-          textAlign: "center",
-          position: "relative",
-          boxShadow: "0 34px 110px rgba(0,0,0,0.58)",
-          overflow: "hidden",
-        }}
-      >
-        <div
-          aria-hidden="true"
-          style={{
-            position: "absolute",
-            right: -32,
-            top: -28,
-            width: 170,
-            height: 170,
-            backgroundImage: "url('/icon-512.png')",
-            backgroundSize: "contain",
-            backgroundRepeat: "no-repeat",
-            backgroundPosition: "center",
-            opacity: 0.07,
-            filter: "grayscale(1) blur(0.2px)",
-            transform: "rotate(-7deg)",
-            pointerEvents: "none",
-          }}
-        />
-
-        <div
-          aria-hidden="true"
-          style={{
-            position: "absolute",
-            inset: 0,
-            background:
-              "radial-gradient(circle at 92% 8%, rgba(200,164,93,0.14), transparent 36%), radial-gradient(circle at 4% 0%, rgba(19,185,129,0.05), transparent 30%)",
-            pointerEvents: "none",
-          }}
-        />
-
-        <button
-          onClick={onClose}
-          aria-label="Fechar"
-          style={{
-            position: "absolute",
-            right: 14,
-            top: 12,
-            background: "rgba(255,255,255,0.035)",
-            border: `1px solid ${C.border}`,
-            color: C.textDim,
-            width: 31,
-            height: 31,
-            borderRadius: 999,
-            cursor: "pointer",
-            zIndex: 2,
-          }}
-        >
-          ×
-        </button>
+    <div style={{ position: "fixed", inset: 0, background: "rgba(2, 7, 13, 0.78)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: 16 }} onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 470, maxHeight: "90vh", overflowY: "auto", background: "linear-gradient(135deg, rgba(8,27,51,0.985) 0%, rgba(6,16,25,0.99) 58%, rgba(12,24,37,0.985) 100%)", border: `1px solid ${C.borderGold || "rgba(200,164,93,0.26)"}`, borderRadius: 26, padding: "28px 22px 20px", textAlign: "center", position: "relative", boxShadow: "0 34px 110px rgba(0,0,0,0.58)", overflow: "hidden" }}>
+        <div aria-hidden="true" style={{ position: "absolute", right: -32, top: -28, width: 170, height: 170, backgroundImage: "url('/icon-512.png')", backgroundSize: "contain", backgroundRepeat: "no-repeat", backgroundPosition: "center", opacity: 0.07, filter: "grayscale(1) blur(0.2px)", transform: "rotate(-7deg)", pointerEvents: "none" }} />
+        <div aria-hidden="true" style={{ position: "absolute", inset: 0, background: "radial-gradient(circle at 92% 8%, rgba(200,164,93,0.14), transparent 36%), radial-gradient(circle at 4% 0%, rgba(19,185,129,0.05), transparent 30%)", pointerEvents: "none" }} />
+        <button onClick={onClose} aria-label="Fechar" style={{ position: "absolute", right: 14, top: 12, background: "rgba(255,255,255,0.035)", border: `1px solid ${C.border}`, color: C.textDim, width: 31, height: 31, borderRadius: 999, cursor: "pointer", zIndex: 2 }}>×</button>
 
         <div style={{ position: "relative", zIndex: 1 }}>
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 7,
-              border: `1px solid ${C.borderGold || "rgba(200,164,93,0.34)"}`,
-              background: "rgba(200,164,93,0.075)",
-              color: accent,
-              borderRadius: 999,
-              padding: "6px 11px",
-              fontSize: 10,
-              fontFamily: MN,
-              fontWeight: 900,
-              letterSpacing: "0.1em",
-              marginBottom: 17,
-            }}
-          >
-            ◆ {copy.badge}
-          </div>
-
-          <h3
-            style={{
-              fontFamily: FN,
-              fontSize: "clamp(24px, 6vw, 31px)",
-              lineHeight: 1.08,
-              fontWeight: 850,
-              letterSpacing: "-0.045em",
-              color: C.white,
-              margin: "0 0 12px",
-            }}
-          >
-            {copy.title}
-          </h3>
-
-          <p style={{ fontSize: 13.5, color: C.textDim, lineHeight: 1.65, margin: "0 auto 20px", maxWidth: 370 }}>
-            {message || copy.subtitle}
-          </p>
-
-          <div style={{ display: "grid", gap: 9, marginBottom: 20 }}>
-            {copy.bullets.map((item) => <BenefitItem key={item[0]} item={item} accent={accent} />)}
-          </div>
-
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 7, border: `1px solid ${C.borderGold || "rgba(200,164,93,0.34)"}`, background: "rgba(200,164,93,0.075)", color: accent, borderRadius: 999, padding: "6px 11px", fontSize: 10, fontFamily: MN, fontWeight: 900, letterSpacing: "0.1em", marginBottom: 17 }}>◆ {copy.badge}</div>
+          <h3 style={{ fontFamily: FN, fontSize: "clamp(24px, 6vw, 31px)", lineHeight: 1.08, fontWeight: 850, letterSpacing: "-0.045em", color: C.white, margin: "0 0 12px" }}>{copy.title}</h3>
+          <p style={{ fontSize: 13.5, color: C.textDim, lineHeight: 1.65, margin: "0 auto 20px", maxWidth: 370 }}>{message || copy.subtitle}</p>
+          <div style={{ display: "grid", gap: 9, marginBottom: 20 }}>{copy.bullets.map((item) => <BenefitItem key={item[0]} item={item} accent={accent} />)}</div>
           <a href={PREMIUM_PAGE_URL} style={{ textDecoration: "none", display: "block" }}>
-            <button
-              style={{
-                width: "100%",
-                minHeight: 45,
-                borderRadius: 999,
-                border: `1px solid ${C.borderGold || "rgba(200,164,93,0.34)"}`,
-                background: "rgba(200,164,93,0.085)",
-                color: C.gold2 || C.gold || C.yellow,
-                fontFamily: MN,
-                fontSize: 12,
-                fontWeight: 900,
-                letterSpacing: "0.2px",
-                cursor: "pointer",
-                marginBottom: 10,
-                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
-              }}
-            >
-              Ver planos <span style={{ float: "right", paddingRight: 3 }}>→</span>
-            </button>
+            <button style={{ width: "100%", minHeight: 45, borderRadius: 999, border: `1px solid ${C.borderGold || "rgba(200,164,93,0.34)"}`, background: "rgba(200,164,93,0.085)", color: C.gold2 || C.gold || C.yellow, fontFamily: MN, fontSize: 12, fontWeight: 900, letterSpacing: "0.2px", cursor: "pointer", marginBottom: 10, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)" }}>Ver planos <span style={{ float: "right", paddingRight: 3 }}>→</span></button>
           </a>
-
-          <button
-            onClick={onClose}
-            style={{
-              width: "100%",
-              minHeight: 43,
-              borderRadius: 999,
-              border: `1px solid ${C.border}`,
-              background: "rgba(255,255,255,0.026)",
-              color: C.textDim,
-              fontFamily: FN,
-              fontSize: 12.5,
-              cursor: "pointer",
-            }}
-          >
-            Agora não
-          </button>
+          <button onClick={onClose} style={{ width: "100%", minHeight: 43, borderRadius: 999, border: `1px solid ${C.border}`, background: "rgba(255,255,255,0.026)", color: C.textDim, fontFamily: FN, fontSize: 12.5, cursor: "pointer" }}>Agora não</button>
         </div>
       </div>
     </div>

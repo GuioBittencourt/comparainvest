@@ -1,151 +1,81 @@
 "use client";
-import { C, MN, FN } from "../lib/theme";
+import { useState } from "react";
+import { C, MN, FN, WA_FINANCEIRO, WA_RIQUEZA } from "../lib/theme";
+import PremiumGate from "./PremiumGate";
+
+const WA_NEGOCIO = "https://wa.me/5512988890312?text=Ol%C3%A1%2C%20vim%20pelo%20comparainvest.%20Quero%20um%20diagn%C3%B3stico%20para%20meu%20neg%C3%B3cio.";
 
 const CAMPAIGNS = {
-  "home-top": {
-    kicker: "Central Comparainvest",
-    title: "Invista com mais clareza.",
-    desc: "Compare ativos, organize decisões e transforme dados em estratégia.",
-    cta: "Explorar",
-    tone: "gold",
-  },
-  "home-bottom": {
-    kicker: "Saúde Financeira",
-    title: "Veja o futuro antes de decidir.",
-    desc: "Monte seu mapa financeiro e entenda onde o dinheiro está travando.",
-    cta: "Conhecer",
-    tone: "blue",
-  },
-  "edu-top": {
-    kicker: "Controle pessoal",
-    title: "Organização antes da liberdade.",
-    desc: "A clareza do mês é o primeiro passo para sobrar dinheiro.",
-    cta: "Ver ferramenta",
-    tone: "blue",
-  },
-  "edu-bottom": {
-    kicker: "Método financeiro",
-    title: "Construa patrimônio com rotina.",
-    desc: "Pequenos ajustes mensais mudam o ano inteiro.",
-    cta: "Avançar",
-    tone: "gold",
-  },
-  "carteira-middle": {
-    kicker: "Carteira inteligente",
-    title: "Sua alocação precisa fazer sentido.",
-    desc: "Compare, simule e ajuste sua carteira com mais consciência.",
-    cta: "Comparar",
-    tone: "green",
-  },
-  "carteira-bottom": {
-    kicker: "Próximo passo",
-    title: "Transforme carteira em plano.",
-    desc: "Use dados para tomar decisões mais consistentes.",
-    cta: "Abrir",
-    tone: "gold",
-  },
-  "rf-bottom": {
-    kicker: "Renda fixa",
-    title: "Taxa boa é taxa entendida.",
-    desc: "Compare prazos, liquidez e rendimento real antes de investir.",
-    cta: "Comparar",
-    tone: "blue",
-  },
-  "comparator-bottom": {
-    kicker: "Análise estratégica",
-    title: "Não compare só preço.",
-    desc: "Indicadores ajudam a enxergar qualidade, risco e eficiência.",
-    cta: "Ver análise",
-    tone: "gold",
-  },
-  "gestao-bottom": {
-    kicker: "Gestão ativa",
-    title: "O vazamento aparece nos detalhes.",
-    desc: "Acompanhe categorias e veja onde ajustar primeiro.",
-    cta: "Organizar",
-    tone: "green",
-  },
-  "negocio-bottom": {
-    kicker: "Meu negócio",
-    title: "Caixa saudável sustenta crescimento.",
-    desc: "Entenda margem, despesas e pontos críticos do negócio.",
-    cta: "Analisar",
-    tone: "gold",
-  },
-  "quiz-result": {
-    kicker: "Diagnóstico",
-    title: "Perfil entendido. Agora vem a estratégia.",
-    desc: "Use sua filosofia para orientar comparações e carteira.",
-    cta: "Continuar",
-    tone: "blue",
-  },
+  "home-top": { tag: "CENTRAL COMPARAINVEST", title: "Invista com mais clareza.", desc: "Compare ativos, organize decisões e transforme dados em estratégia.", cta: "Explorar", context: "comparador", tone: "gold" },
+  "home-bottom": { tag: "SAÚDE FINANCEIRA", title: "Veja o futuro antes de decidir.", desc: "Monte seu mapa financeiro e entenda onde o dinheiro está travando.", cta: "Conhecer", context: "saudeFinanceira", tone: "blue" },
+  "edu-top": { tag: "DIAGNÓSTICO FINANCEIRO", title: "Organize seu dinheiro com método.", desc: "Entenda para onde o dinheiro vai e quais ajustes fazem diferença.", cta: "Falar no WhatsApp", href: WA_FINANCEIRO, tone: "gold" },
+  "edu-bottom": { tag: "SAÚDE FINANCEIRA", title: "Transforme controle em plano.", desc: "Use o Premium para liberar relatório, extrato futuro e estratégia de quitação.", cta: "Ver benefícios", context: "saudeFinanceira", tone: "blue" },
+  "gestao-bottom": { tag: "CONTROLE PREMIUM", title: "Controle antes da liberdade.", desc: "Categorias ilimitadas, relatórios e leitura do mês com mais clareza.", cta: "Ver benefícios", context: "gestaoAtiva", tone: "gold" },
+  "comparator-bottom": { tag: "ANÁLISE ESTRATÉGICA", title: "Não compare só preço.", desc: "Indicadores ajudam a enxergar qualidade, risco e eficiência.", cta: "Ver análise", context: "comparador", tone: "gold" },
+  "invest-top": { tag: "ANÁLISE ESTRATÉGICA", title: "Invista com método.", desc: "Compare, filtre e decida com mais critério antes do aporte.", cta: "Ver benefícios", context: "comparador", tone: "gold" },
+  "rf-bottom": { tag: "RENDA FIXA", title: "Liquidez, prazo e retorno no mesmo mapa.", desc: "Compare títulos com visão clara de cenário.", cta: "Ver benefícios", context: "rendaFixa", tone: "gold" },
+  "carteira-middle": { tag: "CARTEIRA", title: "Sua estratégia em visão completa.", desc: "Monte uma carteira simulada e veja a composição com mais clareza.", cta: "Ver benefícios", context: "carteira", tone: "gold" },
+  "carteira-bottom": { tag: "PATRIMÔNIO", title: "Decisão boa nasce do conjunto.", desc: "Compare sua carteira como estratégia, não como ativos soltos.", cta: "Ver benefícios", context: "carteira", tone: "blue" },
+  "negocio-bottom": { tag: "MEU NEGÓCIO", title: "Caixa saudável sustenta crescimento.", desc: "Entenda margem, despesas e pontos críticos do negócio.", cta: "Falar no WhatsApp", href: WA_NEGOCIO, tone: "gold" },
+  "quiz-result": { tag: "PRÓXIMO PASSO", title: "Compare sua filosofia com a prática.", desc: "Use seu perfil para montar uma carteira mais coerente.", cta: "Explorar", context: "comparador", tone: "gold" },
 };
 
-const TONES = {
-  gold: { border: C.borderGold, color: C.gold, glow: "rgba(200,164,93,0.11)" },
-  blue: { border: C.borderBlue, color: C.blueSoft || C.blue, glow: "rgba(61,131,230,0.10)" },
-  green: { border: C.accentBorder, color: C.accent, glow: "rgba(19,185,129,0.10)" },
-};
+function getTone(tone) {
+  if (tone === "blue") return { border: C.borderBlue || C.border, color: C.blueSoft || C.blue, glow: "rgba(61,131,230,0.12)" };
+  return { border: C.borderGold || C.border, color: C.gold || C.yellow, glow: "rgba(200,164,93,0.13)" };
+}
 
 export default function SponsorSlot({ id, compact = false }) {
-  const campaign = CAMPAIGNS[id] || CAMPAIGNS["home-top"];
-  const tone = TONES[campaign.tone] || TONES.gold;
+  const [showGate, setShowGate] = useState(false);
+  const item = CAMPAIGNS[id] || CAMPAIGNS["home-top"];
+  const tone = getTone(item.tone);
+
+  const handleClick = () => {
+    if (item.href && typeof window !== "undefined") {
+      window.open(item.href, "_blank", "noopener,noreferrer");
+      return;
+    }
+    if (item.context) setShowGate(true);
+  };
 
   return (
-    <div
-      className="ci-sponsor-slot"
-      style={{
-        position: "relative",
-        overflow: "hidden",
-        borderRadius: compact ? 16 : 18,
-        padding: compact ? "15px 15px" : "17px 18px",
-        margin: compact ? "10px 0" : "14px 0",
-        background: "linear-gradient(135deg, rgba(8,27,51,0.90), rgba(6,16,25,0.96))",
-        border: `1px solid ${tone.border}`,
-        boxShadow: "0 14px 42px rgba(0,0,0,0.18)",
-        minHeight: compact ? 128 : 136,
-      }}
-    >
-      <img
-        src="/icon-512.png"
-        alt=""
-        aria-hidden
+    <>
+      {showGate && <PremiumGate context={item.context || "default"} onClose={() => setShowGate(false)} />}
+      <button
+        type="button"
+        onClick={handleClick}
         style={{
-          position: "absolute",
-          right: compact ? -22 : -18,
-          bottom: compact ? -28 : -34,
-          width: compact ? 112 : 138,
-          height: "auto",
-          opacity: 0.055,
-          filter: "blur(0.2px) grayscale(1)",
-          transform: "rotate(-8deg)",
-          pointerEvents: "none",
+          width: "100%",
+          textAlign: "left",
+          position: "relative",
+          overflow: "hidden",
+          borderRadius: compact ? 16 : 20,
+          padding: compact ? "15px 16px" : "18px 20px",
+          margin: compact ? "10px 0" : "16px 0",
+          minHeight: compact ? 92 : 112,
+          background: "linear-gradient(135deg, rgba(8,27,51,0.96) 0%, rgba(6,16,25,0.98) 70%, rgba(12,24,37,0.96) 100%)",
+          border: `1px solid ${tone.border}`,
+          boxShadow: "0 14px 42px rgba(0,0,0,0.22)",
+          cursor: "pointer",
         }}
-      />
-      <div
-        aria-hidden
-        style={{
-          position: "absolute",
-          inset: 0,
-          background: `radial-gradient(circle at 14% 0%, ${tone.glow}, transparent 34%)`,
-          pointerEvents: "none",
-        }}
-      />
-      <div style={{ position: "relative", zIndex: 1 }}>
-        <div style={{ fontFamily: MN, fontSize: 9, fontWeight: 850, letterSpacing: "1.15px", textTransform: "uppercase", color: tone.color, marginBottom: 7 }}>
-          {campaign.kicker}
+      >
+        <div aria-hidden="true" style={{ position: "absolute", right: compact ? -28 : -22, bottom: compact ? -36 : -44, width: compact ? 120 : 150, height: compact ? 120 : 150, backgroundImage: "url('/icon-512.png')", backgroundSize: "contain", backgroundRepeat: "no-repeat", backgroundPosition: "center", opacity: 0.07, filter: "grayscale(1) blur(0.2px)", pointerEvents: "none" }} />
+        <div aria-hidden="true" style={{ position: "absolute", inset: 0, background: `radial-gradient(circle at 86% 20%, ${tone.glow}, transparent 36%)`, pointerEvents: "none" }} />
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <div style={{ fontFamily: MN, fontSize: compact ? 9 : 10, fontWeight: 900, letterSpacing: "1.5px", color: tone.color, textTransform: "uppercase", marginBottom: 8 }}>
+            {item.tag}
+          </div>
+          <div style={{ color: C.white, fontFamily: FN, fontSize: compact ? 17 : 20, lineHeight: 1.15, fontWeight: 850, letterSpacing: "-0.35px", marginBottom: 7 }}>
+            {item.title}
+          </div>
+          <div style={{ color: C.textDim, fontFamily: FN, fontSize: compact ? 12 : 13, lineHeight: 1.55, maxWidth: 560 }}>
+            {item.desc}
+          </div>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginTop: 14, padding: "8px 13px", borderRadius: 999, border: `1px solid ${tone.border}`, color: tone.color, fontFamily: MN, fontSize: 11, fontWeight: 900, background: "rgba(255,255,255,0.025)" }}>
+            {item.cta} <span>→</span>
+          </div>
         </div>
-        <div style={{ color: C.white, fontSize: compact ? 15 : 16, fontWeight: 780, letterSpacing: "-0.25px", marginBottom: 5, maxWidth: 430 }}>
-          {campaign.title}
-        </div>
-        <div style={{ color: C.textDim, fontSize: 11.5, lineHeight: 1.45, maxWidth: 500 }}>
-          {campaign.desc}
-        </div>
-        <div style={{ marginTop: 12, display: "inline-flex", alignItems: "center", gap: 7, padding: "7px 10px", borderRadius: 999, border: `1px solid ${tone.border}`, color: tone.color, fontSize: 10, fontFamily: MN, fontWeight: 850, letterSpacing: "0.35px", background: "rgba(255,255,255,0.025)" }}>
-          {campaign.cta}
-          <span style={{ color: C.textMuted }}>→</span>
-        </div>
-      </div>
-    </div>
+      </button>
+    </>
   );
 }
