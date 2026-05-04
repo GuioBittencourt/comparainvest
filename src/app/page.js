@@ -1,29 +1,54 @@
-// PAGE.JS - TRECHO CORRIGIDO
+"use client";
 
+import { useState } from "react";
+
+// 🔁 MANTENHA TODOS OS SEUS IMPORTS EXISTENTES AQUI
+import EducationHub from "../components/EducationHub";
 import SaudeFinanceira from "../components/SaudeFinanceira";
 
-// função de navegação
-const handleTrack = (track) => {
-  if (track === "saude-financeira") {
-    setTab("saude-financeira");
-    return;
-  }
-  setTab(track);
-};
+export default function Page() {
 
-// EducationHub correto
-{tab === "educacao" && (
-  <EducationHub 
-    onBack={() => setTab("home")} 
-    user={user} 
-    onTrack={handleTrack} 
-  />
-)}
+  const [tab, setTab] = useState("home");
 
-// rota saúde financeira
-{tab === "saude-financeira" && (
-  <SaudeFinanceira 
-    onBack={() => setTab("educacao")} 
-    user={user} 
-  />
-)}
+  // ✅ FUNÇÃO CORRIGIDA
+  const handleTrack = (track) => {
+    if (track === "saude-financeira") {
+      setTab("saude-financeira");
+      return;
+    }
+    setTab(track);
+  };
+
+  return (
+    <div>
+
+      {/* ⚠️ MANTENHA TODA SUA HOME ORIGINAL AQUI */}
+      {tab === "home" && (
+        <div>
+          {/* SUA HOME */}
+        </div>
+      )}
+
+      {/* EDUCAÇÃO */}
+      {tab === "educacao" && (
+        <EducationHub
+          onBack={() => setTab("home")}
+          user={null} // mantenha sua lógica
+          onTrack={handleTrack}
+        />
+      )}
+
+      {/* SAÚDE FINANCEIRA */}
+      {tab === "saude-financeira" && (
+        <SaudeFinanceira
+          onBack={() => setTab("educacao")}
+          user={null} // mantenha sua lógica
+        />
+      )}
+
+      {/* ⚠️ MANTENHA TODAS AS OUTRAS ROTAS DO SEU APP AQUI */}
+      {/* EX: comparadores, carteira, etc */}
+
+    </div>
+  );
+}
