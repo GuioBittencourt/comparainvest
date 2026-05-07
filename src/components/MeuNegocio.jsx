@@ -8,7 +8,7 @@ const FAIXAS = [{ id: "ate2k", label: "Até R$ 2.000/mês" },{ id: "2k_5k", labe
 
 const BENCHMARKS = {entregas: { custoTotal: 55, margemLiquida: 30 },alimentacao: { custoTotal: 40, margemLiquida: 25 },beleza: { custoTotal: 25, margemLiquida: 35 },servicos_gerais: { custoTotal: 30, margemLiquida: 40 },comercio: { custoTotal: 50, margemLiquida: 20 },digital: { custoTotal: 15, margemLiquida: 50 },outro: { custoTotal: 40, margemLiquida: 25 },};
 
-const fmtBRL = (v) => R$ ${Number(v || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })};const fmtPct = (v) => ${Number(v || 0).toFixed(1)}%;const curMonth = () => { const n = new Date(); return ${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}; };
+const fmtBRL = (v) => 'R$ ${Number(v || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })};const fmtPct = (v) => ${Number(v || 0).toFixed(1)}%;const curMonth = () => { const n = new Date(); return ${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}; }';
 
 function loadAll() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; } }function saveAll(list, userId = null) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); if (userId) syncNegocios(userId, list); } catch {} }
 
