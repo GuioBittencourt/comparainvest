@@ -73,6 +73,11 @@ export default function AdminDashboard() {
     fetchData();
   };
 
+  const toggleAluno = async (userId, current) => {
+    await supabase.from("profiles").update({ is_aluno: !current }).eq("id", userId);
+    fetchData();
+  };
+
   const exportExcel = () => {
     const header = ["Nome", "Sobrenome", "E-mail", "Celular", "WhatsApp Link", "CPF", "Sexo", "Nascimento", "Cadastro", "Último Login", "Admin", "Premium"];
     const rows = filtered.map((u) => [
@@ -102,7 +107,7 @@ export default function AdminDashboard() {
   );
 
   return (
-    <div className="admin-dashboard">
+    <div>
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
         <div>
@@ -131,15 +136,15 @@ export default function AdminDashboard() {
       </div>
 
       {/* Filtro por data */}
-      <div className="admin-date-filter">
-        <span className="admin-date-label" style={{ fontSize: 12, color: C.textDim, fontFamily: MN }}>Filtrar por data:</span>
-        <input className="admin-date-input" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}
+      <div style={{ display: "flex", gap: 12, marginBottom: 24, flexWrap: "wrap", alignItems: "center" }}>
+        <span style={{ fontSize: 12, color: C.textDim, fontFamily: MN }}>Filtrar por data:</span>
+        <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}
           style={{ padding: "8px 12px", background: C.cardAlt, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, fontSize: 12, fontFamily: MN }} />
-        <span className="admin-date-separator" style={{ color: C.textMuted, fontSize: 12 }}>até</span>
-        <input className="admin-date-input" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
+        <span style={{ color: C.textMuted, fontSize: 12 }}>até</span>
+        <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
           style={{ padding: "8px 12px", background: C.cardAlt, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, fontSize: 12, fontFamily: MN }} />
         {(dateFrom || dateTo) && (
-          <button className="admin-date-clear" onClick={() => { setDateFrom(""); setDateTo(""); }}
+          <button onClick={() => { setDateFrom(""); setDateTo(""); }}
             style={{ padding: "6px 12px", borderRadius: 8, fontSize: 11, cursor: "pointer", background: `${C.red}15`, color: C.red, border: `1px solid ${C.red}30`, fontFamily: MN }}>
             ✕ Limpar
           </button>
@@ -147,7 +152,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Charts */}
-      <div className="admin-charts-grid">
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
         <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 20 }}>
           <div style={{ fontSize: 12, color: C.textDim, fontFamily: MN, marginBottom: 12 }}>Distribuição por Sexo</div>
           {sexoData.length > 0 ? (
@@ -200,7 +205,7 @@ export default function AdminDashboard() {
         <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 900 }}>
           <thead>
             <tr>
-              {["Nome", "E-mail", "WhatsApp", "CPF", "Sexo", "Idade", "Cadastro", "Último Login", "Premium", "Ações"].map((h) => (
+              {["Nome", "E-mail", "WhatsApp", "CPF", "Sexo", "Idade", "Cadastro", "Último Login", "Premium", "Aluno", "Ações"].map((h) => (
                 <th key={h} style={{ padding: "10px 10px", borderBottom: `1px solid ${C.border}`, textAlign: "left", fontFamily: MN, fontSize: 9, color: C.textMuted, textTransform: "uppercase" }}>{h}</th>
               ))}
             </tr>
@@ -239,6 +244,25 @@ export default function AdminDashboard() {
                         border: `1px solid ${u.is_premium ? C.accent : C.red}30`,
                       }}>
                       {u.is_premium ? "Premium" : "Free"}
+                    </button>
+                  </td>
+
+                  <td style={{ padding: "9px 10px", borderBottom: `1px solid ${C.border}` }}>
+                    <button
+                      onClick={() => toggleAluno(u.id, u.is_aluno)}
+                      style={{
+                        padding: "4px 10px",
+                        borderRadius: 6,
+                        fontSize: 10,
+                        fontWeight: 600,
+                        fontFamily: MN,
+                        cursor: "pointer",
+                        background: u.is_aluno ? "rgba(59,130,246,0.15)" : "rgba(255,255,255,0.03)",
+                        color: u.is_aluno ? "#60A5FA" : C.textDim,
+                        border: `1px solid ${u.is_aluno ? "#60A5FA" : C.border}30`,
+                      }}
+                    >
+                      {u.is_aluno ? "Aluno" : "Não aluno"}
                     </button>
                   </td>
                   <td style={{ padding: "9px 10px", borderBottom: `1px solid ${C.border}` }}>
