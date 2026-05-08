@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { C, FN, MN } from "../lib/theme";
 import { formatarBRL, salvarSnapshotSaude } from "./SaudeFinanceiraModel";
 import { gerarDiagnosticoSaude } from "./SaudeFinanceiraDiagnostico";
@@ -90,7 +90,7 @@ function BlocoUpgrade({ onUpgrade }) {
   );
 }
 
-function Financeiro({ data, setData, onEdit }) {
+function Financeiro({ data, setData, onEdit, readOnly = false }) {
   const diagnostico = useMemo(() => gerarDiagnosticoSaude(data), [data]);
   const r = diagnostico.base;
   const negativo = r.saldoMes < 0;
@@ -128,10 +128,16 @@ function Financeiro({ data, setData, onEdit }) {
         <Linha label="Patrimônio líquido estimado" value={r.patrimonioLiquido} danger={r.patrimonioLiquido < 0} />
       </Card>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-        <button onClick={onEdit} style={{ border: `1px solid ${C.border}`, background: C.cardAlt, color: C.text, borderRadius: 14, padding: "13px 16px", cursor: "pointer", fontFamily: FN, fontWeight: 700 }}>Revisar financeiro</button>
-        <button onClick={() => salvarSnapshotSaude(data)} style={{ border: `1px solid ${C.accentBorder}`, background: `linear-gradient(135deg, ${C.accent}, #059669)`, color: "#03130D", borderRadius: 14, padding: "13px 16px", cursor: "pointer", fontFamily: FN, fontWeight: 800 }}>Salvar diagnóstico</button>
-      </div>
+      {!readOnly ? (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          <button onClick={onEdit} style={{ border: `1px solid ${C.border}`, background: C.cardAlt, color: C.text, borderRadius: 14, padding: "13px 16px", cursor: "pointer", fontFamily: FN, fontWeight: 700 }}>Revisar financeiro</button>
+          <button onClick={() => salvarSnapshotSaude(data)} style={{ border: `1px solid ${C.accentBorder}`, background: `linear-gradient(135deg, ${C.accent}, #059669)`, color: "#03130D", borderRadius: 14, padding: "13px 16px", cursor: "pointer", fontFamily: FN, fontWeight: 800 }}>Salvar diagnóstico</button>
+        </div>
+      ) : (
+        <div style={{ padding: "11px 13px", borderRadius: 12, border: `1px solid ${C.border}`, background: C.cardAlt, color: C.textDim, fontSize: 12, lineHeight: 1.55 }}>
+          Modo somente leitura. Para editar, marque este usuário como aluno no ADM.
+        </div>
+      )}
     </div>
   );
 }
@@ -173,11 +179,16 @@ function Distribuicao({ data }) {
 }
 
 // Extrato Futuro: free vê tabela somente leitura, premium ajusta investimentos
-function ExtratoFuturoWrapper({ data, isPremium, onUpgrade }) {
+function ExtratoFuturoWrapper({ data, isPremium, onUpgrade, readOnly = false }) {
   const [showGate, setShowGate] = useState(false);
   return (
     <div>
       {showGate && <PremiumGate context="saudeFinanceira" onClose={() => setShowGate(false)} />}
+      {readOnly && (
+        <div style={{ marginBottom: 10, padding: "10px 12px", borderRadius: 12, border: `1px solid ${C.border}`, background: C.cardAlt, color: C.textDim, fontSize: 12 }}>
+          Modo somente leitura. Ajustes do Extrato Futuro ficam disponíveis apenas para alunos.
+        </div>
+      )}
       <ExtratoFuturo
         data={data}
         isPremium={isPremium}
@@ -268,10 +279,10 @@ function Independencia({ data, isPremium, onUpgrade }) {
               return (
                 <tr key={p.ano} onClick={bloqueado ? () => setShowGate(true) : undefined} style={{ cursor: bloqueado ? "pointer" : "default" }}>
                   <td style={{ color: C.white, fontWeight: 800, padding: "11px 8px", borderBottom: `1px solid ${C.border}` }}>{p.ano} anos</td>
-                  <td style={{ fontFamily: MN, textAlign: "right", padding: "11px 8px", borderBottom: `1px solid ${C.border}`, color: bloqueado ? "transparent" : C.accent, textShadow: bloqueado ? "0 0 10px rgba(255,255,255,0.4)" : "none", userSelect: bloqueado ? "none" : "auto" }}>
+                  <td style={{ fontFamily: MN, textAlign: "right", padding: "11px 8px", borderBottom: `1px solid ${C.border}`, color: bloqueado ? "transparent" : C.textDim, textShadow: bloqueado ? "0 0 10px rgba(255,255,255,0.4)" : "none", userSelect: bloqueado ? "none" : "auto" }}>
                     {bloqueado ? "••••••" : <span style={{ color: C.accent }}>{formatarBRL(p.patrimonio)}</span>}
                   </td>
-                  <td style={{ fontFamily: MN, textAlign: "right", padding: "11px 8px", borderBottom: `1px solid ${C.border}`, color: bloqueado ? "transparent" : C.accent, textShadow: bloqueado ? "0 0 10px rgba(255,255,255,0.3)" : "none", userSelect: bloqueado ? "none" : "auto" }}>
+                  <td style={{ fontFamily: MN, textAlign: "right", padding: "11px 8px", borderBottom: `1px solid ${C.border}`, color: bloqueado ? "transparent" : C.textDim, textShadow: bloqueado ? "0 0 10px rgba(255,255,255,0.3)" : "none", userSelect: bloqueado ? "none" : "auto" }}>
                     {bloqueado ? "••••" : <span style={{ color: C.textDim }}>{formatarBRL(p.rendaMensal)}</span>}
                   </td>
                 </tr>
@@ -396,15 +407,16 @@ function Relatorio({ data, isPremium, onUpgrade }) {
   );
 }
 
-export default function SaudeFinanceiraDashboard({ data, setData, onEdit, user }) {
-  const [aba, setAba] = useState("financeiro");
+export default function SaudeFinanceiraDashboard({ data, setData, onEdit, user, initialTab = "financeiro", readOnly = false }) {
+  const [aba, setAba] = useState(initialTab || "financeiro");
+  useEffect(() => { setAba(initialTab || "financeiro"); }, [initialTab]);
   const [showGate, setShowGate] = useState(false);
   const isPremium = user?.is_premium || user?.is_admin || false;
 
   const content = {
-    financeiro: <Financeiro data={data} setData={setData} onEdit={onEdit} />,
+    financeiro: <Financeiro data={data} setData={setData} onEdit={onEdit} readOnly={readOnly} />,
     distribuicao: <Distribuicao data={data} />,
-    extrato: <ExtratoFuturoWrapper data={data} isPremium={isPremium} onUpgrade={() => setShowGate(true)} />,
+    extrato: <ExtratoFuturoWrapper data={data} isPremium={isPremium} onUpgrade={() => setShowGate(true)} readOnly={readOnly} />,
     dividas: <Dividas data={data} isPremium={isPremium} onUpgrade={() => setShowGate(true)} />,
     independencia: <Independencia data={data} isPremium={isPremium} onUpgrade={() => setShowGate(true)} />,
     relatorio: <Relatorio data={data} isPremium={isPremium} onUpgrade={() => setShowGate(true)} />,
