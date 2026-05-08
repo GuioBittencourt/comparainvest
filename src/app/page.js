@@ -1,5 +1,4 @@
 "use client";
-// page.js completo — correção Saúde Financeira aplicada
 import { useState, useEffect } from "react";
 import { supabase, ADMIN_EMAIL } from "../lib/supabase";
 import { C, MN, FN, TN, PAL, inputStyle, labelStyle, btnPrimary, btnSecondary } from "../lib/theme";
@@ -20,6 +19,7 @@ import PhilosophyQuiz, { PHILOSOPHIES } from "../components/PhilosophyQuiz";
 import PhilosophyResult from "../components/PhilosophyResult";
 import EducationHub from "../components/EducationHub";
 import SaudeFinanceira from "../components/SaudeFinanceira";
+import GestaoAtiva from "../components/GestaoAtiva";
 import CarteiraFicticia from "../components/CarteiraFicticia";
 import MeuNegocio from "../components/MeuNegocio";
 import { IconHome, IconCarteira, IconAcoes, IconProteger, IconNegocio, IconControle, IconMais } from "../components/Icons";
@@ -195,6 +195,8 @@ export default function Home() {
   const [dbAcoes, setDbAcoes] = useState(DB_A);
   const [dbFiis, setDbFiis] = useState(DB_F);
   const [compareOpen, setCompareOpen] = useState(false);
+  const [adminTargetUser, setAdminTargetUser] = useState(null);
+  const [adminViewMode, setAdminViewMode] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -231,6 +233,22 @@ export default function Home() {
     await supabase.from("searches").insert({ user_id: user.id, ticker: sym });
   };
 
+  const limparVisualizacaoAdmin = () => {
+    setAdminTargetUser(null);
+    setAdminViewMode(null);
+  };
+
+  const abrirModuloAdmin = (targetUser, mode) => {
+    setAdminTargetUser(targetUser);
+    setAdminViewMode(mode);
+    setTab(mode === "gestao" ? "gestao-ativa" : "saude-financeira");
+  };
+
+  const navegarPara = (nextTab) => {
+    limparVisualizacaoAdmin();
+    setTab(nextTab);
+  };
+
   const handleTrack = (track) => {
     if (track === "quiz") {
       setTab("quiz");
@@ -244,8 +262,6 @@ export default function Home() {
       }
     } else if (track === "meu-negocio") {
       setTab("meu-negocio");
-    } else if (track === "saude-financeira") {
-      setTab("saude-financeira");
     } else {
       setTab("educacao");
     }
@@ -507,7 +523,7 @@ const navItems = [
       {/* Content */}
       <div style={{ padding: tab === "home" ? "0 0 86px" : "24px 28px 98px", maxWidth: tab === "admin" ? 1100 : 960, margin: "0 auto" }}>
         {(() => {
-          const pillLabel = {comparadores:"Comparar",acoes:"Ações",fiis:"FIIs",rf:"Renda Fixa",carteira:"Carteira",educacao:"Educação Financeira","meu-negocio":"Meu Negócio","my-philosophy":"Minha Filosofia",admin:"Admin"}[tab];
+          const pillLabel = {comparadores:"Comparar",acoes:"Ações",fiis:"FIIs",rf:"Renda Fixa",carteira:"Carteira",educacao:"Educação Financeira","saude-financeira":"Saúde Financeira","gestao-ativa":"Gestão Ativa","meu-negocio":"Meu Negócio","my-philosophy":"Minha Filosofia",admin:"Admin"}[tab];
           return pillLabel ? (
   <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
     <div
@@ -527,6 +543,16 @@ const navItems = [
   </div>
           ) : null;
         })()}
+{adminTargetUser && (
+          <div style={{ marginBottom: 14, padding: "10px 14px", borderRadius: 14, border: `1px solid ${adminTargetUser.is_aluno ? C.accentBorder : C.border}`, background: adminTargetUser.is_aluno ? `${C.accent}0D` : "rgba(255,255,255,0.030)", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <div>
+              <div style={{ fontSize: 10, fontFamily: MN, color: adminTargetUser.is_aluno ? C.accent : C.textMuted, textTransform: "uppercase", letterSpacing: 1 }}>{adminTargetUser.is_aluno ? "Modo ADM — aluno" : "Modo ADM — observação"}</div>
+              <div style={{ color: C.white, fontWeight: 750, fontSize: 13 }}>{adminTargetUser.nome} {adminTargetUser.sobrenome || ""}</div>
+              <div style={{ color: C.textDim, fontSize: 11 }}>{adminTargetUser.is_aluno ? "Você pode editar Financeiro, Extrato Futuro e Gestão Ativa." : "Usuário não aluno: apenas visualização."}</div>
+            </div>
+            <button onClick={() => { limparVisualizacaoAdmin(); setTab("admin"); }} style={{ padding: "7px 12px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.cardAlt, color: C.textDim, fontFamily: MN, fontSize: 10, cursor: "pointer" }}>← Voltar ao ADM</button>
+          </div>
+        )}
 {tab === "home" && <HomePage user={user} onTrack={handleTrack} />}
 
         {tab === "educacao" && <EducationHub onBack={() => setTab("home")} user={user} onTrack={handleTrack} />}
@@ -534,7 +560,19 @@ const navItems = [
         {tab === "saude-financeira" && (
           <SaudeFinanceira
             user={user}
-            onBack={() => setTab("educacao")}
+            targetUser={adminTargetUser}
+            adminMode={!!adminTargetUser}
+            initialDashboardTab={adminViewMode === "extrato" ? "extrato" : adminViewMode === "relatorio" ? "relatorio" : "financeiro"}
+            onBack={() => adminTargetUser ? (limparVisualizacaoAdmin(), setTab("admin")) : setTab("educacao")}
+          />
+        )}
+
+        {tab === "gestao-ativa" && (
+          <GestaoAtiva
+            user={user}
+            targetUser={adminTargetUser}
+            adminMode={!!adminTargetUser}
+            readOnly={!!adminTargetUser && !adminTargetUser.is_aluno}
           />
         )}
 
@@ -598,7 +636,7 @@ const navItems = [
         {tab === "rf" && <ComparadorRF user={user} onSearch={trackSearch} />}
         {tab === "carteira" && <CarteiraFicticia user={user} onGoCompare={() => setTab("comparadores")} />}
         {tab === "meu-negocio" && <MeuNegocio user={user} />}
-        {tab === "admin" && user?.is_admin && <AdminDashboard />}
+        {tab === "admin" && user?.is_admin && <AdminDashboard onOpenUserModule={abrirModuloAdmin} />}
       </div>
 
       {tab !== "admin" && (
