@@ -1,4 +1,5 @@
 import { calcularSaudeFinanceira, valorSeguro } from "./SaudeFinanceiraEngine";
+import { lerGestaoAtivaMesAtual, aplicarIntegracaoGA } from "../lib/gestaoAtivaIntegracao";
 
 function mesLabel(date) {
   return date.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" }).replace(".", "");
@@ -26,86 +27,33 @@ export function listarDividasQuitaveis(data = {}) {
   (data.outrasContas || []).forEach((d, idx) => {
     const valor = valorQuitacaoEstimado(d);
     if (valor > 0 || parcelaMensal(d) > 0) {
-      quitaveis.push({
-        id: d.id || `outra-${idx}`,
-        nome: d.nome || d.tipo || "Conta quitável",
-        tipo: d.tipo || "outra conta",
-        parcela: parcelaMensal(d),
-        valorQuitacao: valor,
-        prioridade: 2,
-        origem: "outrasContas",
-      });
+      quitaveis.push({ id: d.id || `outra-${idx}`, nome: d.nome || d.tipo || "Conta quitável", tipo: d.tipo || "outra conta", parcela: parcelaMensal(d), valorQuitacao: valor, prioridade: 2, origem: "outrasContas" });
     }
   });
 
   (data.contasFixas?.outros || []).filter((d) => d.quitavel).forEach((d, idx) => {
     const valor = valorQuitacaoEstimado(d);
-    quitaveis.push({
-      id: d.id || `fixa-quitavel-${idx}`,
-      nome: d.nome || "Conta com prazo para acabar",
-      tipo: "fixa quitável",
-      parcela: parcelaMensal(d),
-      valorQuitacao: valor,
-      prioridade: 2,
-      origem: "contasFixas.outros",
-    });
+    quitaveis.push({ id: d.id || `fixa-quitavel-${idx}`, nome: d.nome || "Conta com prazo para acabar", tipo: "fixa quitável", parcela: parcelaMensal(d), valorQuitacao: valor, prioridade: 2, origem: "contasFixas.outros" });
   });
 
   (data.consignados || []).forEach((d, idx) => {
     const valor = valorQuitacaoEstimado(d);
-    quitaveis.push({
-      id: d.id || `consignado-${idx}`,
-      nome: d.nome || "Consignado",
-      tipo: d.descontaFolha ? "consignado em folha" : "consignado",
-      parcela: parcelaMensal(d),
-      valorQuitacao: valor,
-      prioridade: d.descontaFolha ? 1 : 2,
-      origem: "consignados",
-      descontaFolha: !!d.descontaFolha,
-    });
+    quitaveis.push({ id: d.id || `consignado-${idx}`, nome: d.nome || "Consignado", tipo: d.descontaFolha ? "consignado em folha" : "consignado", parcela: parcelaMensal(d), valorQuitacao: valor, prioridade: d.descontaFolha ? 1 : 2, origem: "consignados", descontaFolha: !!d.descontaFolha });
   });
 
   (data.agiotas || []).forEach((d, idx) => {
     const jurosMensal = d.juros?.tipo === "percentual" ? (n(d.valorQuitacao) * n(d.juros.valor)) / 100 : n(d.juros?.valor);
-    quitaveis.push({
-      id: d.id || `agiota-${idx}`,
-      nome: d.nome || "Agiota",
-      tipo: "agiota / juros mensais",
-      parcela: jurosMensal,
-      valorQuitacao: n(d.valorQuitacao),
-      prioridade: 0,
-      origem: "agiotas",
-    });
+    quitaveis.push({ id: d.id || `agiota-${idx}`, nome: d.nome || "Agiota", tipo: "agiota / juros mensais", parcela: jurosMensal, valorQuitacao: n(d.valorQuitacao), prioridade: 0, origem: "agiotas" });
   });
 
   (data.contasAtrasadas || []).forEach((d, idx) => {
     const valor = n(d.valorTotal) || n(d.valorConta);
-    if (valor > 0) {
-      quitaveis.push({
-        id: d.id || `atrasada-${idx}`,
-        nome: d.nome || "Conta atrasada",
-        tipo: "conta atrasada",
-        parcela: n(d.valorConta),
-        valorQuitacao: valor,
-        prioridade: 1,
-        origem: "contasAtrasadas",
-      });
-    }
+    if (valor > 0) quitaveis.push({ id: d.id || `atrasada-${idx}`, nome: d.nome || "Conta atrasada", tipo: "conta atrasada", parcela: n(d.valorConta), valorQuitacao: valor, prioridade: 1, origem: "contasAtrasadas" });
   });
 
   (data.cartoes || []).forEach((cartao, idx) => {
     const valor = n(cartao.faturaAtual);
-    if (valor > 0) {
-      quitaveis.push({
-        id: cartao.id || `cartao-${idx}`,
-        nome: cartao.nome || `Cartão ${idx + 1}`,
-        tipo: "cartão de crédito",
-        parcela: valor,
-        valorQuitacao: valor,
-        prioridade: 1,
-        origem: "cartoes",
-      });
-    }
+    if (valor > 0) quitaveis.push({ id: cartao.id || `cartao-${idx}`, nome: cartao.nome || `Cartão ${idx + 1}`, tipo: "cartão de crédito", parcela: valor, valorQuitacao: valor, prioridade: 1, origem: "cartoes" });
   });
 
   return quitaveis
@@ -122,15 +70,10 @@ function projetarCartoesFuturos(data = {}, mesIndex = 0, dividasQuitadasIds = ne
   return (data.cartoes || []).reduce((total, cartao, idx) => {
     const idCartao = cartao.id || `cartao-${idx}`;
     if (dividasQuitadasIds.has(idCartao)) return total;
-
     const faturas = cartao.faturasProxMeses || {};
     const keys = Object.keys(faturas).sort();
     if (keys[mesIndex]) return total + n(faturas[keys[mesIndex]]);
-
-    const parcelas = (cartao.parcelasFixas || []).reduce((s, p) => {
-      return s + (n(p.mesesRestantes) > mesIndex ? n(p.valorParcela) : 0);
-    }, 0);
-
+    const parcelas = (cartao.parcelasFixas || []).reduce((s, p) => s + (n(p.mesesRestantes) > mesIndex ? n(p.valorParcela) : 0), 0);
     const recorrentes = (cartao.recorrentes || []).reduce((s, r) => s + n(r.valor), 0);
     return total + parcelas + recorrentes;
   }, 0);
@@ -139,11 +82,37 @@ function projetarCartoesFuturos(data = {}, mesIndex = 0, dividasQuitadasIds = ne
 function parcelaDividasAtivas(dividas = [], quitadas = new Set()) {
   return dividas.reduce((s, d) => {
     if (quitadas.has(d.id)) return s;
-    // Consignado descontado em folha já está embutido no salário líquido.
-    // Ele não deve entrar como saída mensal duplicada; ao quitar, aumenta a entrada do mês seguinte.
     if (d.descontaFolha) return s;
     return s + n(d.parcela);
   }, 0);
+}
+
+/**
+ * Calcula contas fixas EXCLUINDO as variáveis controladas pelo Gestão Ativa
+ * (mercado, transporte, uber, pet, farmácia, cabelo)
+ * Estas serão substituídas pelos limites do GA quando ativo
+ */
+function calcularFixasNaoVariaveis(data = {}) {
+  const f = data?.contasFixas || {};
+  const n = (v) => typeof v === "object" && v !== null && "valor" in v ? Number(v.valor) || 0 : Number(v || 0);
+  const outrosFixos = (f.outros || []).filter((item) => !item.quitavel && !item.noCartao).reduce((s, item) => s + n(item.valor), 0);
+  return (
+    n(f.moradia) +
+    n(f.condominio) +
+    n(f.agua) +
+    n(f.luz) +
+    n(f.gas) +
+    n(f.celular) +
+    n(f.internet) +
+    (f.convenio?.descontaFolha ? 0 : n(f.convenio)) +
+    (f.streaming?.noCartao ? 0 : n(f.streaming)) +
+    (f.academia?.noCartao ? 0 : n(f.academia)) +
+    n(f.pensaoPaga) +
+    n(f.educacao) +
+    (f.seguro?.noCartao ? 0 : n(f.seguro)) +
+    outrosFixos
+  );
+  // Excluídos: mercado, transporte, uber, pet, farmacia, cabelo (controlados pelo GA)
 }
 
 export function gerarExtratoFuturo(data = {}, ajustes = {}, quantidadeMeses = 13) {
@@ -156,18 +125,53 @@ export function gerarExtratoFuturo(data = {}, ajustes = {}, quantidadeMeses = 13
   let aumentoFolhaMensal = 0;
   const dividas = listarDividasQuitaveis(data);
 
+  // Integração com Gestão Ativa — lê dados do mês vigente
+  const gaData = lerGestaoAtivaMesAtual();
+
   return Array.from({ length: quantidadeMeses }, (_, i) => {
     const dataMes = new Date(hoje.getFullYear(), hoje.getMonth() + i, 1);
     const mes = mesKey(dataMes);
     const a = ajustes[mes] || {};
 
     const entradas = base.entradas + aumentoFolhaMensal;
-    const fixas = base.fixas;
+    const diversaoBase = base.diversao;
+    let fixas = base.fixas;
+    let diversao = diversaoBase;
+
+    // ── MÊS VIGENTE (i=0): aplica integração com Gestão Ativa ──────────────
+    let gaIntegracao = null;
+    let precisaExtra = false;
+
+    if (i === 0 && gaData && (gaData.categories || []).length > 0) {
+      const investimentoBase = n(a.investimento) || 0;
+      gaIntegracao = aplicarIntegracaoGA(base, gaData, diversaoBase, investimentoBase);
+
+      if (gaIntegracao.gaAtivo) {
+        // Gestão Ativa prevalece: totalLimite substitui variáveis nas fixas
+        // Fixas = (fixas do questionário - variáveis do questionário) + limites do GA
+        // Simplificado: usa base.fixas mas substitui pelo totalGA
+        fixas = calcularFixasNaoVariaveis(data) + gaIntegracao.totalGA;
+
+        // Deduz gastos já lançados do saldo inicial (já saíram do bolso)
+        saldoInicial = Math.max(saldoInicial - gaIntegracao.gastoGA, 0);
+
+        // Ajusta diversão pelo excesso
+        diversao = Math.max(0, diversaoBase - gaIntegracao.ajusteDiversao);
+
+        precisaExtra = gaIntegracao.precisaExtra;
+      }
+    }
+
     const cartoes = projetarCartoesFuturos(data, i, quitadas);
     const outrasContas = parcelaDividasAtivas(dividas.filter((d) => d.origem !== "cartoes"), quitadas);
-    const diversao = base.diversao;
 
     let saldoAntesEstrategia = saldoInicial + entradas - fixas - cartoes - outrasContas - diversao;
+
+    // Ajuste de investimento pelo excesso GA (só no mês vigente)
+    let investimentoAjusteGA = 0;
+    if (i === 0 && gaIntegracao?.gaAtivo) {
+      investimentoAjusteGA = gaIntegracao.ajusteInvestimento;
+    }
 
     let quitacoes = [];
     let valorQuitacoes = 0;
@@ -197,8 +201,10 @@ export function gerarExtratoFuturo(data = {}, ajustes = {}, quantidadeMeses = 13
     let investimento = n(a.investimento);
 
     if (!a.investimentoManual) {
-      const sobraParaInvestir = saldoAposQuitacao - reservaMinima;
+      const sobraParaInvestir = saldoAposQuitacao - reservaMinima - investimentoAjusteGA;
       investimento = sobraParaInvestir > 0 ? Math.floor(sobraParaInvestir / 50) * 50 : 0;
+      // Reduz pelo ajuste GA
+      investimento = Math.max(0, investimento - investimentoAjusteGA);
     }
 
     const saldoFinal = saldoAposQuitacao - investimento;
@@ -222,10 +228,12 @@ export function gerarExtratoFuturo(data = {}, ajustes = {}, quantidadeMeses = 13
       investimentoAcumulado,
       zonaArrebentacao: i < 3,
       virada: saldoInicial < 0 && saldoFinal >= 0,
+      // Dados de integração GA (só mês vigente)
+      gaIntegracao: i === 0 ? gaIntegracao : null,
+      precisaExtra: i === 0 ? precisaExtra : false,
     };
 
     saldoInicial = saldoFinal;
-    // A parcela de consignado quitado volta para o salário líquido a partir do mês seguinte.
     aumentoFolhaMensal += aumentoFolhaGerado;
     return linha;
   });
@@ -248,10 +256,6 @@ export function projetarIndependencia({ aporteInicial = 0, aporteMensal = 0, tax
     const futuroInicial = n(aporteInicial) * Math.pow(1 + taxaMensal, meses);
     const futuroAportes = taxaMensal > 0 ? n(aporteMensal) * ((Math.pow(1 + taxaMensal, meses) - 1) / taxaMensal) : n(aporteMensal) * meses;
     const patrimonio = futuroInicial + futuroAportes;
-    return {
-      ano,
-      patrimonio,
-      rendaMensal: patrimonio * taxaMensal,
-    };
+    return { ano, patrimonio, rendaMensal: patrimonio * taxaMensal };
   });
 }

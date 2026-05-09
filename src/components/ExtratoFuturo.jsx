@@ -1,5 +1,6 @@
 "use client";
 import { useMemo, useState } from "react";
+import SaudeFinanceiraMesVigente from "./SaudeFinanceiraMesVigente";
 import { C, FN, MN } from "../lib/theme";
 import { formatarBRL } from "./SaudeFinanceiraModel";
 import { gerarExtratoFuturo, resumoExtratoFuturo } from "./ExtratoFuturoEngine";
@@ -98,7 +99,7 @@ function MesFiltradoCard({ linha, ajustes, setInvestimentoManual }) {
   );
 }
 
-export default function ExtratoFuturo({ data }) {
+export default function ExtratoFuturo({ data, readOnly = false }) {
   const [ajustes, setAjustes] = useState({});
   const [filtroMes, setFiltroMes] = useState(null);
 
@@ -156,6 +157,14 @@ export default function ExtratoFuturo({ data }) {
         ))}
       </div>
 
+      {/* Banner precisa de extra no mês vigente */}
+      {linhas[0]?.precisaExtra && (
+        <div style={{ marginTop: 12, padding: "12px 16px", background: "linear-gradient(135deg, rgba(239,68,68,0.15), rgba(10,18,28,0.96))", border: `1px solid ${C.red}40`, borderRadius: 14 }}>
+          <div style={{ fontFamily: MN, fontSize: 10, color: C.red, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>⚠ PRECISA DE EXTRA</div>
+          <p style={{ fontSize: 12, color: C.white, margin: 0, lineHeight: 1.6 }}>Os gastos deste mês ultrapassaram o orçamento. Você precisa fazer uma renda extra — vender algo, fazer um bico, revender. É urgente.</p>
+        </div>
+      )}
+
       {/* Panorama completo (tabela) OU mês isolado (lista) */}
       {linhaFiltrada ? (
         <MesFiltradoCard
@@ -163,6 +172,14 @@ export default function ExtratoFuturo({ data }) {
           ajustes={ajustes}
           setInvestimentoManual={setInvestimentoManual}
         />
+        {/* Se for o mês vigente, mostra view detalhada com checks e GA */}
+        {filtroMes === linhas[0]?.mes && (
+          <SaudeFinanceiraMesVigente
+            data={data}
+            linhaMesVigente={linhaFiltrada}
+            readOnly={readOnly}
+          />
+        )}
       ) : (
         <div style={{ overflowX: "auto", marginTop: 12 }}>
           <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1180, fontFamily: FN }}>
