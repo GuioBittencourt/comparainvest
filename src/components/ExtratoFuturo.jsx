@@ -167,19 +167,20 @@ export default function ExtratoFuturo({ data, readOnly = false }) {
 
       {/* Panorama completo (tabela) OU mês isolado (lista) */}
       {linhaFiltrada ? (
-        <MesFiltradoCard
-          linha={linhaFiltrada}
-          ajustes={ajustes}
-          setInvestimentoManual={setInvestimentoManual}
-        />
-        {/* Se for o mês vigente, mostra view detalhada com checks e GA */}
-        {filtroMes === linhas[0]?.mes && (
-          <SaudeFinanceiraMesVigente
-            data={data}
-            linhaMesVigente={linhaFiltrada}
-            readOnly={readOnly}
+        <div>
+          <MesFiltradoCard
+            linha={linhaFiltrada}
+            ajustes={ajustes}
+            setInvestimentoManual={setInvestimentoManual}
           />
-        )}
+          {filtroMes === linhas[0]?.mes && (
+            <SaudeFinanceiraMesVigente
+              data={data}
+              linhaMesVigente={linhaFiltrada}
+              readOnly={readOnly}
+            />
+          )}
+        </div>
       ) : (
         <div style={{ overflowX: "auto", marginTop: 12 }}>
           <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1180, fontFamily: FN }}>
