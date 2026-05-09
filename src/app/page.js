@@ -262,6 +262,11 @@ export default function Home() {
       }
     } else if (track === "meu-negocio") {
       setTab("meu-negocio");
+    } else if (track === "saude-financeira") {
+      limparVisualizacaoAdmin();
+      setTab("saude-financeira");
+    } else if (track === "educacao") {
+      setTab("educacao");
     } else {
       setTab("educacao");
     }
