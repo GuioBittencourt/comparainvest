@@ -179,19 +179,27 @@ function Distribuicao({ data }) {
 }
 
 // Extrato Futuro: free vê tabela somente leitura, premium ajusta investimentos
-function ExtratoFuturoWrapper({ data, isPremium, onUpgrade, readOnly = false }) {
+function ExtratoFuturoWrapper({ data, isPremium, isAluno = false, isAdmin = false, onUpgrade, readOnly = false }) {
   const [showGate, setShowGate] = useState(false);
   return (
     <div>
       {showGate && <PremiumGate context="saudeFinanceira" onClose={() => setShowGate(false)} />}
-      {readOnly && (
+      {readOnly && !isAdmin && (
         <div style={{ marginBottom: 10, padding: "10px 12px", borderRadius: 12, border: `1px solid ${C.border}`, background: C.cardAlt, color: C.textDim, fontSize: 12 }}>
-          Modo somente leitura. Ajustes do Extrato Futuro ficam disponíveis apenas para alunos.
+          Modo somente leitura.
+        </div>
+      )}
+      {isAluno && (
+        <div style={{ marginBottom: 10, padding: "10px 12px", borderRadius: 12, border: `1px solid ${C.accentBorder}`, background: `${C.accent}08`, color: C.textDim, fontSize: 12 }}>
+          Como aluno, você pode ajustar <strong style={{ color: C.accent }}>diversão</strong> e <strong style={{ color: C.accent }}>investimento</strong> no mês selecionado. Os valores se compensam automaticamente.
         </div>
       )}
       <ExtratoFuturo
         data={data}
         isPremium={isPremium}
+        isAluno={isAluno}
+        isAdmin={isAdmin}
+        readOnly={readOnly && !isAdmin}
         onBloqueioClick={() => setShowGate(true)}
       />
     </div>
@@ -412,11 +420,13 @@ export default function SaudeFinanceiraDashboard({ data, setData, onEdit, user, 
   useEffect(() => { setAba(initialTab || "financeiro"); }, [initialTab]);
   const [showGate, setShowGate] = useState(false);
   const isPremium = user?.is_premium || user?.is_admin || false;
+  const isAluno = !!(user?.is_aluno && !user?.is_admin);
+  const isAdmin = !!user?.is_admin;
 
   const content = {
     financeiro: <Financeiro data={data} setData={setData} onEdit={onEdit} readOnly={readOnly} />,
     distribuicao: <Distribuicao data={data} />,
-    extrato: <ExtratoFuturoWrapper data={data} isPremium={isPremium} onUpgrade={() => setShowGate(true)} readOnly={readOnly} />,
+    extrato: <ExtratoFuturoWrapper data={data} isPremium={isPremium} isAluno={isAluno} isAdmin={isAdmin} onUpgrade={() => setShowGate(true)} readOnly={readOnly} targetUserId={user?.id || null} />,
     dividas: <Dividas data={data} isPremium={isPremium} onUpgrade={() => setShowGate(true)} />,
     independencia: <Independencia data={data} isPremium={isPremium} onUpgrade={() => setShowGate(true)} />,
     relatorio: <Relatorio data={data} isPremium={isPremium} onUpgrade={() => setShowGate(true)} />,

@@ -165,7 +165,13 @@ export function gerarExtratoFuturo(data = {}, ajustes = {}, quantidadeMeses = 13
     const cartoes = projetarCartoesFuturos(data, i, quitadas);
     const outrasContas = parcelaDividasAtivas(dividas.filter((d) => d.origem !== "cartoes"), quitadas);
 
-    let saldoAntesEstrategia = saldoInicial + entradas - fixas - cartoes - outrasContas - diversao;
+    // Linhas extras ADM — somadas como saídas (valores positivos = despesa, negativos = receita extra)
+    const linhasExtras = (ajustes.__linhasExtras || []).reduce((s, linha) => {
+      const valorMes = n(linha.valores?.[mes] || 0);
+      return s + valorMes;
+    }, 0);
+
+    let saldoAntesEstrategia = saldoInicial + entradas - fixas - cartoes - outrasContas - diversao - linhasExtras;
 
     // Ajuste de investimento pelo excesso GA (só no mês vigente)
     let investimentoAjusteGA = 0;
@@ -221,6 +227,7 @@ export function gerarExtratoFuturo(data = {}, ajustes = {}, quantidadeMeses = 13
       cartoes,
       outrasContas,
       diversao,
+      linhasExtras,
       quitacoes,
       valorQuitacoes,
       investimento,
@@ -228,7 +235,6 @@ export function gerarExtratoFuturo(data = {}, ajustes = {}, quantidadeMeses = 13
       investimentoAcumulado,
       zonaArrebentacao: i < 3,
       virada: saldoInicial < 0 && saldoFinal >= 0,
-      // Dados de integração GA (só mês vigente)
       gaIntegracao: i === 0 ? gaIntegracao : null,
       precisaExtra: i === 0 ? precisaExtra : false,
     };

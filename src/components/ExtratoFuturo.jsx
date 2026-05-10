@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import SaudeFinanceiraMesVigente from "./SaudeFinanceiraMesVigente";
 import { C, FN, MN } from "../lib/theme";
 import { formatarBRL } from "./SaudeFinanceiraModel";
@@ -99,12 +99,72 @@ function MesFiltradoCard({ linha, ajustes, setInvestimentoManual }) {
   );
 }
 
-export default function ExtratoFuturo({ data, readOnly = false }) {
+export default function ExtratoFuturo({ data, readOnly = false, isAdmin = false, isAluno = false, targetUserId = null }) {
   const [ajustes, setAjustes] = useState({});
   const [filtroMes, setFiltroMes] = useState(null);
+  const [linhasExtras, setLinhasExtras] = useState([]); // linhas ADM
+  const [editandoLinhas, setEditandoLinhas] = useState(false);
 
-  const linhas = useMemo(() => gerarExtratoFuturo(data, ajustes), [data, ajustes]);
-  const resumo = useMemo(() => resumoExtratoFuturo(data, ajustes), [data, ajustes]);
+  // Carrega linhas extras do Supabase quando ADM abre extrato de aluno
+  useEffect(() => {
+    if (!isAdmin || !targetUserId) return;
+    import("../lib/supabase").then(({ supabase }) => {
+      supabase.from("extrato_linhas_extras")
+        .select("*")
+        .eq("user_id", targetUserId)
+        .then(({ data: rows }) => {
+          if (rows?.length) setLinhasExtras(rows);
+        });
+    });
+  }, [isAdmin, targetUserId]);
+
+  const salvarLinhasExtras = async (novas) => {
+    if (!isAdmin || !targetUserId) return;
+    const { supabase } = await import("../lib/supabase");
+    // Upsert completo — deleta antigas e insere novas
+    await supabase.from("extrato_linhas_extras").delete().eq("user_id", targetUserId);
+    if (novas.length > 0) {
+      await supabase.from("extrato_linhas_extras").insert(
+        novas.map(l => ({ ...l, user_id: targetUserId }))
+      );
+    }
+  };
+
+  const adicionarLinhaExtra = () => {
+    const nova = { id: `extra_${Date.now()}`, nome: "Nova linha", valores: {}, tipo: "despesa" };
+    const novas = [...linhasExtras, nova];
+    setLinhasExtras(novas);
+    salvarLinhasExtras(novas);
+  };
+
+  const removerLinhaExtra = (id) => {
+    const novas = linhasExtras.filter(l => l.id !== id);
+    setLinhasExtras(novas);
+    salvarLinhasExtras(novas);
+  };
+
+  const atualizarLinhaExtra = (id, campo, valor) => {
+    const novas = linhasExtras.map(l => l.id === id ? { ...l, [campo]: valor } : l);
+    setLinhasExtras(novas);
+    salvarLinhasExtras(novas);
+  };
+
+  const atualizarValorMes = (id, mes, valor) => {
+    const novas = linhasExtras.map(l =>
+      l.id === id ? { ...l, valores: { ...l.valores, [mes]: Number(valor) || 0 } } : l
+    );
+    setLinhasExtras(novas);
+    salvarLinhasExtras(novas);
+  };
+
+  // Injeta linhas extras nos ajustes do engine
+  const ajustesComExtras = useMemo(() => ({
+    ...ajustes,
+    __linhasExtras: linhasExtras,
+  }), [ajustes, linhasExtras]);
+
+  const linhas = useMemo(() => gerarExtratoFuturo(data, ajustesComExtras), [data, ajustesComExtras]);
+  const resumo = useMemo(() => resumoExtratoFuturo(data, ajustesComExtras), [data, ajustesComExtras]);
 
   const setInvestimentoManual = (mes, valor) => {
     setAjustes((p) => ({
@@ -132,6 +192,81 @@ export default function ExtratoFuturo({ data, readOnly = false }) {
         <strong style={{ color: C.yellow, fontFamily: MN, fontSize: 11, letterSpacing: 1 }}>ZONA DE ARREBENTAÇÃO</strong>
         <div style={{ marginTop: 4 }}>Os 3 primeiros meses exigem atenção máxima. É a fase de ajuste, corte de vazamentos e organização das primeiras quitações.</div>
       </div>
+
+      {/* Painel de linhas extras — só ADM */}
+      {isAdmin && (
+        <div style={{ marginTop: 14 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+            <div style={{ fontSize: 10, color: C.textMuted, fontFamily: MN, textTransform: "uppercase", letterSpacing: 1 }}>
+              Linhas extras ({linhasExtras.length})
+            </div>
+            <div style={{ display: "flex", gap: 6 }}>
+              <button onClick={() => setEditandoLinhas(e => !e)}
+                style={{ padding: "4px 10px", borderRadius: 6, fontSize: 10, fontFamily: MN, cursor: "pointer", background: editandoLinhas ? `${C.accent}15` : "transparent", color: editandoLinhas ? C.accent : C.textMuted, border: `1px solid ${editandoLinhas ? C.accentBorder : C.border}` }}>
+                {editandoLinhas ? "Fechar" : "Editar"}
+              </button>
+              {editandoLinhas && (
+                <button onClick={adicionarLinhaExtra}
+                  style={{ padding: "4px 10px", borderRadius: 6, fontSize: 10, fontFamily: MN, cursor: "pointer", background: `${C.accent}15`, color: C.accent, border: `1px solid ${C.accentBorder}` }}>
+                  + Linha
+                </button>
+              )}
+            </div>
+          </div>
+
+          {editandoLinhas && linhasExtras.length > 0 && (
+            <div style={{ overflowX: "auto", marginBottom: 12 }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 800, fontFamily: MN }}>
+                <thead>
+                  <tr>
+                    <th style={{ ...thLeft, fontSize: 9 }}>Nome da linha</th>
+                    <th style={{ ...th, fontSize: 9 }}>Tipo</th>
+                    {linhas.map(l => <th key={l.mes} style={{ ...th, fontSize: 9 }}>{l.label}</th>)}
+                    <th style={{ ...th, fontSize: 9 }}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {linhasExtras.map(linha => (
+                    <tr key={linha.id}>
+                      <td style={tdLeft}>
+                        <input value={linha.nome} onChange={e => atualizarLinhaExtra(linha.id, "nome", e.target.value)}
+                          style={{ width: 140, background: C.bg, border: `1px solid ${C.border}`, borderRadius: 6, color: C.white, padding: "4px 6px", fontFamily: FN, fontSize: 11 }} />
+                      </td>
+                      <td style={td}>
+                        <select value={linha.tipo || "despesa"} onChange={e => atualizarLinhaExtra(linha.id, "tipo", e.target.value)}
+                          style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 6, color: C.white, padding: "4px 6px", fontFamily: MN, fontSize: 10 }}>
+                          <option value="despesa">Despesa</option>
+                          <option value="receita">Receita</option>
+                          <option value="quitacao">Quitação</option>
+                        </select>
+                      </td>
+                      {linhas.map(l => (
+                        <td key={`${linha.id}-${l.mes}`} style={td}>
+                          <input type="number"
+                            value={linha.valores?.[l.mes] || ""}
+                            onChange={e => atualizarValorMes(linha.id, l.mes, e.target.value)}
+                            placeholder="0"
+                            style={{ ...inputMini, width: 70 }} />
+                        </td>
+                      ))}
+                      <td style={td}>
+                        <button onClick={() => { if(confirm(`Remover linha "${linha.nome}"?`)) removerLinhaExtra(linha.id); }}
+                          style={{ padding: "3px 7px", borderRadius: 5, fontSize: 9, cursor: "pointer", background: `${C.red}15`, color: C.red, border: `1px solid ${C.red}30` }}>×</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {!editandoLinhas && linhasExtras.length > 0 && (
+            <div style={{ fontSize: 11, color: C.textDim }}>
+              {linhasExtras.map(l => l.nome).join(", ")} — clique em Editar para ajustar valores
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Botões de filtro */}
       <div style={{ display: "flex", gap: 6, overflowX: "auto", marginTop: 16, paddingBottom: 4 }}>
@@ -220,6 +355,18 @@ export default function ExtratoFuturo({ data, readOnly = false }) {
                   </td>
                 ))}
               </tr>
+              {linhasExtras.length > 0 && linhasExtras.map(le => (
+                <tr key={`extra-${le.id}`}>
+                  <td style={{ ...tdLeft, color: le.tipo === "receita" ? C.accent : le.tipo === "quitacao" ? C.yellow : C.textDim }}>
+                    {le.nome} {le.tipo === "receita" ? "↑" : "↓"}
+                  </td>
+                  {linhas.map(l => (
+                    <td key={`${le.id}-${l.mes}`} style={{ ...td, color: le.tipo === "receita" ? C.accent : C.textDim }}>
+                      {le.valores?.[l.mes] ? formatarBRL(le.valores[l.mes]) : "—"}
+                    </td>
+                  ))}
+                </tr>
+              ))}
               <tr>
                 <td style={tdLeft}>Ação estratégica</td>
                 {linhas.map((l) => (

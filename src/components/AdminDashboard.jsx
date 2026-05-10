@@ -74,7 +74,10 @@ export default function AdminDashboard({ onOpenUserModule } = {}) {
   };
 
   const toggleAluno = async (userId, current) => {
-    await supabase.from("profiles").update({ is_aluno: !current }).eq("id", userId);
+    // Aluno = Premium automático. Removendo aluno, mantém premium se já era premium.
+    const update = { is_aluno: !current };
+    if (!current) update.is_premium = true; // virou aluno → premium automático
+    await supabase.from("profiles").update(update).eq("id", userId);
     fetchData();
   };
 
