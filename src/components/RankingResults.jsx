@@ -1,7 +1,7 @@
 "use client";
 import { useState, useMemo, useRef, useCallback } from "react";
 import { XAxis, YAxis, Tooltip as RTooltip, ResponsiveContainer, BarChart, Bar, Cell, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Legend } from "recharts";
-import { C, MN, FN, PAL } from "../lib/theme";
+import { C, MN, FN, TN, PAL } from "../lib/theme";
 import { fmtInd } from "../lib/utils";
 import InfoTip from "./InfoTip";
 import { BattleShareCard } from "./ShareCard";
@@ -70,7 +70,7 @@ function LongPressCard({ children, onLongPress, style }) {
    ═══════════════════════════════════════════════════════════════ */
 export default function RankingResults({ ranked, selected, indicators, label, onAddToCart }) {
   const [showShare, setShowShare] = useState(false);
-  const medals = ["🥇", "🥈", "🥉"];
+  const medals = ["1º", "2º", "3º"];
   const totalD = selected.length * (selected.length - 1) / 2;
 
   const radarData = useMemo(() => {
@@ -97,7 +97,7 @@ export default function RankingResults({ ranked, selected, indicators, label, on
       {/* Winner */}
       <div style={{ background: C.card, border: `1px solid ${C.accentBorder}`, borderRadius: 16, padding: 28, textAlign: "center", marginBottom: 16 }}>
         <div style={{ fontSize: 10, color: C.textMuted, textTransform: "uppercase", letterSpacing: "2px", fontFamily: MN, marginBottom: 10 }}>Melhor {label} do setor</div>
-        <div style={{ fontFamily: MN, fontSize: 26, fontWeight: 800, color: C.accent }}>{ranked[0]?.symbol}</div>
+        <div style={{ fontFamily: TN, fontSize: 28, fontWeight: 400, color: C.accent }}>{ranked[0]?.symbol}</div>
         <div style={{ fontSize: 12, color: C.textDim, marginTop: 2 }}>{ranked[0]?.shortName}</div>
         <div style={{ fontFamily: MN, fontSize: 13, color: C.accent, marginTop: 6 }}>{ranked[0]?.wins} vitórias de {totalD} duelos</div>
         <button onClick={() => setShowShare(true)} style={{ marginTop: 12, padding: "8px 20px", borderRadius: 10, fontSize: 11, fontWeight: 600, fontFamily: MN, cursor: "pointer", background: `${C.accent}15`, color: C.accent, border: `1px solid ${C.accent}30` }}>
@@ -105,7 +105,7 @@ export default function RankingResults({ ranked, selected, indicators, label, on
         </button>
       </div>
 
-      {showShare && <BattleShareCard ranked={ranked} label={label} onClose={() => setShowShare(false)} />}
+      {showShare && <BattleShareCard ranked={ranked} onClose={() => setShowShare(false)} />}
 
       {/* Long press hint */}
       {onAddToCart && (

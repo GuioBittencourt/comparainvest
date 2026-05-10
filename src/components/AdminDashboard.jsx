@@ -1,14 +1,14 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "../lib/supabase";
-import { C, MN, FN, PAL } from "../lib/theme";
+import { C, MN, FN, TN, PAL, CHART, heroStyle } from "../lib/theme";
 import { formatPhone } from "../lib/utils";
 import {
   ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis,
   Tooltip as RTooltip, Legend
 } from "recharts";
 
-export default function AdminDashboard() {
+export default function AdminDashboard({ onOpenUserModule } = {}) {
   const [profiles, setProfiles] = useState([]);
   const [searches, setSearches] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -40,10 +40,10 @@ export default function AdminDashboard() {
     const c = { M: 0, F: 0, O: 0, N: 0 };
     filtered.forEach((u) => { if (c[u.sexo] !== undefined) c[u.sexo]++; });
     return [
-      { name: "Masculino", value: c.M, fill: C.blue },
-      { name: "Feminino", value: c.F, fill: C.pink },
-      { name: "Outro", value: c.O, fill: C.purple },
-      { name: "N/D", value: c.N, fill: C.textMuted },
+      { name: "Masculino", value: c.M, fill: CHART.male },
+      { name: "Feminino", value: c.F, fill: CHART.female },
+      { name: "Outro", value: c.O, fill: CHART.other },
+      { name: "N/D", value: c.N, fill: CHART.nd },
     ].filter((d) => d.value > 0);
   }, [filtered]);
 
@@ -73,15 +73,23 @@ export default function AdminDashboard() {
     fetchData();
   };
 
+  const toggleAluno = async (userId, current) => {
+    // Aluno = Premium automático. Removendo aluno, mantém premium se já era premium.
+    const update = { is_aluno: !current };
+    if (!current) update.is_premium = true; // virou aluno → premium automático
+    await supabase.from("profiles").update(update).eq("id", userId);
+    fetchData();
+  };
+
   const exportExcel = () => {
-    const header = ["Nome", "Sobrenome", "E-mail", "Celular", "WhatsApp Link", "CPF", "Sexo", "Nascimento", "Cadastro", "Último Login", "Admin", "Premium"];
+    const header = ["Nome", "Sobrenome", "E-mail", "Celular", "WhatsApp Link", "CPF", "Sexo", "Nascimento", "Cadastro", "Último Login", "Admin", "Premium", "Aluno"];
     const rows = filtered.map((u) => [
       u.nome, u.sobrenome, u.email || "",
       u.celular || "", u.celular ? `https://wa.me/55${u.celular}` : "",
       u.cpf ? `***${u.cpf.slice(3, 9)}***` : "",
       u.sexo === "M" ? "Masculino" : u.sexo === "F" ? "Feminino" : u.sexo === "O" ? "Outro" : "N/D",
       u.nascimento || "", u.created_at?.slice(0, 10) || "", u.last_login?.slice(0, 10) || "",
-      u.is_admin ? "Sim" : "Não", u.is_premium ? "Sim" : "Não",
+      u.is_admin ? "Sim" : "Não", u.is_premium ? "Sim" : "Não", u.is_aluno ? "Sim" : "Não",
     ]);
     const csv = [header, ...rows].map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
     const BOM = "\uFEFF";
@@ -106,26 +114,27 @@ export default function AdminDashboard() {
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
         <div>
-          <h2 style={{ fontFamily: MN, fontSize: 18, fontWeight: 800, color: C.white, margin: 0 }}>🔐 Painel Administrativo</h2>
+          <h2 style={heroStyle}>Painel Administrativo</h2>
           <p style={{ fontSize: 12, color: C.textDim, margin: "4px 0 0" }}>Dados reais do Supabase — {total} usuários</p>
         </div>
-        <button onClick={exportExcel} style={{ padding: "8px 18px", borderRadius: 10, fontSize: 12, fontWeight: 600, fontFamily: MN, cursor: "pointer", background: `${C.green}15`, color: C.green, border: `1px solid ${C.green}30` }}>
-          📥 Exportar Excel/CSV
+        <button onClick={exportExcel} style={{ padding: "8px 18px", borderRadius: 10, fontSize: 12, fontWeight: 600, fontFamily: MN, cursor: "pointer", background: "rgba(255,255,255,0.030)", color: C.textDim, border: `1px solid ${C.border}` }}>
+          Exportar CSV
         </button>
       </div>
 
       {/* KPIs */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12, marginBottom: 24 }}>
         {[
-          { label: "Total Usuários", value: total, icon: "👥" },
-          { label: "Cadastros Hoje", value: filtered.filter((u) => u.created_at?.startsWith(today)).length, icon: "📅" },
-          { label: "Buscas Totais", value: searches.length, icon: "🔍" },
-          { label: "Premium", value: filtered.filter((u) => u.is_premium).length, icon: "⭐" },
-          { label: "LGPD Aceitos", value: filtered.filter((u) => u.lgpd_accepted).length, icon: "✅" },
+          { label: "Total Usuários", value: total, icon: "" },
+          { label: "Cadastros Hoje", value: filtered.filter((u) => u.created_at?.startsWith(today)).length, icon: "" },
+          { label: "Buscas Totais", value: searches.length, icon: "" },
+          { label: "Premium", value: filtered.filter((u) => u.is_premium).length, icon: "" },
+          { label: "Alunos", value: filtered.filter((u) => u.is_aluno).length, icon: "" },
+          { label: "LGPD Aceitos", value: filtered.filter((u) => u.lgpd_accepted).length, icon: "" },
         ].map((k) => (
           <div key={k.label} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px 18px" }}>
             <div style={{ fontSize: 11, color: C.textDim, marginBottom: 4 }}>{k.icon} {k.label}</div>
-            <div style={{ fontFamily: MN, fontSize: 26, fontWeight: 800, color: C.accent }}>{k.value}</div>
+            <div style={{ fontFamily: TN, fontSize: 28, fontWeight: 400, color: C.accent }}>{k.value}</div>
           </div>
         ))}
       </div>
@@ -181,7 +190,7 @@ export default function AdminDashboard() {
       {/* Top tickers */}
       {topTickers.length > 0 && (
         <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 20, marginBottom: 24 }}>
-          <div style={{ fontSize: 12, color: C.textDim, fontFamily: MN, marginBottom: 12 }}>🔍 Ativos Mais Buscados</div>
+          <div style={{ fontSize: 12, color: C.textDim, fontFamily: MN, marginBottom: 12 }}>Ativos Mais Buscados</div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {topTickers.map((s, i) => (
               <span key={s.name} style={{ padding: "6px 12px", borderRadius: 8, fontSize: 12, fontFamily: MN, fontWeight: 600, background: `${PAL[i % PAL.length]}15`, color: PAL[i % PAL.length], border: `1px solid ${PAL[i % PAL.length]}30` }}>
@@ -197,10 +206,10 @@ export default function AdminDashboard() {
         <div style={{ padding: "14px 18px", borderBottom: `1px solid ${C.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <span style={{ fontSize: 11, fontWeight: 600, color: C.textDim, fontFamily: MN }}>TODOS OS USUÁRIOS ({total})</span>
         </div>
-        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 900 }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1160 }}>
           <thead>
             <tr>
-              {["Nome", "E-mail", "WhatsApp", "CPF", "Sexo", "Idade", "Cadastro", "Último Login", "Premium", "Ações"].map((h) => (
+              {["Nome", "E-mail", "WhatsApp", "CPF", "Sexo", "Idade", "Cadastro", "Último Login", "Premium", "Aluno", "Acessos", "Ações"].map((h) => (
                 <th key={h} style={{ padding: "10px 10px", borderBottom: `1px solid ${C.border}`, textAlign: "left", fontFamily: MN, fontSize: 9, color: C.textMuted, textTransform: "uppercase" }}>{h}</th>
               ))}
             </tr>
@@ -214,13 +223,13 @@ export default function AdminDashboard() {
                 <tr key={u.id}>
                   <td style={{ padding: "9px 10px", borderBottom: `1px solid ${C.border}`, fontSize: 12, color: C.text }}>
                     {u.nome} {u.sobrenome}
-                    {u.is_admin && <span style={{ marginLeft: 6, fontSize: 9, padding: "2px 6px", borderRadius: 4, background: `${C.purple}20`, color: C.purple }}>ADM</span>}
+                    {u.is_admin && <span style={{ marginLeft: 6, fontSize: 9, padding: "2px 6px", borderRadius: 4, background: `${C.accent}15`, color: C.accent }}>ADM</span>}
                   </td>
                   <td style={{ padding: "9px 10px", borderBottom: `1px solid ${C.border}`, fontSize: 11, color: C.textDim, fontFamily: MN }}>{u.email || "—"}</td>
                   <td style={{ padding: "9px 10px", borderBottom: `1px solid ${C.border}`, fontSize: 11 }}>
                     {whatsLink ? (
                       <a href={whatsLink} target="_blank" rel="noopener noreferrer" style={{ color: C.green, textDecoration: "none", fontFamily: MN, fontSize: 11 }}>
-                        📱 {formatPhone(u.celular)}
+                        {formatPhone(u.celular)}
                       </a>
                     ) : "—"}
                   </td>
@@ -238,14 +247,32 @@ export default function AdminDashboard() {
                         color: u.is_premium ? C.accent : C.red,
                         border: `1px solid ${u.is_premium ? C.accent : C.red}30`,
                       }}>
-                      {u.is_premium ? "⭐ Premium" : "Free"}
+                      {u.is_premium ? "Premium" : "Free"}
                     </button>
                   </td>
                   <td style={{ padding: "9px 10px", borderBottom: `1px solid ${C.border}` }}>
+                    <button onClick={() => toggleAluno(u.id, u.is_aluno)}
+                      style={{ padding: "4px 10px", borderRadius: 6, fontSize: 10, fontWeight: 600, fontFamily: MN, cursor: "pointer",
+                        background: u.is_aluno ? `${C.blue || C.accent}15` : "rgba(255,255,255,0.030)",
+                        color: u.is_aluno ? (C.blue || C.accent) : C.textDim,
+                        border: `1px solid ${u.is_aluno ? (C.blue || C.accent) : C.border}30`,
+                      }}>
+                      {u.is_aluno ? "Aluno" : "Não aluno"}
+                    </button>
+                  </td>
+                  <td style={{ padding: "9px 10px", borderBottom: `1px solid ${C.border}` }}>
+                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap", minWidth: 230 }}>
+                      <button onClick={() => onOpenUserModule?.(u, "financeiro")} style={{ padding: "4px 8px", borderRadius: 6, fontSize: 9, fontFamily: MN, cursor: "pointer", background: "rgba(255,255,255,0.030)", color: C.textDim, border: `1px solid ${C.border}` }}>Financeiro</button>
+                      <button onClick={() => onOpenUserModule?.(u, "extrato")} style={{ padding: "4px 8px", borderRadius: 6, fontSize: 9, fontFamily: MN, cursor: "pointer", background: "rgba(255,255,255,0.030)", color: C.textDim, border: `1px solid ${C.border}` }}>Extrato</button>
+                      <button onClick={() => onOpenUserModule?.(u, "gestao")} style={{ padding: "4px 8px", borderRadius: 6, fontSize: 9, fontFamily: MN, cursor: "pointer", background: u.is_aluno ? `${C.accent}12` : "rgba(255,255,255,0.030)", color: u.is_aluno ? C.accent : C.textDim, border: `1px solid ${u.is_aluno ? C.accentBorder : C.border}` }}>Gestão</button>
+                      <button onClick={() => onOpenUserModule?.(u, "relatorio")} style={{ padding: "4px 8px", borderRadius: 6, fontSize: 9, fontFamily: MN, cursor: "pointer", background: "rgba(255,255,255,0.030)", color: C.textDim, border: `1px solid ${C.border}` }}>Relatório</button>
+                    </div>
+                  </td>
+                  <td style={{ padding: "9px 10px", borderBottom: `1px solid ${C.border}` }}>
                     {whatsLink && (
-                      <a href={`${whatsLink}?text=Olá ${u.nome}! Aqui é da equipe comparainvest 😊`} target="_blank" rel="noopener noreferrer"
-                        style={{ padding: "4px 10px", borderRadius: 6, fontSize: 10, fontFamily: MN, background: `${C.green}15`, color: C.green, border: `1px solid ${C.green}30`, textDecoration: "none" }}>
-                        💬 Enviar
+                      <a href={`${whatsLink}?text=Olá ${u.nome}! Aqui é da equipe comparainvest `} target="_blank" rel="noopener noreferrer"
+                        style={{ padding: "4px 10px", borderRadius: 6, fontSize: 10, fontFamily: MN, background: "rgba(255,255,255,0.030)", color: C.textDim, border: `1px solid ${C.border}`, textDecoration: "none" }}>
+                        Enviar
                       </a>
                     )}
                   </td>
@@ -253,7 +280,7 @@ export default function AdminDashboard() {
               );
             })}
             {total === 0 && (
-              <tr><td colSpan={10} style={{ padding: 20, textAlign: "center", color: C.textMuted, fontSize: 12 }}>Nenhum usuário encontrado.</td></tr>
+              <tr><td colSpan={12} style={{ padding: 20, textAlign: "center", color: C.textMuted, fontSize: 12 }}>Nenhum usuário encontrado.</td></tr>
             )}
           </tbody>
         </table>

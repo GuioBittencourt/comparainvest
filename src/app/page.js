@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { supabase, ADMIN_EMAIL } from "../lib/supabase";
-import { C, MN, FN, PAL, inputStyle, labelStyle, btnPrimary, btnSecondary } from "../lib/theme";
+import { C, MN, FN, TN, PAL, inputStyle, labelStyle, btnPrimary, btnSecondary } from "../lib/theme";
 import { validateCPF, formatCPF, formatPhone, validateEmail, validatePhone } from "../lib/utils";
 import { LGPD_TEXT } from "../lib/lgpd";
 import { IND_ACOES, IND_FIIS } from "../data/indicators";
@@ -18,7 +18,11 @@ import HomePage from "../components/HomePage";
 import PhilosophyQuiz, { PHILOSOPHIES } from "../components/PhilosophyQuiz";
 import PhilosophyResult from "../components/PhilosophyResult";
 import EducationHub from "../components/EducationHub";
+import SaudeFinanceira from "../components/SaudeFinanceira";
+import GestaoAtiva from "../components/GestaoAtiva";
 import CarteiraFicticia from "../components/CarteiraFicticia";
+import MeuNegocio from "../components/MeuNegocio";
+import { IconHome, IconCarteira, IconAcoes, IconProteger, IconNegocio, IconControle, IconMais } from "../components/Icons";
 
 function FieldError({ msg }) {
   if (!msg) return null;
@@ -77,9 +81,15 @@ function RegisterScreen({ onRegistered, onGoLogin }) {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <div style={{ width: "100%", maxWidth: 480, background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, padding: "36px 32px" }}>
-        <h1 style={{ fontFamily: MN, fontSize: 22, fontWeight: 800, color: C.white, margin: "0 0 4px", textAlign: "center" }}>compara<span style={{ color: C.accent }}>invest</span></h1>
+    <div style={{ minHeight: "100vh", background: "radial-gradient(circle at top, rgba(16,185,129,0.05), transparent 32%), " + C.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div style={{ width: "100%", maxWidth: 480, background: "linear-gradient(180deg, rgba(12,22,34,0.98), rgba(7,16,24,0.98))", border: `1px solid ${C.borderLight}`, borderRadius: 24, padding: "38px 32px", boxShadow: "0 30px 90px rgba(0,0,0,0.34)" }}>
+        <div style={{ textAlign: "center", margin: "0 0 8px" }}>
+  <img
+    src="/logo-completo.png"
+    alt="comparainvest"
+    style={{ width: 126, maxWidth: "100%", height: "auto", filter: "drop-shadow(0 12px 26px rgba(16,185,129,0.10))" }}
+  />
+</div>
         <p style={{ textAlign: "center", color: C.textDim, fontSize: 13, marginBottom: 28 }}>Crie sua conta gratuita</p>
         {globalErr && <div style={{ padding: "10px 14px", background: `${C.red}15`, border: `1px solid ${C.red}30`, borderRadius: 10, color: C.red, fontSize: 12, marginBottom: 16 }}>{globalErr}</div>}
         {successMsg && <div style={{ padding: "10px 14px", background: `${C.accent}15`, border: `1px solid ${C.accent}30`, borderRadius: 10, color: C.accent, fontSize: 12, marginBottom: 16 }}>{successMsg}</div>}
@@ -144,15 +154,21 @@ function LoginScreen({ onLoggedIn, onGoRegister }) {
     setError(""); setResetMsg("");
     if (!validateEmail(email)) { setError("Digite um e-mail válido."); return; }
     setLoading(true);
-    const { error: resetErr } = await supabase.auth.resetPasswordForEmail(email.toLowerCase().trim(), { redirectTo: window.location.origin });
+    const { error: resetErr } = await supabase.auth.resetPasswordForEmail(email.toLowerCase().trim(), { redirectTo: `${window.location.origin}/reset-password` });
     if (resetErr) { setError(resetErr.message); } else { setResetMsg("E-mail de recuperação enviado! Verifique sua caixa."); }
     setLoading(false);
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <div style={{ width: "100%", maxWidth: 400, background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, padding: "36px 32px" }}>
-        <h1 style={{ fontFamily: MN, fontSize: 22, fontWeight: 800, color: C.white, margin: "0 0 4px", textAlign: "center" }}>compara<span style={{ color: C.accent }}>invest</span></h1>
+    <div style={{ minHeight: "100vh", background: "radial-gradient(circle at top, rgba(16,185,129,0.05), transparent 32%), " + C.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div style={{ width: "100%", maxWidth: 400, background: "linear-gradient(180deg, rgba(12,22,34,0.98), rgba(7,16,24,0.98))", border: `1px solid ${C.borderLight}`, borderRadius: 24, padding: "38px 32px", boxShadow: "0 30px 90px rgba(0,0,0,0.34)" }}>
+        <div style={{ textAlign: "center", margin: "0 0 8px" }}>
+  <img
+    src="/logo-completo.png"
+    alt="comparainvest"
+    style={{ width: 126, maxWidth: "100%", height: "auto", filter: "drop-shadow(0 12px 26px rgba(16,185,129,0.10))" }}
+  />
+</div>
         <p style={{ textAlign: "center", color: C.textDim, fontSize: 13, marginBottom: 28 }}>{resetMode ? "Recuperar senha" : "Entrar na sua conta"}</p>
         {error && <div style={{ padding: "10px 14px", background: `${C.red}15`, border: `1px solid ${C.red}30`, borderRadius: 10, color: C.red, fontSize: 12, marginBottom: 16 }}>{error}</div>}
         {resetMsg && <div style={{ padding: "10px 14px", background: `${C.accent}15`, border: `1px solid ${C.accent}30`, borderRadius: 10, color: C.accent, fontSize: 12, marginBottom: 16 }}>{resetMsg}</div>}
@@ -174,9 +190,13 @@ export default function Home() {
   const [screen, setScreen] = useState("loading");
   const [user, setUser] = useState(null);
   const [tab, setTab] = useState("home");
+  const [menuOpen, setMenuOpen] = useState(false);
   const [quizResult, setQuizResult] = useState(null);
   const [dbAcoes, setDbAcoes] = useState(DB_A);
   const [dbFiis, setDbFiis] = useState(DB_F);
+  const [compareOpen, setCompareOpen] = useState(false);
+  const [adminTargetUser, setAdminTargetUser] = useState(null);
+  const [adminViewMode, setAdminViewMode] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -213,14 +233,40 @@ export default function Home() {
     await supabase.from("searches").insert({ user_id: user.id, ticker: sym });
   };
 
+  const limparVisualizacaoAdmin = () => {
+    setAdminTargetUser(null);
+    setAdminViewMode(null);
+  };
+
+  const abrirModuloAdmin = (targetUser, mode) => {
+    setAdminTargetUser(targetUser);
+    setAdminViewMode(mode);
+    setTab(mode === "gestao" ? "gestao-ativa" : "saude-financeira");
+  };
+
+  const navegarPara = (nextTab) => {
+    limparVisualizacaoAdmin();
+    setTab(nextTab);
+  };
+
   const handleTrack = (track) => {
-    if (track === "investimentos") {
-      // Check if user already has a philosophy
+    if (track === "quiz") {
+      setTab("quiz");
+    } else if (track === "carteira") {
+      setTab("carteira");
+    } else if (track === "comparadores" || track === "investimentos") {
       if (user?.philosophy) {
         setTab("comparadores");
       } else {
         setTab("quiz");
       }
+    } else if (track === "meu-negocio") {
+      setTab("meu-negocio");
+    } else if (track === "saude-financeira") {
+      limparVisualizacaoAdmin();
+      setTab("saude-financeira");
+    } else if (track === "educacao") {
+      setTab("educacao");
     } else {
       setTab("educacao");
     }
@@ -255,69 +301,302 @@ export default function Home() {
     return <PhilosophyResult result={storedResult} onContinue={() => setTab("comparadores")} onRefazer={() => setTab("quiz")} />;
   }
 
+const item = {
+  padding: "10px 8px",
+  borderRadius: 8,
+  cursor: "pointer",
+  fontSize: 14,
+  color: C.white,
+  transition: "all 0.2s",
+};
+
+const subItem = {
+  padding: "10px 8px 10px 18px",
+  borderRadius: 8,
+  cursor: "pointer",
+  fontSize: 14,
+  color: C.white,
+  transition: "all 0.2s"
+};
+
+const navItems = [
+  { id: "home", label: "Home", Icon: IconHome },
+  { id: "comparadores", label: "Investir", Icon: IconAcoes },
+  { id: "educacao", label: "Controle", Icon: IconControle },
+  { id: "meu-negocio", label: "Negócio", Icon: IconNegocio },
+  { id: "more", label: "Mais", Icon: IconMais },
+];
+
   return (
     <div style={{ fontFamily: FN, background: C.bg, color: C.text, minHeight: "100vh" }}>
-      {/* Header */}
-      <div style={{ padding: "24px 28px", borderBottom: `1px solid ${C.border}`, background: `linear-gradient(180deg, rgba(0,229,160,0.03) 0%, transparent 100%)` }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-          <div>
-            <h1 onClick={() => setTab("home")} style={{ fontFamily: MN, fontSize: 24, fontWeight: 800, color: C.white, margin: 0, cursor: "pointer" }}>compara<span style={{ color: C.accent }}>invest</span></h1>
-            <p style={{ color: C.textDim, fontSize: 12, margin: "4px 0 0" }}>
-              Olá, {user?.nome}!
-              {user?.philosophy && <button onClick={() => setTab("my-philosophy")} style={{ marginLeft: 8, fontSize: 10, padding: "2px 8px", borderRadius: 4, background: `${C.accent}15`, color: C.accent, fontFamily: MN, border: `1px solid ${C.accent}30`, cursor: "pointer" }} title="Ver minha filosofia">Filosofia: {user.philosophy} →</button>}
-            </p>
-          </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            {user?.is_admin && (
-              <button onClick={() => setTab("admin")} style={{ padding: "8px 16px", borderRadius: 10, fontSize: 11, fontWeight: 600, fontFamily: MN, cursor: "pointer", background: `${C.purple}15`, color: C.purple, border: `1px solid ${C.purple}30` }}>
-                🔐 Admin
-              </button>
-            )}
-            <button onClick={handleLogout} style={{ padding: "8px 16px", borderRadius: 10, fontSize: 11, fontWeight: 600, fontFamily: MN, cursor: "pointer", background: C.cardAlt, color: C.textDim, border: `1px solid ${C.border}` }}>Sair</button>
-          </div>
-        </div>
+    {menuOpen && (
+  <div
+    style={{
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100%",
+      background: "rgba(0,0,0,0.4)",
+      zIndex: 1000,
+    }}
+    onClick={() => setMenuOpen(false)}
+  >
+    <div
+      style={{
+        width: 260,
+        height: "100%",
+        background: C.card,
+        padding: 20,
+        boxShadow: "4px 0 20px rgba(0,0,0,0.4)",
+      }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div
+  style={{
+    display: "inline-flex",
+    alignItems: "center",
+    padding: "4px 8px",
+    borderRadius: 999,
+    fontSize: 9,
+    fontWeight: 700,
+    fontFamily: MN,
+    letterSpacing: "0.2px",
+    background: user?.is_premium ? `${C.accent}15` : `${C.yellow}12`,
+    color: user?.is_premium ? C.accent : C.yellow,
+    border: `1px solid ${user?.is_premium ? `${C.accent}30` : `${C.yellow}25`}`,
+    lineHeight: 1,
+    whiteSpace: "nowrap",
+    marginBottom: 18,
+  }}
+>
+  {user?.is_premium ? "Premium" : "Gratuito"}
+</div>
 
-        {/* Navigation tabs - only show when not on home */}
-        {tab !== "home" && tab !== "educacao" && tab !== "admin" && (
-          <div style={{ display: "flex", gap: 0, marginTop: 16 }}>
-            {[
-              { id: "home", label: "🏠 Início" },
-              { id: "comparadores", label: "⚔️ Comparar" },
-              { id: "acoes", label: "📈 Ações", desc: "12 ind." },
-              { id: "fiis", label: "🏢 FIIs", desc: "11 ind." },
-              { id: "rf", label: "🏦 RF", desc: "8 ind." },
-              { id: "carteira", label: "💼 Carteira" },
-            ].map((t) => (
-              <button key={t.id} onClick={() => setTab(t.id)} style={{ padding: "11px 16px", fontSize: 12, fontWeight: tab === t.id ? 600 : 400, color: tab === t.id ? C.accent : C.textDim, background: "transparent", border: "none", borderBottom: tab === t.id ? `2px solid ${C.accent}` : "2px solid transparent", cursor: "pointer", fontFamily: FN, transition: "all 0.2s" }}>
-                {t.label} {t.desc && <span style={{ fontSize: 9, color: C.textMuted }}>({t.desc})</span>}
-              </button>
-            ))}
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+
+  <div
+    onClick={() => { setTab("home"); setMenuOpen(false); }}
+    style={item}
+    onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt}
+    onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+  >
+    Home
+  </div>
+
+  <div
+  onClick={() => setCompareOpen(!compareOpen)}
+  style={{
+    ...item,
+    marginTop: 10,
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center"
+  }}
+>
+  Comparar
+  <span style={{ fontSize: 12, color: C.textDim }}>
+    {compareOpen ? "▴" : "▾"}
+  </span>
+</div>
+
+{compareOpen && (
+  <>
+    <div
+      onClick={() => { setTab("acoes"); setMenuOpen(false); }}
+      style={subItem}
+      onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt}
+      onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+    >
+      Ações
+    </div>
+
+    <div
+      onClick={() => { setTab("fiis"); setMenuOpen(false); }}
+      style={subItem}
+      onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt}
+      onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+    >
+      FIIs
+    </div>
+
+    <div
+      onClick={() => { setTab("rf"); setMenuOpen(false); }}
+      style={subItem}
+      onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt}
+      onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+    >
+      Renda Fixa
+    </div>
+  </>
+)}
+
+  <div
+    onClick={() => { setTab("carteira"); setMenuOpen(false); }}
+    style={item}
+    onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt}
+    onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+  >
+    Carteira
+  </div>
+
+  <div
+    onClick={() => { setTab("meu-negocio"); setMenuOpen(false); }}
+    style={item}
+    onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt}
+    onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+  >
+    Meu Negócio
+  </div>
+
+  {user?.philosophy && (
+    <div
+      onClick={() => { setTab("my-philosophy"); setMenuOpen(false); }}
+      style={item}
+      onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt}
+      onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+    >
+      Minha Filosofia
+    </div>
+  )}
+
+  {user?.is_admin && (
+    <div
+      onClick={() => { setTab("admin"); setMenuOpen(false); }}
+      style={item}
+      onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt}
+      onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+    >
+      Admin
+    </div>
+  )}
+
+  <div
+    onClick={handleLogout}
+    style={{ ...item, marginTop: 10 }}
+    onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt}
+    onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+  >
+    Sair
+  </div>
+
+</div>
+    </div>
+  </div>
+)}
+            {/* Header */}
+      <div
+        style={{
+          padding: "24px 28px",
+          borderBottom: `1px solid ${C.border}`,
+          background: "linear-gradient(180deg, rgba(16,185,129,0.035) 0%, rgba(7,16,24,0.96) 100%)",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 12,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+
+            <div>
+              <div
+                onClick={() => setTab("home")}
+                style={{ cursor: "pointer", display: "flex", alignItems: "center" }}
+              >
+                <img
+                  src="/logo-texto.png"
+                  alt="comparainvest"
+                  style={{ height: 32, width: "auto" }}
+                />
+              </div>
+
+              <p style={{ color: C.textDim, fontSize: 12, margin: "4px 0 0" }}>
+  Olá, {user?.nome}!
+</p>
+            </div>
           </div>
-        )}
+
+          <div />
+        </div>
       </div>
 
       {/* Content */}
-      <div style={{ padding: tab === "home" ? 0 : "24px 28px", maxWidth: tab === "admin" ? 1100 : 960, margin: "0 auto" }}>
-        {tab === "home" && <HomePage user={user} onTrack={handleTrack} />}
+      <div style={{ padding: tab === "home" ? "0 0 86px" : "24px 28px 98px", maxWidth: tab === "admin" ? 1100 : 960, margin: "0 auto" }}>
+        {(() => {
+          const pillLabel = {comparadores:"Comparar",acoes:"Ações",fiis:"FIIs",rf:"Renda Fixa",carteira:"Carteira",educacao:"Educação Financeira","saude-financeira":"Saúde Financeira","gestao-ativa":"Gestão Ativa","meu-negocio":"Meu Negócio","my-philosophy":"Minha Filosofia",admin:"Admin"}[tab];
+          return pillLabel ? (
+  <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+    <div
+      style={{
+        fontSize: 13,
+        fontFamily: MN,
+        color: C.white,
+        background: "rgba(255,255,255,0.06)",
+        padding: "6px 14px",
+        borderRadius: 999,
+        border: `1px solid ${C.border}`,
+        letterSpacing: "0.8px",
+      }}
+    >
+      {pillLabel}
+    </div>
+  </div>
+          ) : null;
+        })()}
+{adminTargetUser && (
+          <div style={{ marginBottom: 14, padding: "10px 14px", borderRadius: 14, border: `1px solid ${adminTargetUser.is_aluno ? C.accentBorder : C.border}`, background: adminTargetUser.is_aluno ? `${C.accent}0D` : "rgba(255,255,255,0.030)", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <div>
+              <div style={{ fontSize: 10, fontFamily: MN, color: adminTargetUser.is_aluno ? C.accent : C.textMuted, textTransform: "uppercase", letterSpacing: 1 }}>{adminTargetUser.is_aluno ? "Modo ADM — aluno" : "Modo ADM — observação"}</div>
+              <div style={{ color: C.white, fontWeight: 750, fontSize: 13 }}>{adminTargetUser.nome} {adminTargetUser.sobrenome || ""}</div>
+              <div style={{ color: C.textDim, fontSize: 11 }}>{adminTargetUser.is_aluno ? "Você pode editar Financeiro, Extrato Futuro e Gestão Ativa." : "Usuário não aluno: apenas visualização."}</div>
+            </div>
+            <button onClick={() => { limparVisualizacaoAdmin(); setTab("admin"); }} style={{ padding: "7px 12px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.cardAlt, color: C.textDim, fontFamily: MN, fontSize: 10, cursor: "pointer" }}>← Voltar ao ADM</button>
+          </div>
+        )}
+{tab === "home" && <HomePage user={user} onTrack={handleTrack} />}
 
-        {tab === "educacao" && <EducationHub onBack={() => setTab("home")} user={user} />}
+        {tab === "educacao" && <EducationHub onBack={() => setTab("home")} user={user} onTrack={handleTrack} />}
+
+        {tab === "saude-financeira" && (
+          <SaudeFinanceira
+            user={user}
+            targetUser={adminTargetUser}
+            adminMode={!!adminTargetUser}
+            initialDashboardTab={adminViewMode === "extrato" ? "extrato" : adminViewMode === "relatorio" ? "relatorio" : "financeiro"}
+            onBack={() => adminTargetUser ? (limparVisualizacaoAdmin(), setTab("admin")) : setTab("educacao")}
+          />
+        )}
+
+        {tab === "gestao-ativa" && (
+          <GestaoAtiva
+            user={user}
+            targetUser={adminTargetUser}
+            adminMode={!!adminTargetUser}
+            readOnly={!!adminTargetUser && !adminTargetUser.is_aluno}
+          />
+        )}
 
         {tab === "comparadores" && (
           <div style={{ padding: "32px 0" }}>
-            <h2 style={{ fontFamily: MN, fontSize: 18, fontWeight: 800, color: C.white, margin: "0 0 8px" }}>⚔️ Hub de Comparação</h2>
+            <h2 style={{ fontFamily: FN, fontSize: 28, fontWeight: 600, letterSpacing: "-0.04em", color: C.white, margin: "0 0 8px" }}>Hub de Comparação</h2>
             <p style={{ color: C.textDim, fontSize: 13, marginBottom: 24, lineHeight: 1.7 }}>
               Escolha o tipo de ativo que deseja comparar.
-              {!user?.philosophy && <span style={{ display: "block", marginTop: 8 }}><button onClick={() => setTab("quiz")} style={{ background: "none", border: "none", color: C.accent, fontSize: 13, cursor: "pointer", fontFamily: FN, padding: 0, textDecoration: "underline" }}>💡 Faça o quiz de filosofia</button> para receber sugestões personalizadas de carteira.</span>}
+              {!user?.philosophy && <span style={{ display: "block", marginTop: 8 }}><button onClick={() => setTab("quiz")} style={{ background: "none", border: "none", color: C.accent, fontSize: 13, cursor: "pointer", fontFamily: FN, padding: 0, textDecoration: "underline" }}>Faça o quiz de filosofia</button> para receber sugestões personalizadas de carteira.</span>}
             </p>
 
             <BannerRiqueza />
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               {[
-                { id: "acoes", icon: "📈", title: "Ações", desc: "12 indicadores R2A", color: C.accent },
-                { id: "fiis", icon: "🏢", title: "Fundos Imobiliários", desc: "11 indicadores", color: C.blue },
-                { id: "rf", icon: "🏦", title: "Renda Fixa", desc: "8 indicadores", color: C.orange },
-                { id: "cripto", icon: "₿", title: "Cripto", desc: "Em breve", color: C.purple, disabled: true },
+                { id: "acoes", title: "Ações", desc: "12 indicadores R2A", color: C.accent },
+                { id: "fiis", title: "Fundos Imobiliários", desc: "11 indicadores", color: C.blue },
+                { id: "rf", title: "Renda Fixa", desc: "8 indicadores", color: C.accent },
+                { id: "cripto", title: "Cripto", desc: "Em breve", color: C.textDim, disabled: true },
               ].map((c) => (
                 <button key={c.id} onClick={() => !c.disabled && setTab(c.id)}
                   style={{
@@ -329,10 +608,10 @@ export default function Home() {
                   onMouseEnter={(e) => { if (!c.disabled) e.currentTarget.style.borderColor = c.color; }}
                   onMouseLeave={(e) => { if (!c.disabled) e.currentTarget.style.borderColor = `${c.color}30`; }}
                 >
-                  <div style={{ fontSize: 32, marginBottom: 8 }}>{c.icon}</div>
-                  <div style={{ fontFamily: MN, fontSize: 14, fontWeight: 700, color: C.white }}>{c.title}</div>
+                  
+                  <div style={{ fontFamily: FN, fontSize: 14, fontWeight: 600, color: C.white }}>{c.title}</div>
                   <div style={{ fontSize: 11, color: C.textDim, marginTop: 4 }}>{c.desc}</div>
-                  {c.disabled && <div style={{ fontSize: 9, color: C.yellow, fontFamily: MN, marginTop: 8 }}>🔒 Em breve</div>}
+                  {c.disabled && <div style={{ fontSize: 9, color: C.yellow, fontFamily: MN, marginTop: 8 }}>Em breve</div>}
                 </button>
               ))}
             </div>
@@ -361,13 +640,66 @@ export default function Home() {
         )}
         {tab === "rf" && <ComparadorRF user={user} onSearch={trackSearch} />}
         {tab === "carteira" && <CarteiraFicticia user={user} onGoCompare={() => setTab("comparadores")} />}
-        {tab === "admin" && user?.is_admin && <AdminDashboard />}
+        {tab === "meu-negocio" && <MeuNegocio user={user} />}
+        {tab === "admin" && user?.is_admin && <AdminDashboard onOpenUserModule={abrirModuloAdmin} />}
       </div>
 
+      {tab !== "admin" && (
+        <div
+          style={{
+            position: "fixed",
+            left: 16,
+            right: 16,
+            bottom: 14,
+            zIndex: 900,
+            background: "linear-gradient(180deg, rgba(15,25,38,0.94), rgba(7,16,24,0.96))",
+            border: `1px solid ${C.borderLight}`,
+            borderRadius: 20,
+            boxShadow: "0 18px 60px rgba(0,0,0,0.40)",
+            backdropFilter: "blur(14px)",
+            display: "grid",
+            gridTemplateColumns: "repeat(5, 1fr)",
+            padding: "8px 8px",
+            maxWidth: 760,
+            margin: "0 auto",
+          }}
+        >
+          {navItems.map(({ id, label, Icon }) => {
+            const active = id !== "more" && (tab === id || (id === "comparadores" && ["comparadores", "acoes", "fiis", "rf"].includes(tab)));
+            return (
+              <button
+                key={id}
+                onClick={() => id === "more" ? setMenuOpen(true) : setTab(id)}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: active ? C.accent : C.textDim,
+                  fontFamily: FN,
+                  fontSize: 10,
+                  cursor: "pointer",
+                  padding: "7px 4px 5px",
+                  borderRadius: 14,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 4,
+                  position: "relative",
+                  transition: "color .18s ease, transform .18s ease, background .18s ease",
+                }}
+              >
+                <span style={{ color: active ? C.accent : C.textDim }}><Icon size={19} /></span>
+                <span>{label}</span>
+                {active && <span style={{ position: "absolute", left: "28%", right: "28%", bottom: 0, height: 2, borderRadius: 2, background: C.accent }} />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* Footer */}
-      <div style={{ padding: "16px 28px", borderTop: `1px solid ${C.border}`, textAlign: "center", fontSize: 10, color: C.textMuted, fontFamily: MN }}>
-        comparainvest v3.0 — Next.js + Supabase + LGPD + Comparador R2A
+      <div style={{ padding: "16px 28px 96px", borderTop: `1px solid ${C.border}`, textAlign: "center", fontSize: 10, color: C.textMuted, fontFamily: MN }}>
+        COMPARAINVEST © • Desde 2026 — LGPD • Comparador B3 
       </div>
     </div>
-  );
+   );
 }

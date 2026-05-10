@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { C, MN, FN, PAL } from "../lib/theme";
+import { C, MN, FN, TN, PAL, SERIF, btnPrimary, btnPurple, btnSecondary } from "../lib/theme";
 import { ResponsiveContainer, PieChart, Pie, Cell, Legend, Tooltip as RTooltip } from "recharts";
 import SponsorSlot from "./SponsorSlot";
 import { PhilosophyShareCard } from "./ShareCard";
@@ -28,11 +28,11 @@ export default function PhilosophyResult({ result, onContinue, onRefazer }) {
         }}>
           <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${p.color}, transparent)` }} />
 
-          <div style={{ fontSize: 56, marginBottom: 8 }}>{p.icon}</div>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 8, color: p.color }}>{p.icon}</div>
           <div style={{ fontFamily: MN, fontSize: 11, color: C.textMuted, textTransform: "uppercase", letterSpacing: "2px", marginBottom: 4 }}>
             Sua filosofia de investidor
           </div>
-          <h1 style={{ fontFamily: MN, fontSize: 32, fontWeight: 800, color: p.color, margin: "0 0 8px" }}>
+          <h1 style={{ fontFamily: SERIF, fontSize: 34, fontWeight: 700, color: C.white, margin: "0 0 8px" }}>
             {p.name}
           </h1>
           <p style={{ fontSize: 14, color: C.textDim, lineHeight: 1.7, maxWidth: 400, margin: "0 auto 16px" }}>
@@ -77,7 +77,7 @@ export default function PhilosophyResult({ result, onContinue, onRefazer }) {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 10, marginTop: 16 }}>
             {data.map((d) => (
               <div key={d.name} style={{ padding: "10px", background: `${d.fill}10`, borderRadius: 10, border: `1px solid ${d.fill}25`, textAlign: "center" }}>
-                <div style={{ fontFamily: MN, fontSize: 22, fontWeight: 800, color: d.fill }}>{d.value}%</div>
+                <div style={{ fontFamily: MN, fontSize: 22, fontWeight: 700, color: d.fill }}>{d.value}%</div>
                 <div style={{ fontSize: 11, color: C.textDim, marginTop: 2 }}>{d.name}</div>
               </div>
             ))}
@@ -90,9 +90,9 @@ export default function PhilosophyResult({ result, onContinue, onRefazer }) {
         <button
           onClick={() => setShowShare(true)}
           style={{
-            width: "100%", padding: "14px", background: `${p.color}15`,
-            border: `1px solid ${p.color}30`, borderRadius: 14, fontSize: 14, fontWeight: 700,
-            fontFamily: FN, cursor: "pointer", marginBottom: 10, color: p.color,
+            ...btnPrimary,
+            marginBottom: 10,
+            boxShadow: "0 10px 26px rgba(16,185,129,0.12)",
           }}
         >
           Compartilhar meu resultado
@@ -102,7 +102,6 @@ export default function PhilosophyResult({ result, onContinue, onRefazer }) {
           <PhilosophyShareCard
             philosophy={p}
             score={result.score}
-            allocation={{ rf: p.rf, fii: p.fii, acoes: p.acoes, cripto: p.cripto }}
             onClose={() => setShowShare(false)}
           />
         )}
@@ -111,12 +110,11 @@ export default function PhilosophyResult({ result, onContinue, onRefazer }) {
         <button
           onClick={onContinue}
           style={{
-            width: "100%", padding: "16px", background: C.accent, color: C.bg,
-            border: "none", borderRadius: 14, fontSize: 16, fontWeight: 700,
-            fontFamily: FN, cursor: "pointer", marginBottom: 12,
+            ...btnPurple,
+            marginBottom: 12,
           }}
         >
-          Montar minha carteira →
+          Montar minha carteira
         </button>
 
         {/* Refazer quiz */}
@@ -124,9 +122,8 @@ export default function PhilosophyResult({ result, onContinue, onRefazer }) {
           <button
             onClick={onRefazer}
             style={{
-              width: "100%", padding: "12px", background: "transparent",
-              border: `1px solid ${C.border}`, borderRadius: 12, fontSize: 13,
-              color: C.textDim, fontFamily: FN, cursor: "pointer", marginBottom: 12,
+              ...btnSecondary,
+              marginBottom: 12,
             }}
           >
             Refazer o quiz de filosofia

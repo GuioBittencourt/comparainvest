@@ -1,5 +1,5 @@
 "use client";
-import { C, MN, FN } from "../lib/theme";
+import { C, MN, FN, TN } from "../lib/theme";
 import { fmtBRL, fmtInd } from "../lib/utils";
 
 export default function AssetDetail({ asset, indicators, color }) {
@@ -16,12 +16,12 @@ export default function AssetDetail({ asset, indicators, color }) {
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
         <div>
-          <div style={{ fontFamily: MN, fontSize: 22, fontWeight: 800, color: C.white }}>{asset.symbol}</div>
+          <div style={{ fontFamily: TN, fontSize: 24, fontWeight: 400, color: C.white }}>{asset.symbol}</div>
           <div style={{ fontSize: 13, color: C.textDim, marginTop: 2 }}>{asset.shortName}</div>
           {asset.sector && <div style={{ fontSize: 11, color: color, fontFamily: MN, marginTop: 4 }}>{asset.sector}</div>}
         </div>
         <div style={{ textAlign: "right" }}>
-          <div style={{ fontFamily: MN, fontSize: 22, fontWeight: 800, color: C.white }}>{fmtBRL(asset.regularMarketPrice)}</div>
+          <div style={{ fontFamily: TN, fontSize: 24, fontWeight: 400, color: C.white }}>{fmtBRL(asset.regularMarketPrice)}</div>
         </div>
       </div>
 
@@ -32,7 +32,7 @@ export default function AssetDetail({ asset, indicators, color }) {
           fontSize: 12, color: C.textDim, lineHeight: 1.7, marginBottom: 16,
           border: `1px solid ${C.border}`,
         }}>
-          📋 {asset.about}
+          {asset.about}
         </div>
       )}
 
@@ -64,7 +64,7 @@ export default function AssetDetail({ asset, indicators, color }) {
             transition: "border-color 0.2s",
           }}
         >
-          📄 Ver relatórios e RI da empresa →
+          Ver relatórios e RI da empresa →
         </a>
       )}
     </div>

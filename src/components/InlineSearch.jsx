@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { C, MN, FN, PAL } from "../lib/theme";
+import { C, MN, FN, TN, PAL } from "../lib/theme";
 import { fmtBRL } from "../lib/utils";
 
 export default function InlineSearch({ index, onSelect, sectorLock, selected, placeholder, db }) {

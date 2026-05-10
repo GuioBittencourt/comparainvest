@@ -1,20 +1,21 @@
 "use client";
-import { useState, useMemo } from "react";
-import { C, MN, FN, PAL } from "../lib/theme";
+import { useState, useMemo, useEffect } from "react";
+import { syncCarteira, carregarCarteiraRemoto } from "../lib/supabaseSync";
+import { C, MN, FN, TN, PAL, heroStyle } from "../lib/theme";
 import { fmtBRL, numFmt } from "../lib/utils";
 import { ResponsiveContainer, PieChart, Pie, Cell, Legend, Tooltip as RTooltip, BarChart, Bar, XAxis, YAxis } from "recharts";
 import { DB_A } from "../data/acoes";
 import { DB_F } from "../data/fiis";
-import UpgradeModal from "./UpgradeModal";
+import PremiumGate from "./PremiumGate";
 import SponsorSlot from "./SponsorSlot";
 
 const ALL_ASSETS = { ...DB_A, ...DB_F };
 
 const CATEGORIES = {
-  rf: { label: "Renda Fixa", icon: "🏦", color: C.blue },
-  fii: { label: "FIIs", icon: "🏢", color: C.accent },
-  acoes: { label: "Ações", icon: "📈", color: C.orange },
-  cripto: { label: "Cripto", icon: "₿", color: C.purple },
+  rf: { label: "Renda Fixa", icon: "", color: C.blue },
+  fii: { label: "FIIs", icon: "", color: C.accent },
+  acoes: { label: "Ações", icon: "", color: C.purple },
+  cripto: { label: "Cripto", icon: "₿", color: C.yellow },
 };
 
 const PROJECTIONS = [1, 5, 10, 20, 30];
@@ -29,21 +30,37 @@ function getCategory(symbol) {
 }
 
 export default function CarteiraFicticia({ user, onGoCompare }) {
-  const [assets, setAssets] = useState([]);
-  const [showAdd, setShowAdd] = useState(false);
-  const [searchQ, setSearchQ] = useState("");
-  const [showUpgrade, setShowUpgrade] = useState(false);
+  const userId = user?.id || null;
+  const [assets, setAssets] = useState(() => {
+  try {
+    return JSON.parse(localStorage.getItem("comparai_cart") || "[]");
+  } catch {
+    return [];
+  }
+});
 
-  // Load cart from localStorage (populated by long press in comparator)
-  useState(() => {
-    try {
-      const cart = JSON.parse(localStorage.getItem("comparai_cart") || "[]");
-      if (cart.length > 0) setAssets(cart);
-    } catch {}
-  });
-  const [rfManual, setRfManual] = useState([]);
-  const [rfName, setRfName] = useState("");
-  const [rfValue, setRfValue] = useState("");
+  // Carrega do Supabase na montagem se logado
+  useEffect(() => {
+    if (!userId) return;
+    carregarCarteiraRemoto(userId).then((remoto) => {
+      if (remoto && Array.isArray(remoto)) {
+        try { localStorage.setItem("comparai_cart", JSON.stringify(remoto)); } catch {}
+        setAssets(remoto);
+      }
+    });
+  }, [userId]);
+const [showAdd, setShowAdd] = useState(false);
+const [searchQ, setSearchQ] = useState("");
+const [showUpgrade, setShowUpgrade] = useState(false);
+const [rfManual, setRfManual] = useState([]);
+const [rfName, setRfName] = useState("");
+const [rfValue, setRfValue] = useState("");
+  useEffect(() => {
+  try {
+    localStorage.setItem("comparai_cart", JSON.stringify(assets));
+    if (userId) syncCarteira(userId, assets);
+  } catch {}
+}, [assets, userId]);
 
   const isPremium = user?.is_premium || user?.is_admin;
 
@@ -131,9 +148,9 @@ export default function CarteiraFicticia({ user, onGoCompare }) {
 
   return (
     <div>
-      {showUpgrade && <UpgradeModal onClose={() => setShowUpgrade(false)} message="Monte sua carteira completa com ativos ilimitados. Faça upgrade para Premium!" />}
+      {showUpgrade && <PremiumGate onClose={() => setShowUpgrade(false)} context="carteira" />}
 
-      <h2 style={{ fontFamily: MN, fontSize: 18, fontWeight: 800, color: C.white, margin: "0 0 8px" }}>💼 Minha Carteira Fictícia</h2>
+      <h2 style={heroStyle}>Minha Carteira Fictícia</h2>
       <p style={{ color: C.textDim, fontSize: 13, marginBottom: 24, lineHeight: 1.7 }}>
         Monte sua carteira simulada, defina valores mensais e veja as projeções de patrimônio e renda passiva.
         {user?.philosophy && <span style={{ color: C.accent }}> Sua filosofia: {user.philosophy}</span>}
@@ -178,7 +195,7 @@ export default function CarteiraFicticia({ user, onGoCompare }) {
             style={{ flex: 1, padding: "10px 14px", background: C.cardAlt, border: `1px solid ${C.border}`, borderRadius: 10, color: C.text, fontSize: 12, fontFamily: FN, outline: "none" }} />
           <input value={rfValue} onChange={(e) => setRfValue(e.target.value)} placeholder="R$/mês" type="number"
             style={{ width: 100, padding: "10px 14px", background: C.cardAlt, border: `1px solid ${C.border}`, borderRadius: 10, color: C.text, fontSize: 12, fontFamily: MN, outline: "none" }} />
-          <button onClick={addRfManual} style={{ padding: "10px 16px", borderRadius: 10, background: `${C.blue}15`, color: C.blue, border: `1px solid ${C.blue}30`, fontSize: 12, fontFamily: MN, cursor: "pointer" }}>+</button>
+          <button onClick={addRfManual} style={{ padding: "10px 16px", borderRadius: 10, background: `${C.accent}12`, color: C.accent, border: `1px solid ${C.accent}25`, fontSize: 12, fontFamily: MN, cursor: "pointer" }}>+</button>
         </div>
       </div>
 
@@ -219,7 +236,7 @@ export default function CarteiraFicticia({ user, onGoCompare }) {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
           {/* Sua alocação */}
           <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 20 }}>
-            <div style={{ fontFamily: MN, fontSize: 11, color: C.textDim, marginBottom: 12, textAlign: "center" }}>📊 SUA ALOCAÇÃO</div>
+            <div style={{ fontFamily: MN, fontSize: 11, color: C.textDim, marginBottom: 12, textAlign: "center" }}>SUA ALOCAÇÃO</div>
             {pieData.length > 0 ? (
               <ResponsiveContainer width="100%" height={180}>
                 <PieChart>
@@ -240,7 +257,7 @@ export default function CarteiraFicticia({ user, onGoCompare }) {
 
           {/* Sugerida pela filosofia */}
           <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 20 }}>
-            <div style={{ fontFamily: MN, fontSize: 11, color: C.textDim, marginBottom: 12, textAlign: "center" }}>🎯 SUGERIDA ({user?.philosophy || "padrão"})</div>
+            <div style={{ fontFamily: MN, fontSize: 11, color: C.textDim, marginBottom: 12, textAlign: "center" }}>SUGERIDA ({user?.philosophy || "padrão"})</div>
             <ResponsiveContainer width="100%" height={180}>
               <PieChart>
                 <Pie
@@ -266,7 +283,7 @@ export default function CarteiraFicticia({ user, onGoCompare }) {
       {/* Projections */}
       {totalMensal > 0 && (
         <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 24, marginBottom: 16 }}>
-          <div style={{ fontFamily: MN, fontSize: 12, color: C.textDim, marginBottom: 4, textAlign: "center" }}>🔮 PROJEÇÕES — JUROS COMPOSTOS</div>
+          <div style={{ fontFamily: MN, fontSize: 12, color: C.textDim, marginBottom: 4, textAlign: "center" }}>PROJEÇÕES — JUROS COMPOSTOS</div>
           <div style={{ fontSize: 11, color: C.textMuted, textAlign: "center", marginBottom: 20 }}>
             Investindo R$ {numFmt(totalMensal, 0)}/mês | Retorno médio estimado: {numFmt(weightedRate * 100, 1)}% a.a.
           </div>
@@ -330,13 +347,13 @@ export default function CarteiraFicticia({ user, onGoCompare }) {
       {/* Empty state */}
       {assets.length === 0 && (
         <div style={{ textAlign: "center", padding: "40px 20px" }}>
-          <div style={{ fontSize: 48, marginBottom: 12 }}>💼</div>
+          
           <div style={{ fontSize: 16, fontWeight: 600, color: C.white, marginBottom: 8 }}>Sua carteira está vazia</div>
           <div style={{ fontSize: 13, color: C.textDim, maxWidth: 400, margin: "0 auto", lineHeight: 1.7, marginBottom: 20 }}>
             Adicione ações, FIIs e renda fixa acima, defina quanto pretende investir em cada por mês, e veja as projeções de patrimônio e renda passiva com juros compostos.
           </div>
           <button onClick={onGoCompare} style={{ padding: "12px 24px", borderRadius: 12, fontSize: 13, fontFamily: MN, cursor: "pointer", background: `${C.accent}15`, color: C.accent, border: `1px solid ${C.accent}30` }}>
-            ⚔️ Ir para o Comparador
+            Ir para o Comparador
           </button>
         </div>
       )}

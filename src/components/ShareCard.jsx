@@ -1,6 +1,6 @@
 "use client";
-import { useRef, useCallback } from "react";
-import { C, MN } from "../lib/theme";
+import { useRef, useCallback, cloneElement, isValidElement } from "react";
+import { C, MN, TN } from "../lib/theme";
 
 /* ═══════════════════════════════════════
    CAPTURA (ANTI-IMAGEM PRETA)
@@ -18,7 +18,7 @@ async function cardToCanvas(cardRef) {
     await wait(150);
 
     const canvas = await html2canvas(cardRef, {
-      backgroundColor: "#06090F",
+      backgroundColor: "#071018",
       scale: 2.5,
       useCORS: true,
     });
@@ -82,7 +82,12 @@ https://comparainvest.vercel.app`;
         <div ref={cardRef} style={card}>
           <div style={title}>MINHA FILOSOFIA</div>
 
-          <div style={{ fontSize: 42 }}>{p.icon}</div>
+          {/* Renderiza o ícone SVG da filosofia em tamanho destacado.
+              p.icon vem de PHILOSOPHIES como <IconX size={48} />;
+              clonamos para forçar size maior no card de share. */}
+          <div style={{ display: "flex", justifyContent: "center", margin: "8px 0" }}>
+            {isValidElement(p.icon) ? cloneElement(p.icon, { size: 96 }) : p.icon}
+          </div>
 
           <div style={{ ...big, color: p.color }}>{p.name}</div>
 
@@ -112,7 +117,7 @@ https://comparainvest.vercel.app`;
 export function BattleShareCard({ ranked, onClose }) {
   const cardRef = useRef(null);
 
-  const medals = ["🥇", "🥈", "🥉"];
+  const medals = ["1º", "2º", "3º"];
   const top3 = ranked.slice(0, 3);
   const winner = ranked[0];
 
@@ -140,7 +145,7 @@ https://comparainvest.vercel.app`;
           {/* Título */}
           <div style={title}>BATALHA DE ATIVOS</div>
 
-          {/* 🟢 TICKER GRANDE */}
+          {/* TICKER GRANDE */}
           <div
             style={{
               marginTop: 12,
@@ -221,10 +226,12 @@ const box = {
 };
 
 const card = {
-  background: "#06090F",
+  background: C.bg,
   padding: 20,
-  borderRadius: 16,
+  borderRadius: 22,
   textAlign: "center",
+  border: `1px solid ${C.border}`,
+  boxShadow: "0 24px 80px rgba(0,0,0,0.32)",
 };
 
 const title = {
@@ -236,7 +243,7 @@ const title = {
 
 const big = {
   fontSize: 24,
-  fontWeight: 800,
+  fontWeight: 700,
 };
 
 const desc = {
@@ -254,16 +261,16 @@ const buttons = {
 const btnPrimary = {
   flex: 1,
   padding: 12,
-  borderRadius: 10,
-  background: C.accent,
-  color: C.bg,
+  borderRadius: 13,
+  background: "linear-gradient(180deg, #20C982, #0E9F6E)",
+  color: "#06110C",
   border: "none",
   cursor: "pointer",
 };
 
 const btn = {
   padding: 12,
-  borderRadius: 10,
+  borderRadius: 13,
   background: C.cardAlt,
   border: `1px solid ${C.border}`,
   cursor: "pointer",
