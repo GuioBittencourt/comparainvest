@@ -13,13 +13,11 @@ import SaudeFinanceiraDashboard from "./SaudeFinanceiraDashboard";
 
 const ORDEM = BLOCOS_SAUDE.map((b) => b.id);
 
-export default function SaudeFinanceira({ onBack, user }) {
+export default function SaudeFinanceira({ onBack, user, targetUser = null }) {
   const userId = user?.id || null;
-  // Inicia com localStorage (rápido), depois tenta Supabase
   const [data, setData] = useState(() => carregarSaudeFinanceira());
   const [carregado, setCarregado] = useState(false);
 
-  // Carrega do Supabase na montagem (se logado)
   useEffect(() => {
     carregarSaudeFinanceiraAsync(userId).then((remoto) => {
       setData(remoto);
@@ -31,7 +29,6 @@ export default function SaudeFinanceira({ onBack, user }) {
   const blocoAtual = ORDEM[idx] || "entradas";
   const progresso = Math.round(((idx + 1) / ORDEM.length) * 100);
 
-  // Salva local + Supabase a cada mudança
   useEffect(() => {
     if (!carregado) return;
     salvarSaudeFinanceira(data, userId);
@@ -64,7 +61,7 @@ export default function SaudeFinanceira({ onBack, user }) {
           data={data}
           setData={setData}
           user={user}
-          targetUser={targetUser || null}
+          targetUser={targetUser}
           onEdit={() => setData((p) => ({ ...p, questionarioCompleto: false, stepAtual: "entradas" }))}
         />
       ) : (
