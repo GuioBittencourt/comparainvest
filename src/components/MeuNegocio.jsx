@@ -79,14 +79,25 @@ export default function MeuNegocio({ user }) {
   useEffect(() => { setNegocios(loadAll()); setLoaded(true); }, []);
   // Carrega do Supabase na montagem se logado
   useEffect(() => {
-    if (!userId) return;
-    carregarNegociosRemoto(userId).then((remoto) => {
-      if (remoto && Array.isArray(remoto)) {
-        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(remoto)); } catch {}
+  if (!userId) return;
+  carregarNegociosRemoto(userId).then((remoto) => {
+    if (!remoto || !Array.isArray(remoto)) return;
+    // Só substitui se o Supabase tiver dados mais recentes ou localStorage estiver vazio
+    const local = loadAll();
+    if (local.length === 0) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(remoto));
+      setNegocios(remoto);
+    } else if (remoto.length > 0) {
+      // Compara pelo updatedAt do item mais recente
+      const localMaisRecente = Math.max(...local.map(n => new Date(n.createdAt || 0).getTime()));
+      const remoteMaisRecente = Math.max(...remoto.map(n => new Date(n.createdAt || 0).getTime()));
+      if (remoteMaisRecente > localMaisRecente) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(remoto));
         setNegocios(remoto);
       }
-    });
-  }, [userId]);
+    }
+  });
+}, [userId]);
 
   useEffect(() => { if (loaded) saveAll(negocios, userId); }, [negocios, loaded, userId]);
 
