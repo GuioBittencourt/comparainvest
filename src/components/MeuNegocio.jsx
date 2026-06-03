@@ -551,30 +551,28 @@ export default function MeuNegocio({ user }) {
       </div>
 
       {/* Saldo Inicial do Mês */}
-      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 18, marginBottom: 14 }}>
-        <div style={{ fontSize: 11, color: C.textMuted, fontFamily: MN, letterSpacing: "1px", marginBottom: 8 }}>SALDO INICIAL DO MÊS</div>
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(160px, 240px) minmax(0, 1fr)", gap: 12, alignItems: "center" }}>
-          <input
-            type="number"
-            value={saldoInicialMes}
-            onChange={(e) => {
-              const value = Number(e.target.value || 0);
-              updateActive((n) => ({
-                ...n,
-                saldoInicial: {
-                  ...(n.saldoInicial || {}),
-                  [displayMonth]: value,
-                },
-              }));
-            }}
-            placeholder="0"
-            style={{ width: "100%", padding: "11px 13px", background: C.cardAlt, border: `1px solid ${C.border}`, borderRadius: 10, color: C.white, fontSize: 14, fontFamily: MN, outline: "none", boxSizing: "border-box" }}
-          />
-          <div style={{ fontSize: 12, color: C.textDim, lineHeight: 1.55 }}>
-            Capital de giro, sobra do mês anterior ou valor já existente em caixa. Esse valor entra no saldo final do mês, sem alterar receitas ou despesas.
-          </div>
-        </div>
-      </div>
+<div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 18, marginBottom: 14 }}>
+  <div style={{ fontSize: 11, color: C.textMuted, fontFamily: MN, letterSpacing: "1px", marginBottom: 4 }}>SALDO INICIAL DO MÊS</div>
+  <div style={{ fontSize: 12, color: C.textDim, lineHeight: 1.55, marginBottom: 10 }}>
+    Capital de giro, sobra do mês anterior ou valor em caixa. Entra no saldo final sem alterar receitas ou despesas.
+  </div>
+  <input
+    type="number"
+    value={saldoInicialMes}
+    onChange={(e) => {
+      const value = Number(e.target.value || 0);
+      updateActive((n) => ({
+        ...n,
+        saldoInicial: {
+          ...(n.saldoInicial || {}),
+          [displayMonth]: value,
+        },
+      }));
+    }}
+    placeholder="0"
+    style={{ width: "100%", padding: "11px 13px", background: C.cardAlt, border: `1px solid ${C.border}`, borderRadius: 10, color: C.white, fontSize: 14, fontFamily: MN, outline: "none", boxSizing: "border-box" }}
+  />
+</div>
 
       {/* Meta progress */}
       {active.meta > 0 && (
