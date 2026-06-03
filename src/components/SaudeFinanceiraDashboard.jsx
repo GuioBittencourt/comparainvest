@@ -435,7 +435,7 @@ export default function SaudeFinanceiraDashboard({ data, setData, onEdit, user, 
   }[aba];
 
   return (
-    <div style={{ display: "grid", gap: 16, width: "100%", maxWidth: "100%", boxSizing: "border-box" }}>
+    <div style={{ display: "grid", gap: 16, width: "100%", boxSizing: "border-box", minWidth: 0 }}>
       {showGate && <PremiumGate context="saudeFinanceira" onClose={() => setShowGate(false)} />}
       {showVirada && isAdmin && (
         <ViradasMes

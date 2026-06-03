@@ -34,7 +34,7 @@ button, input, textarea, select { font: inherit; }
     padding: 24px 28px 98px;
   }
   .page-content-wide {
-    max-width: 1100px;
+    max-width: 1200px;
     padding: 24px 28px 98px;
   }
   .page-content-admin {
