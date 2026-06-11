@@ -526,7 +526,8 @@ const navItems = [
       </div>
 
       {/* Content */}
-      <div style={{ padding: tab === "home" ? "0 0 86px" : "24px 28px 98px", maxWidth: tab === "admin" ? 1100 : 960, margin: "0 auto" }}>
+            <div style={{ padding: tab === "home" ? "0 0 86px" : "24px 28px 98px", maxWidth: tab === "admin" ? 1100 : tab === "saude-financeira" ? 1200 : 960, margin: "0 auto" }}>
+
         {(() => {
           const pillLabel = {comparadores:"Comparar",acoes:"Ações",fiis:"FIIs",rf:"Renda Fixa",carteira:"Carteira",educacao:"Educação Financeira","saude-financeira":"Saúde Financeira","gestao-ativa":"Gestão Ativa","meu-negocio":"Meu Negócio","my-philosophy":"Minha Filosofia",admin:"Admin"}[tab];
           return pillLabel ? (
