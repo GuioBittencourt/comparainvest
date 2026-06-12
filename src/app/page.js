@@ -592,7 +592,7 @@ const navItems = [
 
             <BannerRiqueza />
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12, maxWidth: 700, margin: "0 auto" }}>
               {[
                 { id: "acoes", title: "Ações", desc: "12 indicadores R2A", color: C.accent },
                 { id: "fiis", title: "Fundos Imobiliários", desc: "11 indicadores", color: C.blue },
@@ -601,7 +601,7 @@ const navItems = [
               ].map((c) => (
                 <button key={c.id} onClick={() => !c.disabled && setTab(c.id)}
                   style={{
-                    padding: "24px 20px", borderRadius: 16, textAlign: "center",
+                    padding: "28px 20px", borderRadius: 16, textAlign: "center", minHeight: 110, display: "flex", flexDirection: "column", justifyContent: "center",
                     background: C.card, border: `1px solid ${c.disabled ? C.border : `${c.color}30`}`,
                     cursor: c.disabled ? "not-allowed" : "pointer", opacity: c.disabled ? 0.5 : 1,
                     transition: "all 0.2s",
@@ -704,4 +704,3 @@ const navItems = [
     </div>
    );
 }
-
