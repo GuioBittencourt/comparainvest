@@ -48,10 +48,13 @@ const curMonth = () => { const n = new Date(); return `${n.getFullYear()}-${Stri
 function loadAll() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; } }
 function saveAll(list, userId = null) {
   try {
+    console.log("[saveAll] chamado, itens:", list.length, "userId:", userId);
     const listComTimestamp = list.map(n => ({ ...n, updatedAt: new Date().toISOString() }));
     localStorage.setItem(STORAGE_KEY, JSON.stringify(listComTimestamp));
     if (userId) syncNegocios(userId, listComTimestamp);
-  } catch {}
+  } catch (e) {
+    console.error("[saveAll] erro:", e);
+  }
 }
 
 function calcTotals(neg) {
