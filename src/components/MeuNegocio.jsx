@@ -46,7 +46,13 @@ const fmtPct = (v) => `${Number(v || 0).toFixed(1)}%`;
 const curMonth = () => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}`; };
 
 function loadAll() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; } }
-function saveAll(list, userId = null) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); if (userId) syncNegocios(userId, list); } catch {} }
+function saveAll(list, userId = null) {
+  try {
+    const listComTimestamp = list.map(n => ({ ...n, updatedAt: new Date().toISOString() }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(listComTimestamp));
+    if (userId) syncNegocios(userId, listComTimestamp);
+  } catch {}
+}
 
 function calcTotals(neg) {
   const month = curMonth();
@@ -81,20 +87,18 @@ export default function MeuNegocio({ user }) {
   useEffect(() => {
   if (!userId) return;
   carregarNegociosRemoto(userId).then((remoto) => {
-    if (!remoto || !Array.isArray(remoto)) return;
-    // Só substitui se o Supabase tiver dados mais recentes ou localStorage estiver vazio
+    if (!remoto || !Array.isArray(remoto) || remoto.length === 0) return;
     const local = loadAll();
     if (local.length === 0) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(remoto));
       setNegocios(remoto);
-    } else if (remoto.length > 0) {
-      // Compara pelo updatedAt do item mais recente
-      const localMaisRecente = Math.max(...local.map(n => new Date(n.createdAt || 0).getTime()));
-      const remoteMaisRecente = Math.max(...remoto.map(n => new Date(n.createdAt || 0).getTime()));
-      if (remoteMaisRecente > localMaisRecente) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(remoto));
-        setNegocios(remoto);
-      }
+      return;
+    }
+    const localTs = Math.max(...local.map(n => new Date(n.updatedAt || n.createdAt || 0).getTime()));
+    const remoteTs = Math.max(...remoto.map(n => new Date(n.updatedAt || n.createdAt || 0).getTime()));
+    if (remoteTs > localTs) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(remoto));
+      setNegocios(remoto);
     }
   });
 }, [userId]);
