@@ -85,25 +85,21 @@ export default function MeuNegocio({ user }) {
 
   const isPremium = user?.is_premium || user?.is_admin;
 
-  useEffect(() => { setNegocios(loadAll()); setLoaded(true); }, []);
-  // Carrega do Supabase na montagem se logado
+  useEffect(() => { setLoaded(true); }, []);
   useEffect(() => {
-  if (!userId) return;
-  carregarNegociosRemoto(userId).then((remoto) => {
-    if (!remoto || !Array.isArray(remoto) || remoto.length === 0) return;
-    const local = loadAll();
-    if (local.length === 0) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(remoto));
-      setNegocios(remoto);
+    if (!userId) {
+      setNegocios(loadAll());
       return;
-    }
-    const localTs = Math.max(...local.map(n => new Date(n.updatedAt || n.createdAt || 0).getTime()));
-    const remoteTs = Math.max(...remoto.map(n => new Date(n.updatedAt || n.createdAt || 0).getTime()));
-    if (remoteTs > localTs) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(remoto));
-      setNegocios(remoto);
-    }
-  });
+  }
+    carregarNegociosRemoto(userId).then((remoto) => {
+      if (remoto && Array.isArray(remoto) && remoto.length > 0) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(remoto));
+        setNegocios(remoto);
+      } else {
+        const local = loadAll();
+        if (local.length > 0) setNegocios(local);
+      }
+    });
 }, [userId]);
 
   useEffect(() => {
