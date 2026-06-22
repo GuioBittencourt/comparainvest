@@ -104,14 +104,8 @@ export default function MeuNegocio({ user }) {
 
   useEffect(() => {
   if (!loaded) return;
-  // Lê localStorage atual e compara com estado React
-  const local = loadAll();
-  const localTs = Math.max(...local.map(n => new Date(n.updatedAt || n.createdAt || 0).getTime()), 0);
-  const stateTs = Math.max(...negocios.map(n => new Date(n.updatedAt || n.createdAt || 0).getTime()), 0);
-  // Só salva se o estado React for mais recente que o localStorage
-  if (stateTs >= localTs) {
-    saveAll(negocios, userId);
-  }
+  if (negocios.length === 0) return;
+  saveAll(negocios, userId);
 }, [negocios, loaded, userId]);
 
   const active = negocios.find((n) => n.id === activeId);
