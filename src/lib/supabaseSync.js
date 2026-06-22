@@ -103,11 +103,15 @@ export async function carregarGestaoAtivaRemoto(userId, mes) {
 export async function syncNegocios(userId, lista) {
   if (!userId) return;
   try {
-    await supabase.from("negocios").upsert(
+    const { error } = await supabase.from("negocios").upsert(
       { user_id: userId, dados: lista, atualizado_em: new Date().toISOString() },
       { onConflict: "user_id" }
     );
-  } catch {}
+    if (error) console.error("[syncNegocios] erro:", error);
+    else console.log("[syncNegocios] OK — itens:", lista.length);
+  } catch (e) {
+    console.error("[syncNegocios] exception:", e);
+  }
 }
 
 export async function carregarNegociosRemoto(userId) {
