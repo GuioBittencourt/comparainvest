@@ -10,9 +10,6 @@ import { BannerNegocio } from "./Banners";
 
 const STORAGE_KEY = "comparai_negocios";
 
-/* ═══════════════════════════════════════════════════════════════
-   DATA
-   ═══════════════════════════════════════════════════════════════ */
 const SEGMENTOS = [
   { id: "entregas", label: "Entregas / Motorista de App", desc: "iFood, Uber, 99, Rappi, entregas em geral", receitas: ["Corridas / Entregas", "Bônus e Incentivos", "Gorjetas", "Outras Receitas"], despesas: ["Combustível", "Manutenção do Veículo", "Seguro do Veículo", "Celular / Dados Móveis", "Alimentação na Rua", "Troca de Óleo", "Pneus", "Lavagem", "Outras Despesas"] },
   { id: "alimentacao", label: "Alimentação / Salgados / Doces", desc: "Produção e venda de alimentos", receitas: ["Vendas Diretas", "Encomendas", "Eventos / Festas", "Revenda", "Outras Receitas"], despesas: ["Ingredientes / Insumos", "Embalagens", "Gás de Cozinha", "Energia Elétrica", "Água", "Aluguel do Espaço", "Equipamentos", "Transporte / Entrega", "Marketing", "Outras Despesas"] },
@@ -46,15 +43,13 @@ const fmtPct = (v) => `${Number(v || 0).toFixed(1)}%`;
 const curMonth = () => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}`; };
 
 function loadAll() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; } }
+
 function saveAll(list, userId = null) {
   try {
-    console.log("[saveAll] chamado, itens:", list.length, "userId:", userId);
     const listComTimestamp = list.map(n => ({ ...n, updatedAt: new Date().toISOString() }));
     localStorage.setItem(STORAGE_KEY, JSON.stringify(listComTimestamp));
     if (userId) syncNegocios(userId, listComTimestamp);
-  } catch (e) {
-    console.error("[saveAll] erro:", e);
-  }
+  } catch {}
 }
 
 function calcTotals(neg) {
@@ -66,13 +61,10 @@ function calcTotals(neg) {
   return { totalR, totalD, lucro: totalR - totalD, margem: totalR > 0 ? ((totalR - totalD) / totalR) * 100 : 0, custoPct: totalR > 0 ? (totalD / totalR) * 100 : 0 };
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   MAIN
-   ═══════════════════════════════════════════════════════════════ */
 export default function MeuNegocio({ user }) {
   const userId = user?.id || null;
   const [negocios, setNegocios] = useState([]);
-  const [view, setView] = useState("list"); // list, quiz, dashboard, historico
+  const [view, setView] = useState("list");
   const [activeId, setActiveId] = useState(null);
   const [quizStep, setQuizStep] = useState(0);
   const [quizData, setQuizData] = useState({ segmento: null, faturamento: null, nome: "", meta: "" });
@@ -81,16 +73,17 @@ export default function MeuNegocio({ user }) {
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [editData, setEditData] = useState({ nome: "", meta: "", segmento: null, faturamento: null });
   const [loaded, setLoaded] = useState(false);
-  const [viewMonth, setViewMonth] = useState(curMonth()); // for browsing other months
+  const [viewMonth, setViewMonth] = useState(curMonth());
 
   const isPremium = user?.is_premium || user?.is_admin;
 
   useEffect(() => { setLoaded(true); }, []);
+
   useEffect(() => {
     if (!userId) {
       setNegocios(loadAll());
       return;
-  }
+    }
     carregarNegociosRemoto(userId).then((remoto) => {
       if (remoto && Array.isArray(remoto) && remoto.length > 0) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(remoto));
@@ -100,13 +93,13 @@ export default function MeuNegocio({ user }) {
         if (local.length > 0) setNegocios(local);
       }
     });
-}, [userId]);
+  }, [userId]);
 
   useEffect(() => {
-  if (!loaded) return;
-  if (negocios.length === 0) return;
-  saveAll(negocios, userId);
-}, [negocios, loaded, userId]);
+    if (!loaded) return;
+    if (negocios.length === 0) return;
+    saveAll(negocios, userId);
+  }, [negocios, loaded, userId]);
 
   const active = negocios.find((n) => n.id === activeId);
   const seg = active ? SEGMENTOS.find((s) => s.id === active.segmento) : null;
@@ -132,10 +125,6 @@ export default function MeuNegocio({ user }) {
     return Object.entries(g).sort((a, b) => b[1] - a[1]);
   }, [despMes]);
 
-  // (removido: useMemo de `alerts` antigo. O diagnóstico agora vive em
-  // `lib/meuNegocio/motor` e é renderizado pelo componente RelatorioPremium.)
-
-  // === MUTATIONS ===
   const updateActive = (fn) => setNegocios((prev) => prev.map((n) => n.id === activeId ? fn(n) : n));
   const addItem = (type) => {
     if (!newItem.desc || !newItem.valor || !newItem.categoria) return;
@@ -156,9 +145,6 @@ export default function MeuNegocio({ user }) {
     setQuizStep(0);
   };
 
-  /* ═══════════════════════════════════════════════════════════════
-     QUIZ
-     ═══════════════════════════════════════════════════════════════ */
   if (view === "quiz") {
     return (
       <div>
@@ -167,7 +153,6 @@ export default function MeuNegocio({ user }) {
           <h2 style={heroStyle}>Novo Negócio</h2>
           <p style={{ fontSize: 13, color: C.textDim, lineHeight: 1.7, margin: 0 }}>Configure o perfil para gestão personalizada.</p>
         </div>
-
         {quizStep === 0 && (
           <div>
             <div style={{ fontSize: 14, fontWeight: 600, color: C.white, marginBottom: 14 }}>Qual é o segmento?</div>
@@ -181,7 +166,6 @@ export default function MeuNegocio({ user }) {
             ))}
           </div>
         )}
-
         {quizStep === 1 && (
           <div>
             <button onClick={() => setQuizStep(0)} style={{ background: "none", border: "none", color: C.textDim, fontSize: 12, cursor: "pointer", fontFamily: FN, marginBottom: 12 }}>← Voltar</button>
@@ -195,7 +179,6 @@ export default function MeuNegocio({ user }) {
             ))}
           </div>
         )}
-
         {quizStep === 2 && (
           <div>
             <button onClick={() => setQuizStep(1)} style={{ background: "none", border: "none", color: C.textDim, fontSize: 12, cursor: "pointer", fontFamily: FN, marginBottom: 12 }}>← Voltar</button>
@@ -213,9 +196,6 @@ export default function MeuNegocio({ user }) {
     );
   }
 
-  /* ═══════════════════════════════════════════════════════════════
-     LIST (HOME)
-     ═══════════════════════════════════════════════════════════════ */
   if (view === "list") {
     const consolidated = negocios.length >= 2 ? negocios.reduce((acc, n) => {
       const t = calcTotals(n);
@@ -228,11 +208,8 @@ export default function MeuNegocio({ user }) {
           <h2 style={heroStyle}>Meu Negócio</h2>
           <button onClick={() => setView("quiz")} style={{ padding: "8px 14px", borderRadius: 12, fontSize: 12, fontWeight: 800, fontFamily: MN, cursor: "pointer", background: "rgba(255,255,255,0.035)", color: C.gold || C.textDim, border: `1px solid ${C.borderGold || C.border}` }}>+ Novo negócio</button>
         </div>
-
         <BannerNegocio />
-      {!isPremium && <PremiumNotice context="meuNegocio" onClick={() => setShowUpgrade(true)} />}
-
-        {/* Consolidated view */}
+        {!isPremium && <PremiumNotice context="meuNegocio" onClick={() => setShowUpgrade(true)} />}
         {consolidated && (
           <div style={{ background: "linear-gradient(180deg, rgba(11,24,38,0.94), rgba(7,16,25,0.94))", border: `1px solid ${C.border}`, borderRadius: 18, padding: 16, marginBottom: 14, boxShadow: "0 14px 42px rgba(0,0,0,0.20)" }}>
             <div style={{ fontSize: 11, color: C.textMuted, fontFamily: MN, letterSpacing: "1px", marginBottom: 12 }}>VISÃO CONSOLIDADA — {negocios.length} NEGÓCIOS</div>
@@ -250,8 +227,6 @@ export default function MeuNegocio({ user }) {
                 <div style={{ fontFamily: MN, fontSize: 16, fontWeight: 800, color: consolidated.lucro >= 0 ? C.accent : C.red }}>{fmtBRL(consolidated.lucro)}</div>
               </div>
             </div>
-
-            {/* Per-business comparison */}
             {isPremium && (
               <div style={{ marginTop: 14 }}>
                 {negocios.map((n) => {
@@ -269,7 +244,6 @@ export default function MeuNegocio({ user }) {
                 })}
               </div>
             )}
-
             {!isPremium && negocios.length >= 2 && (
               <div style={{ marginTop: 12, padding: "10px 14px", background: `${C.yellow}08`, border: `1px solid ${C.yellow}20`, borderRadius: 10 }}>
                 <div style={{ fontSize: 11, color: C.textDim }}>
@@ -280,8 +254,6 @@ export default function MeuNegocio({ user }) {
             )}
           </div>
         )}
-
-        {/* Business cards */}
         {negocios.map((n) => {
           const t = calcTotals(n);
           const segLabel = SEGMENTOS.find((s) => s.id === n.segmento)?.label || "Negócio";
@@ -306,14 +278,13 @@ export default function MeuNegocio({ user }) {
                     <span style={{ fontSize: 10, color: C.textDim, fontFamily: MN }}>{fmtPct((t.totalR / n.meta) * 100)}</span>
                   </div>
                   <div style={{ height: 3, background: C.cardAlt, borderRadius: 2 }}>
-                    <div style={{ height: "100%", width: `${Math.min((t.totalR / n.meta) * 100, 100)}%`, background: t.totalR >= n.meta ? C.accent : C.accent, borderRadius: 2, transition: "width 0.3s" }} />
+                    <div style={{ height: "100%", width: `${Math.min((t.totalR / n.meta) * 100, 100)}%`, background: C.accent, borderRadius: 2, transition: "width 0.3s" }} />
                   </div>
                 </div>
               )}
             </button>
           );
         })}
-
         {negocios.length === 0 && (
           <div style={{ textAlign: "center", padding: "34px 20px", background: "linear-gradient(180deg, rgba(11,24,38,0.78), rgba(7,16,25,0.82))", border: `1px solid ${C.border}`, borderRadius: 18 }}>
             <div style={{ fontSize: 15, color: C.white, fontWeight: 600, marginBottom: 8 }}>Nenhum negócio cadastrado</div>
@@ -321,70 +292,44 @@ export default function MeuNegocio({ user }) {
             <button onClick={() => setView("quiz")} style={{ padding: "12px 28px", borderRadius: 12, fontSize: 14, fontWeight: 700, fontFamily: FN, cursor: "pointer", background: "linear-gradient(180deg, #20C982, #0E9F6E)", color: "#06110C", border: "none" }}>Adicionar negócio</button>
           </div>
         )}
-
         {showUpgrade && <PremiumGate onClose={() => setShowUpgrade(false)} context="meuNegocio" />}
       </div>
     );
   }
 
-  /* ═══════════════════════════════════════════════════════════════
-     HISTÓRICO
-     ═══════════════════════════════════════════════════════════════ */
   if (view === "historico" && active) {
-    // Build monthly data from all receitas/despesas
     const allMonths = new Set();
     (active.receitas || []).forEach((r) => allMonths.add(r.month || month));
     (active.despesas || []).forEach((d) => allMonths.add(d.month || month));
     const sortedMonths = [...allMonths].sort();
-
-    // Group by year
     const years = {};
     sortedMonths.forEach((m) => {
       const y = m.split("-")[0];
       if (!years[y]) years[y] = [];
       years[y].push(m);
     });
-
     const monthlyData = sortedMonths.map((m) => {
       const rec = (active.receitas || []).filter((r) => (r.month || month) === m).reduce((s, r) => s + r.valor, 0);
       const desp = (active.despesas || []).filter((d) => (d.month || month) === m).reduce((s, d) => s + d.valor, 0);
       return { month: m, label: new Date(parseInt(m.split("-")[0]), parseInt(m.split("-")[1]) - 1).toLocaleDateString("pt-BR", { month: "short", year: "2-digit" }), receita: rec, despesa: desp, lucro: rec - desp, margem: rec > 0 ? ((rec - desp) / rec) * 100 : 0 };
     });
-
     const maxVal = Math.max(...monthlyData.map((d) => Math.max(d.receita, d.despesa)), 1);
-
     return (
       <div>
         <button onClick={() => setView("dashboard")} style={{ background: "none", border: "none", color: C.textDim, fontSize: 12, cursor: "pointer", fontFamily: FN, marginBottom: 12 }}>← Voltar ao dashboard</button>
         <h2 style={{ ...heroStyle, marginBottom: 6 }}>Histórico — {active.nome}</h2>
         <p style={{ fontSize: 12, color: C.textDim, marginBottom: 20, margin: "0 0 20px" }}>Evolução mês a mês. Dados armazenados por até 5 anos.</p>
-
         {monthlyData.length === 0 && (
           <div style={{ textAlign: "center", padding: "40px 20px", color: C.textMuted, fontSize: 13 }}>Nenhum dado registrado ainda. Lance receitas e despesas para começar o histórico.</div>
         )}
-
-        {/* Evolution chart - simple bar chart */}
         {monthlyData.length > 0 && (
           <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 20, marginBottom: 16 }}>
             <div style={{ fontSize: 11, color: C.textMuted, fontFamily: MN, letterSpacing: "1px", marginBottom: 16 }}>EVOLUÇÃO</div>
-
-            {/* Legend */}
             <div style={{ display: "flex", gap: 16, marginBottom: 14, justifyContent: "center" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <span style={{ width: 10, height: 10, borderRadius: 2, background: C.accent }} />
-                <span style={{ fontSize: 10, color: C.textDim }}>Receita</span>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <span style={{ width: 10, height: 10, borderRadius: 2, background: C.red }} />
-                <span style={{ fontSize: 10, color: C.textDim }}>Despesa</span>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <span style={{ width: 10, height: 10, borderRadius: 2, background: C.accent }} />
-                <span style={{ fontSize: 10, color: C.textDim }}>Lucro</span>
-              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 10, height: 10, borderRadius: 2, background: C.accent }} /><span style={{ fontSize: 10, color: C.textDim }}>Receita</span></div>
+              <div style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 10, height: 10, borderRadius: 2, background: C.red }} /><span style={{ fontSize: 10, color: C.textDim }}>Despesa</span></div>
+              <div style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 10, height: 10, borderRadius: 2, background: C.accent }} /><span style={{ fontSize: 10, color: C.textDim }}>Lucro</span></div>
             </div>
-
-            {/* Bars */}
             <div style={{ display: "flex", gap: 4, alignItems: "flex-end", height: 140, overflowX: "auto", paddingBottom: 4 }}>
               {monthlyData.map((d) => (
                 <div key={d.month} style={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 40, flex: 1 }}>
@@ -398,8 +343,6 @@ export default function MeuNegocio({ user }) {
             </div>
           </div>
         )}
-
-        {/* Monthly details table */}
         {Object.entries(years).reverse().map(([year, months]) => (
           <div key={year} style={{ marginBottom: 16 }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: C.white, fontFamily: MN, marginBottom: 8 }}>{year}</div>
@@ -412,22 +355,11 @@ export default function MeuNegocio({ user }) {
                   <button key={m} onClick={() => { setViewMonth(m); setView("dashboard"); }}
                     style={{ display: "flex", width: "100%", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", background: "transparent", border: "none", borderBottom: `1px solid ${C.border}`, cursor: "pointer", textAlign: "left" }}
                     onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
-                    <div>
-                      <div style={{ fontSize: 13, color: C.white, textTransform: "capitalize" }}>{monthName}</div>
-                    </div>
+                    <div><div style={{ fontSize: 13, color: C.white, textTransform: "capitalize" }}>{monthName}</div></div>
                     <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-                      <div style={{ textAlign: "right" }}>
-                        <div style={{ fontFamily: MN, fontSize: 11, color: C.accent }}>{fmtBRL(d.receita)}</div>
-                        <div style={{ fontSize: 9, color: C.textMuted }}>receita</div>
-                      </div>
-                      <div style={{ textAlign: "right" }}>
-                        <div style={{ fontFamily: MN, fontSize: 11, color: d.lucro >= 0 ? C.accent : C.red }}>{fmtBRL(d.lucro)}</div>
-                        <div style={{ fontSize: 9, color: C.textMuted }}>lucro</div>
-                      </div>
-                      <div style={{ textAlign: "right" }}>
-                        <div style={{ fontFamily: MN, fontSize: 11, color: d.margem >= (bench.margemLiquida || 25) ? C.accent : C.yellow }}>{fmtPct(d.margem)}</div>
-                        <div style={{ fontSize: 9, color: C.textMuted }}>margem</div>
-                      </div>
+                      <div style={{ textAlign: "right" }}><div style={{ fontFamily: MN, fontSize: 11, color: C.accent }}>{fmtBRL(d.receita)}</div><div style={{ fontSize: 9, color: C.textMuted }}>receita</div></div>
+                      <div style={{ textAlign: "right" }}><div style={{ fontFamily: MN, fontSize: 11, color: d.lucro >= 0 ? C.accent : C.red }}>{fmtBRL(d.lucro)}</div><div style={{ fontSize: 9, color: C.textMuted }}>lucro</div></div>
+                      <div style={{ textAlign: "right" }}><div style={{ fontFamily: MN, fontSize: 11, color: d.margem >= (bench.margemLiquida || 25) ? C.accent : C.yellow }}>{fmtPct(d.margem)}</div><div style={{ fontSize: 9, color: C.textMuted }}>margem</div></div>
                     </div>
                   </button>
                 );
@@ -439,31 +371,22 @@ export default function MeuNegocio({ user }) {
     );
   }
 
-  /* ═══════════════════════════════════════════════════════════════
-     EDITAR NEGÓCIO (Premium)
-     ═══════════════════════════════════════════════════════════════ */
   if (view === "editar" && active && isPremium) {
-    const seg = SEGMENTOS.find((s) => s.id === editData.segmento);
     return (
       <div>
         <button onClick={() => setView("dashboard")} style={{ background: "none", border: "none", color: C.textDim, fontSize: 12, cursor: "pointer", fontFamily: FN, marginBottom: 12 }}>← Voltar ao dashboard</button>
         <h2 style={heroStyle}>Editar negócio</h2>
         <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 20, marginTop: 16, display: "grid", gap: 14 }}>
-
           <div>
             <label style={{ fontSize: 11, color: C.textMuted, fontFamily: MN, display: "block", marginBottom: 4 }}>NOME DO NEGÓCIO</label>
-            <input value={editData.nome} onChange={(e) => setEditData((p) => ({ ...p, nome: e.target.value }))}
-              placeholder="Ex: Delivery da Maria"
+            <input value={editData.nome} onChange={(e) => setEditData((p) => ({ ...p, nome: e.target.value }))} placeholder="Ex: Delivery da Maria"
               style={{ width: "100%", padding: "10px 12px", background: C.cardAlt, border: `1px solid ${C.border}`, borderRadius: 10, color: C.white, fontSize: 14, fontFamily: FN, outline: "none", boxSizing: "border-box" }} />
           </div>
-
           <div>
             <label style={{ fontSize: 11, color: C.textMuted, fontFamily: MN, display: "block", marginBottom: 4 }}>META DE FATURAMENTO MENSAL (R$)</label>
-            <input type="number" value={editData.meta} onChange={(e) => setEditData((p) => ({ ...p, meta: e.target.value }))}
-              placeholder="Ex: 5000"
+            <input type="number" value={editData.meta} onChange={(e) => setEditData((p) => ({ ...p, meta: e.target.value }))} placeholder="Ex: 5000"
               style={{ width: "100%", padding: "10px 12px", background: C.cardAlt, border: `1px solid ${C.border}`, borderRadius: 10, color: C.white, fontSize: 14, fontFamily: MN, outline: "none", boxSizing: "border-box" }} />
           </div>
-
           <div>
             <label style={{ fontSize: 11, color: C.textMuted, fontFamily: MN, display: "block", marginBottom: 8 }}>FAIXA DE FATURAMENTO</label>
             <div style={{ display: "grid", gap: 6 }}>
@@ -475,7 +398,6 @@ export default function MeuNegocio({ user }) {
               ))}
             </div>
           </div>
-
           <div>
             <label style={{ fontSize: 11, color: C.textMuted, fontFamily: MN, display: "block", marginBottom: 8 }}>SEGMENTO</label>
             <div style={{ display: "grid", gap: 6 }}>
@@ -488,42 +410,21 @@ export default function MeuNegocio({ user }) {
               ))}
             </div>
           </div>
-
-          <button
-            onClick={() => {
-              if (!editData.nome.trim()) return;
-              updateActive((n) => ({
-                ...n,
-                nome: editData.nome.trim(),
-                meta: parseFloat(editData.meta) || n.meta,
-                segmento: editData.segmento || n.segmento,
-                faturamento: editData.faturamento || n.faturamento,
-              }));
-              setView("dashboard");
-            }}
+          <button onClick={() => { if (!editData.nome.trim()) return; updateActive((n) => ({ ...n, nome: editData.nome.trim(), meta: parseFloat(editData.meta) || n.meta, segmento: editData.segmento || n.segmento, faturamento: editData.faturamento || n.faturamento })); setView("dashboard"); }}
             style={{ padding: "13px", borderRadius: 12, background: `linear-gradient(135deg, ${C.accent}, #059669)`, border: "none", color: "#03130D", fontFamily: FN, fontSize: 14, fontWeight: 800, cursor: "pointer" }}>
             Salvar alterações
           </button>
-
-          <button onClick={() => setView("dashboard")}
-            style={{ padding: "10px", borderRadius: 12, background: "transparent", border: `1px solid ${C.border}`, color: C.textDim, fontFamily: FN, fontSize: 13, cursor: "pointer" }}>
-            Cancelar
-          </button>
+          <button onClick={() => setView("dashboard")} style={{ padding: "10px", borderRadius: 12, background: "transparent", border: `1px solid ${C.border}`, color: C.textDim, fontFamily: FN, fontSize: 13, cursor: "pointer" }}>Cancelar</button>
         </div>
       </div>
     );
   }
 
-  /* ═══════════════════════════════════════════════════════════════
-     DASHBOARD
-     ═══════════════════════════════════════════════════════════════ */
   if (!active) { setView("list"); return null; }
 
   return (
     <div>
       {showUpgrade && <PremiumGate onClose={() => setShowUpgrade(false)} context="diagnostico" />}
-
-      {/* Header */}
       <div style={{ marginBottom: 20 }}>
         <button onClick={() => { setView("list"); setActiveId(null); setViewMonth(curMonth()); }} style={{ background: "none", border: "none", color: C.textDim, fontSize: 12, cursor: "pointer", fontFamily: FN, marginBottom: 8 }}>← Voltar aos negócios</button>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
@@ -532,8 +433,7 @@ export default function MeuNegocio({ user }) {
             <span style={{ fontSize: 11, color: C.accent, fontFamily: MN }}>{seg?.label}</span>
           </div>
           <div style={{ display: "flex", gap: 6 }}>
-            <button onClick={() => setView("historico")}
-              style={{ padding: "6px 14px", borderRadius: 8, fontSize: 10, fontFamily: MN, cursor: "pointer", background: "rgba(255,255,255,0.030)", color: C.textDim, border: `1px solid ${C.border}` }}>Histórico</button>
+            <button onClick={() => setView("historico")} style={{ padding: "6px 14px", borderRadius: 8, fontSize: 10, fontFamily: MN, cursor: "pointer", background: "rgba(255,255,255,0.030)", color: C.textDim, border: `1px solid ${C.border}` }}>Histórico</button>
             {isPremium && (
               <button onClick={() => { setEditData({ nome: active.nome, meta: active.meta || "", segmento: active.segmento, faturamento: active.faturamento }); setView("editar"); }}
                 style={{ padding: "6px 14px", borderRadius: 8, fontSize: 10, fontFamily: MN, cursor: "pointer", background: `${C.accent}12`, color: C.accent, border: `1px solid ${C.accentBorder}` }}>Editar</button>
@@ -543,45 +443,21 @@ export default function MeuNegocio({ user }) {
           </div>
         </div>
       </div>
-
       <BannerNegocio />
-
-      {/* Month navigator */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 16 }}>
-        <button onClick={() => { const [y, m] = displayMonth.split("-").map(Number); const d = new Date(y, m - 2, 1); setViewMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`); }}
-          style={{ background: "none", border: "none", color: C.textDim, fontSize: 16, cursor: "pointer", padding: "4px 8px" }}>←</button>
+        <button onClick={() => { const [y, m] = displayMonth.split("-").map(Number); const d = new Date(y, m - 2, 1); setViewMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`); }} style={{ background: "none", border: "none", color: C.textDim, fontSize: 16, cursor: "pointer", padding: "4px 8px" }}>←</button>
         <div style={{ fontFamily: MN, fontSize: 13, color: isCurrentMonth ? C.accent : C.white, minWidth: 100, textAlign: "center" }}>
           {new Date(parseInt(displayMonth.split("-")[0]), parseInt(displayMonth.split("-")[1]) - 1).toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
         </div>
-        <button onClick={() => { if (!isCurrentMonth) { const [y, m] = displayMonth.split("-").map(Number); const d = new Date(y, m, 1); setViewMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`); } }}
-          style={{ background: "none", border: "none", color: isCurrentMonth ? C.textMuted : C.textDim, fontSize: 16, cursor: isCurrentMonth ? "default" : "pointer", padding: "4px 8px" }}>→</button>
+        <button onClick={() => { if (!isCurrentMonth) { const [y, m] = displayMonth.split("-").map(Number); const d = new Date(y, m, 1); setViewMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`); } }} style={{ background: "none", border: "none", color: isCurrentMonth ? C.textMuted : C.textDim, fontSize: 16, cursor: isCurrentMonth ? "default" : "pointer", padding: "4px 8px" }}>→</button>
       </div>
-
-      {/* Saldo Inicial do Mês */}
-<div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 18, marginBottom: 14 }}>
-  <div style={{ fontSize: 11, color: C.textMuted, fontFamily: MN, letterSpacing: "1px", marginBottom: 4 }}>SALDO INICIAL DO MÊS</div>
-  <div style={{ fontSize: 12, color: C.textDim, lineHeight: 1.55, marginBottom: 10 }}>
-    Capital de giro, sobra do mês anterior ou valor em caixa. Entra no saldo final sem alterar receitas ou despesas.
-  </div>
-  <input
-    type="number"
-    value={saldoInicialMes}
-    onChange={(e) => {
-      const value = Number(e.target.value || 0);
-      updateActive((n) => ({
-        ...n,
-        saldoInicial: {
-          ...(n.saldoInicial || {}),
-          [displayMonth]: value,
-        },
-      }));
-    }}
-    placeholder="0"
-    style={{ width: "100%", padding: "11px 13px", background: C.cardAlt, border: `1px solid ${C.border}`, borderRadius: 10, color: C.white, fontSize: 14, fontFamily: MN, outline: "none", boxSizing: "border-box" }}
-  />
-</div>
-
-      {/* Meta progress */}
+      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 18, marginBottom: 14 }}>
+        <div style={{ fontSize: 11, color: C.textMuted, fontFamily: MN, letterSpacing: "1px", marginBottom: 4 }}>SALDO INICIAL DO MÊS</div>
+        <div style={{ fontSize: 12, color: C.textDim, lineHeight: 1.55, marginBottom: 10 }}>Capital de giro, sobra do mês anterior ou valor em caixa. Entra no saldo final sem alterar receitas ou despesas.</div>
+        <input type="number" value={saldoInicialMes}
+          onChange={(e) => { const value = Number(e.target.value || 0); updateActive((n) => ({ ...n, saldoInicial: { ...(n.saldoInicial || {}), [displayMonth]: value } })); }}
+          placeholder="0" style={{ width: "100%", padding: "11px 13px", background: C.cardAlt, border: `1px solid ${C.border}`, borderRadius: 10, color: C.white, fontSize: 14, fontFamily: MN, outline: "none", boxSizing: "border-box" }} />
+      </div>
       {active.meta > 0 && (
         <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "14px 18px", marginBottom: 12 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, marginBottom: 6, flexWrap: "wrap" }}>
@@ -589,12 +465,10 @@ export default function MeuNegocio({ user }) {
             <span style={{ ...moneyCompactStyle, fontSize: "clamp(12px, 3.4vw, 14px)", color: totalR >= active.meta ? C.accent : C.text }}>{fmtBRL(totalR)} / {fmtBRL(active.meta)}</span>
           </div>
           <div style={{ height: 5, background: C.cardAlt, borderRadius: 3 }}>
-            <div style={{ height: "100%", width: `${Math.min((totalR / active.meta) * 100, 100)}%`, background: totalR >= active.meta ? C.accent : C.accent, borderRadius: 3, transition: "width 0.3s" }} />
+            <div style={{ height: "100%", width: `${Math.min((totalR / active.meta) * 100, 100)}%`, background: C.accent, borderRadius: 3, transition: "width 0.3s" }} />
           </div>
         </div>
       )}
-
-      {/* DRE — dashboard executivo compacto */}
       <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: 20, marginBottom: 16 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 14 }}>
           <div>
@@ -603,7 +477,6 @@ export default function MeuNegocio({ user }) {
           </div>
           <span style={{ width: 8, height: 8, borderRadius: 999, background: lucro >= 0 ? C.accent : C.red, boxShadow: lucro >= 0 ? `0 0 18px ${C.accentGlow}` : "none" }} />
         </div>
-
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
           {[
             { label: "Saldo Inicial", value: fmtBRL(saldoInicialMes), color: C.blue || C.textDim },
@@ -622,16 +495,7 @@ export default function MeuNegocio({ user }) {
           ))}
         </div>
       </div>
-
-      {/* Relatório do Mês — componentizado em meu-negocio/RelatorioPremium */}
-      <RelatorioPremium
-        negocio={active}
-        mes={displayMonth}
-        isPremium={isPremium}
-        onUpgrade={() => setShowUpgrade(true)}
-      />
-
-      {/* Despesas por Categoria */}
+      <RelatorioPremium negocio={active} mes={displayMonth} isPremium={isPremium} onUpgrade={() => setShowUpgrade(true)} />
       {despPorCat.length > 0 && (
         <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 20, marginBottom: 16, marginTop: 10 }}>
           <div style={{ fontSize: 11, color: C.textMuted, fontFamily: MN, letterSpacing: "1px", marginBottom: 12 }}>DESPESAS POR CATEGORIA</div>
@@ -651,11 +515,7 @@ export default function MeuNegocio({ user }) {
           })}
         </div>
       )}
-
-      {/* Receitas + Despesas em 2 colunas (auto-fit: empilha em mobile) */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 12, marginBottom: 12 }}>
-
-        {/* Receitas */}
         <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 20 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
             <div style={{ fontSize: 11, color: C.textMuted, fontFamily: MN, letterSpacing: "1px" }}>RECEITAS</div>
@@ -673,8 +533,6 @@ export default function MeuNegocio({ user }) {
             </div>
           ))}
         </div>
-
-        {/* Despesas */}
         <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 20 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
             <div style={{ fontSize: 11, color: C.textMuted, fontFamily: MN, letterSpacing: "1px" }}>DESPESAS</div>
@@ -692,20 +550,14 @@ export default function MeuNegocio({ user }) {
             </div>
           ))}
         </div>
-
       </div>
-
       <SponsorSlot id="negocio-bottom" />
-
-      {/* Empty hint */}
       {recMes.length === 0 && despMes.length === 0 && (
         <div style={{ textAlign: "center", padding: "24px 20px" }}>
           <div style={{ fontSize: 13, color: C.white, fontWeight: 600, marginBottom: 6 }}>Comece lançando receitas e despesas</div>
           <div style={{ fontSize: 12, color: C.textDim, lineHeight: 1.7 }}>Categorias preparadas para {seg?.label}.</div>
         </div>
       )}
-
-      {/* Modal */}
       {showModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 20 }} onClick={() => setShowModal(null)}>
           <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 400, background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: "24px 20px" }}>
@@ -734,7 +586,6 @@ export default function MeuNegocio({ user }) {
           </div>
         </div>
       )}
-
       <p style={{ textAlign: "center", fontSize: 10, color: C.textMuted, lineHeight: 1.6, marginTop: 20 }}>Simulação educativa. Não substitui acompanhamento contábil.</p>
     </div>
   );

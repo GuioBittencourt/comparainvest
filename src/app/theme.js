@@ -67,8 +67,8 @@ export const MN = "'JetBrains Mono', 'SFMono-Regular', Consolas, monospace";
 export const SERIF = "'DM Serif Display', Georgia, 'Times New Roman', serif";
 export const TN = FN;
 
-export const WA_FINANCEIRO = "https://wa.me/5512988890312?text=Ol%C3%A1%20vim%20pelo%20comparainvest.%20Quero%20meu%20Diagn%C3%B3stico%20Financeiro";
-export const WA_RIQUEZA = "https://wa.me/5512988890312?text=Ol%C3%A1%20vim%20pelo%20comparainvest.%20Quero%20meu%20Diagn%C3%B3stico%20da%20Riqueza!%20";
+export const WA_FINANCEIRO = "https://wa.me/5512996657178?text=Ol%C3%A1%20vim%20pelo%20comparainvest.%20Quero%20meu%20Diagn%C3%B3stico%20Financeiro";
+export const WA_RIQUEZA = "https://wa.me/5512996657178?text=Ol%C3%A1%20vim%20pelo%20comparainvest.%20Quero%20meu%20Diagn%C3%B3stico%20da%20Riqueza!%20";
 
 export const glassPanel = {
   background: "linear-gradient(180deg, rgba(12, 28, 45, 0.94), rgba(6, 16, 25, 0.96))",
