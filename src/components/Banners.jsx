@@ -1,7 +1,7 @@
 "use client";
 import { C, FN, MN, WA_FINANCEIRO, WA_RIQUEZA } from "../lib/theme";
 
-const WA_NEGOCIO = "https://wa.me/5512988890312?text=Ol%C3%A1%2C%20vim%20pelo%20comparainvest.%20Quero%20um%20diagn%C3%B3stico%20para%20meu%20neg%C3%B3cio.";
+const WA_NEGOCIO = "https://wa.me/5512996657178?text=Ol%C3%A1%2C%20vim%20pelo%20comparainvest.%20Quero%20um%20diagn%C3%B3stico%20para%20meu%20neg%C3%B3cio.";
 
 function DiagnosticBanner({ title, subtitle, href, mark = "DF", tag = "DIAGNÓSTICO", tone = "gold" }) {
   const color = tone === "blue" ? (C.blueSoft || C.blue) : (C.gold || C.yellow);
