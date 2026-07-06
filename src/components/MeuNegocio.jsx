@@ -7,6 +7,7 @@ import PremiumGate from "./PremiumGate";
 import PremiumNotice from "./PremiumNotice";
 import RelatorioPremium from "./meu-negocio/RelatorioPremium";
 import { BannerNegocio } from "./Banners";
+import React from "react";
 
 const STORAGE_KEY = "comparai_negocios";
 
@@ -75,15 +76,20 @@ export default function MeuNegocio({ user }) {
   const [loaded, setLoaded] = useState(false);
   const [viewMonth, setViewMonth] = useState(curMonth());
 
+  // --- FOTO STATES ---
+  const [showFotoModal, setShowFotoModal] = useState(false);
+  const [fotoLoading, setFotoLoading] = useState(false);
+  const [fotoResultado, setFotoResultado] = useState(null);
+  const [fotoError, setFotoError] = useState(null);
+  const [fotoTipo, setFotoTipo] = useState("despesa"); // despesa | receita
+  const fotoInputRef = React.useRef(null);
+
   const isPremium = user?.is_premium || user?.is_admin;
 
   useEffect(() => { setLoaded(true); }, []);
 
   useEffect(() => {
-    if (!userId) {
-      setNegocios(loadAll());
-      return;
-    }
+    if (!userId) { setNegocios(loadAll()); return; }
     carregarNegociosRemoto(userId).then((remoto) => {
       if (remoto && Array.isArray(remoto) && remoto.length > 0) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(remoto));
@@ -126,6 +132,7 @@ export default function MeuNegocio({ user }) {
   }, [despMes]);
 
   const updateActive = (fn) => setNegocios((prev) => prev.map((n) => n.id === activeId ? fn(n) : n));
+
   const addItem = (type) => {
     if (!newItem.desc || !newItem.valor || !newItem.categoria) return;
     const item = { id: Date.now(), desc: newItem.desc, valor: parseFloat(newItem.valor), categoria: newItem.categoria, month: displayMonth };
@@ -133,8 +140,75 @@ export default function MeuNegocio({ user }) {
     setNewItem({ desc: "", valor: "", categoria: "" });
     setShowModal(null);
   };
+
   const removeItem = (type, id) => updateActive((n) => ({ ...n, [type]: (n[type] || []).filter((x) => x.id !== id) }));
   const deleteNegocio = (id) => { setNegocios((prev) => prev.filter((n) => n.id !== id)); setView("list"); setActiveId(null); };
+
+  // --- FOTO FUNÇÕES ---
+  async function reduzirImagem(file, maxWidth = 1200, qualidade = 0.82) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const canvas = document.createElement("canvas");
+        let w = img.width, h = img.height;
+        if (w > maxWidth) { h = Math.round(h * maxWidth / w); w = maxWidth; }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", qualidade));
+      };
+      img.onerror = reject;
+      img.src = url;
+    });
+  }
+
+  async function handleFotoComprovante(file) {
+    if (!file || !userId) return;
+    setFotoLoading(true);
+    setFotoError(null);
+    setFotoResultado(null);
+    try {
+      const base64full = await reduzirImagem(file);
+      const base64 = base64full.split(",")[1];
+      const res = await fetch("/api/analisar-comprovante", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageBase64: base64, mimeType: "image/jpeg", userId, isPremium, mode: "comprovante" }),
+      });
+      const json = await res.json();
+      if (!json.ok) {
+        if (json.error === "limite_atingido") setFotoError("limite");
+        else setFotoError(json.message || "Erro ao analisar imagem.");
+        return;
+      }
+      setFotoTipo(json.data.tipo === "receita" ? "receita" : "despesa");
+      setFotoResultado(json.data);
+    } catch {
+      setFotoError("Erro ao processar imagem. Tente novamente.");
+    } finally {
+      setFotoLoading(false);
+    }
+  }
+
+  function confirmarLancamentoFoto() {
+    if (!fotoResultado || !active || !seg) return;
+    const categoriaIA = fotoResultado.categoria || "";
+    // Tenta mapear para categoria do segmento, senão usa a primeira disponível
+    const listaCats = fotoTipo === "receita" ? seg.receitas : seg.despesas;
+    const catMatch = listaCats.find(c => c.toLowerCase().includes(categoriaIA.toLowerCase().split("/")[0].trim())) || listaCats[0];
+    const item = {
+      id: Date.now(),
+      desc: fotoResultado.descricao || fotoResultado.estabelecimento || "Lançamento via foto",
+      valor: fotoResultado.valor || 0,
+      categoria: catMatch,
+      month: displayMonth,
+      viaFoto: true,
+    };
+    updateActive((n) => ({ ...n, [fotoTipo === "receita" ? "receitas" : "despesas"]: [...(n[fotoTipo === "receita" ? "receitas" : "despesas"] || []), item] }));
+    setShowFotoModal(false);
+    setFotoResultado(null);
+  }
 
   const finishQuiz = () => {
     const novo = { id: Date.now(), segmento: quizData.segmento, saldoInicial: {}, faturamento: quizData.faturamento, nome: quizData.nome || SEGMENTOS.find((s) => s.id === quizData.segmento)?.label || "Meu Negócio", meta: parseFloat(quizData.meta) || 0, receitas: [], despesas: [], createdAt: new Date().toISOString() };
@@ -158,7 +232,7 @@ export default function MeuNegocio({ user }) {
             <div style={{ fontSize: 14, fontWeight: 600, color: C.white, marginBottom: 14 }}>Qual é o segmento?</div>
             {SEGMENTOS.map((s) => (
               <button key={s.id} onClick={() => { setQuizData((p) => ({ ...p, segmento: s.id })); setQuizStep(1); }}
-                style={{ display: "block", width: "100%", padding: "16px 18px", borderRadius: 12, textAlign: "left", background: C.card, border: `1px solid ${C.border}`, cursor: "pointer", marginBottom: 8, transition: "border-color 0.2s" }}
+                style={{ display: "block", width: "100%", padding: "16px 18px", borderRadius: 12, textAlign: "left", background: C.card, border: `1px solid ${C.border}`, cursor: "pointer", marginBottom: 8 }}
                 onMouseEnter={(e) => e.currentTarget.style.borderColor = C.accentBorder} onMouseLeave={(e) => e.currentTarget.style.borderColor = C.border}>
                 <div style={{ fontSize: 14, fontWeight: 600, color: C.white }}>{s.label}</div>
                 <div style={{ fontSize: 11, color: C.textDim, marginTop: 3 }}>{s.desc}</div>
@@ -172,7 +246,7 @@ export default function MeuNegocio({ user }) {
             <div style={{ fontSize: 14, fontWeight: 600, color: C.white, marginBottom: 14 }}>Faixa de faturamento mensal?</div>
             {FAIXAS.map((f) => (
               <button key={f.id} onClick={() => { setQuizData((p) => ({ ...p, faturamento: f.id })); setQuizStep(2); }}
-                style={{ display: "block", width: "100%", padding: "14px 18px", borderRadius: 12, textAlign: "left", background: C.card, border: `1px solid ${C.border}`, cursor: "pointer", marginBottom: 8, transition: "border-color 0.2s" }}
+                style={{ display: "block", width: "100%", padding: "14px 18px", borderRadius: 12, textAlign: "left", background: C.card, border: `1px solid ${C.border}`, cursor: "pointer", marginBottom: 8 }}
                 onMouseEnter={(e) => e.currentTarget.style.borderColor = C.accentBorder} onMouseLeave={(e) => e.currentTarget.style.borderColor = C.border}>
                 <div style={{ fontSize: 14, fontWeight: 600, color: C.white }}>{f.label}</div>
               </button>
@@ -211,7 +285,7 @@ export default function MeuNegocio({ user }) {
         <BannerNegocio />
         {!isPremium && <PremiumNotice context="meuNegocio" onClick={() => setShowUpgrade(true)} />}
         {consolidated && (
-          <div style={{ background: "linear-gradient(180deg, rgba(11,24,38,0.94), rgba(7,16,25,0.94))", border: `1px solid ${C.border}`, borderRadius: 18, padding: 16, marginBottom: 14, boxShadow: "0 14px 42px rgba(0,0,0,0.20)" }}>
+          <div style={{ background: "linear-gradient(180deg, rgba(11,24,38,0.94), rgba(7,16,25,0.94))", border: `1px solid ${C.border}`, borderRadius: 18, padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 11, color: C.textMuted, fontFamily: MN, letterSpacing: "1px", marginBottom: 12 }}>VISÃO CONSOLIDADA — {negocios.length} NEGÓCIOS</div>
             <div style={{ display: "flex", gap: 10 }}>
               <div style={{ flex: 1, padding: 10, background: C.cardAlt, borderRadius: 10, textAlign: "center", border: `1px solid ${C.border}` }}>
@@ -227,29 +301,22 @@ export default function MeuNegocio({ user }) {
                 <div style={{ fontFamily: MN, fontSize: 16, fontWeight: 800, color: consolidated.lucro >= 0 ? C.accent : C.red }}>{fmtBRL(consolidated.lucro)}</div>
               </div>
             </div>
-            {isPremium && (
-              <div style={{ marginTop: 14 }}>
-                {negocios.map((n) => {
-                  const t = calcTotals(n);
-                  const saudavel = t.margem >= (BENCHMARKS[n.segmento]?.margemLiquida || 25) - 5;
-                  return (
-                    <div key={n.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderTop: `1px solid ${C.border}` }}>
-                      <span style={{ fontSize: 12, color: C.text }}>{n.nome}</span>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <span style={{ fontFamily: MN, fontSize: 11, color: t.lucro >= 0 ? C.accent : C.red }}>{fmtBRL(t.lucro)}</span>
-                        <span style={{ width: 8, height: 8, borderRadius: "50%", background: saudavel ? C.accent : C.yellow }} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            {isPremium && negocios.map((n) => {
+              const t = calcTotals(n);
+              const saudavel = t.margem >= (BENCHMARKS[n.segmento]?.margemLiquida || 25) - 5;
+              return (
+                <div key={n.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderTop: `1px solid ${C.border}`, marginTop: 8 }}>
+                  <span style={{ fontSize: 12, color: C.text }}>{n.nome}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ fontFamily: MN, fontSize: 11, color: t.lucro >= 0 ? C.accent : C.red }}>{fmtBRL(t.lucro)}</span>
+                    <span style={{ width: 8, height: 8, borderRadius: "50%", background: saudavel ? C.accent : C.yellow }} />
+                  </div>
+                </div>
+              );
+            })}
             {!isPremium && negocios.length >= 2 && (
               <div style={{ marginTop: 12, padding: "10px 14px", background: `${C.yellow}08`, border: `1px solid ${C.yellow}20`, borderRadius: 10 }}>
-                <div style={{ fontSize: 11, color: C.textDim }}>
-                  Diagnóstico cruzado disponível no Premium.{" "}
-                  <button onClick={() => setShowUpgrade(true)} style={{ background: "none", border: "none", color: C.accent, fontSize: 11, cursor: "pointer", fontFamily: FN, padding: 0, textDecoration: "underline" }}>Ver mais</button>
-                </div>
+                <div style={{ fontSize: 11, color: C.textDim }}>Diagnóstico cruzado disponível no Premium.{" "}<button onClick={() => setShowUpgrade(true)} style={{ background: "none", border: "none", color: C.accent, fontSize: 11, cursor: "pointer", fontFamily: FN, padding: 0, textDecoration: "underline" }}>Ver mais</button></div>
               </div>
             )}
           </div>
@@ -259,7 +326,7 @@ export default function MeuNegocio({ user }) {
           const segLabel = SEGMENTOS.find((s) => s.id === n.segmento)?.label || "Negócio";
           return (
             <button key={n.id} onClick={() => { setActiveId(n.id); setView("dashboard"); }}
-              style={{ display: "block", width: "100%", textAlign: "left", padding: "15px 16px", background: "linear-gradient(180deg, rgba(11,24,38,0.94), rgba(7,16,25,0.94))", border: `1px solid ${C.border}`, borderRadius: 16, cursor: "pointer", marginBottom: 10, transition: "border-color 0.2s", boxShadow: "0 10px 30px rgba(0,0,0,0.16)" }}
+              style={{ display: "block", width: "100%", textAlign: "left", padding: "15px 16px", background: "linear-gradient(180deg, rgba(11,24,38,0.94), rgba(7,16,25,0.94))", border: `1px solid ${C.border}`, borderRadius: 16, cursor: "pointer", marginBottom: 10 }}
               onMouseEnter={(e) => e.currentTarget.style.borderColor = C.accentBorder} onMouseLeave={(e) => e.currentTarget.style.borderColor = C.border}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
@@ -278,7 +345,7 @@ export default function MeuNegocio({ user }) {
                     <span style={{ fontSize: 10, color: C.textDim, fontFamily: MN }}>{fmtPct((t.totalR / n.meta) * 100)}</span>
                   </div>
                   <div style={{ height: 3, background: C.cardAlt, borderRadius: 2 }}>
-                    <div style={{ height: "100%", width: `${Math.min((t.totalR / n.meta) * 100, 100)}%`, background: C.accent, borderRadius: 2, transition: "width 0.3s" }} />
+                    <div style={{ height: "100%", width: `${Math.min((t.totalR / n.meta) * 100, 100)}%`, background: C.accent, borderRadius: 2 }} />
                   </div>
                 </div>
               )}
@@ -303,11 +370,7 @@ export default function MeuNegocio({ user }) {
     (active.despesas || []).forEach((d) => allMonths.add(d.month || month));
     const sortedMonths = [...allMonths].sort();
     const years = {};
-    sortedMonths.forEach((m) => {
-      const y = m.split("-")[0];
-      if (!years[y]) years[y] = [];
-      years[y].push(m);
-    });
+    sortedMonths.forEach((m) => { const y = m.split("-")[0]; if (!years[y]) years[y] = []; years[y].push(m); });
     const monthlyData = sortedMonths.map((m) => {
       const rec = (active.receitas || []).filter((r) => (r.month || month) === m).reduce((s, r) => s + r.valor, 0);
       const desp = (active.despesas || []).filter((d) => (d.month || month) === m).reduce((s, d) => s + d.valor, 0);
@@ -318,18 +381,11 @@ export default function MeuNegocio({ user }) {
       <div>
         <button onClick={() => setView("dashboard")} style={{ background: "none", border: "none", color: C.textDim, fontSize: 12, cursor: "pointer", fontFamily: FN, marginBottom: 12 }}>← Voltar ao dashboard</button>
         <h2 style={{ ...heroStyle, marginBottom: 6 }}>Histórico — {active.nome}</h2>
-        <p style={{ fontSize: 12, color: C.textDim, marginBottom: 20, margin: "0 0 20px" }}>Evolução mês a mês. Dados armazenados por até 5 anos.</p>
-        {monthlyData.length === 0 && (
-          <div style={{ textAlign: "center", padding: "40px 20px", color: C.textMuted, fontSize: 13 }}>Nenhum dado registrado ainda. Lance receitas e despesas para começar o histórico.</div>
-        )}
+        <p style={{ fontSize: 12, color: C.textDim, marginBottom: 20, margin: "0 0 20px" }}>Evolução mês a mês.</p>
+        {monthlyData.length === 0 && <div style={{ textAlign: "center", padding: "40px 20px", color: C.textMuted, fontSize: 13 }}>Nenhum dado registrado ainda.</div>}
         {monthlyData.length > 0 && (
           <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 20, marginBottom: 16 }}>
             <div style={{ fontSize: 11, color: C.textMuted, fontFamily: MN, letterSpacing: "1px", marginBottom: 16 }}>EVOLUÇÃO</div>
-            <div style={{ display: "flex", gap: 16, marginBottom: 14, justifyContent: "center" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 10, height: 10, borderRadius: 2, background: C.accent }} /><span style={{ fontSize: 10, color: C.textDim }}>Receita</span></div>
-              <div style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 10, height: 10, borderRadius: 2, background: C.red }} /><span style={{ fontSize: 10, color: C.textDim }}>Despesa</span></div>
-              <div style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 10, height: 10, borderRadius: 2, background: C.accent }} /><span style={{ fontSize: 10, color: C.textDim }}>Lucro</span></div>
-            </div>
             <div style={{ display: "flex", gap: 4, alignItems: "flex-end", height: 140, overflowX: "auto", paddingBottom: 4 }}>
               {monthlyData.map((d) => (
                 <div key={d.month} style={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 40, flex: 1 }}>
@@ -355,7 +411,7 @@ export default function MeuNegocio({ user }) {
                   <button key={m} onClick={() => { setViewMonth(m); setView("dashboard"); }}
                     style={{ display: "flex", width: "100%", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", background: "transparent", border: "none", borderBottom: `1px solid ${C.border}`, cursor: "pointer", textAlign: "left" }}
                     onMouseEnter={(e) => e.currentTarget.style.background = C.cardAlt} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
-                    <div><div style={{ fontSize: 13, color: C.white, textTransform: "capitalize" }}>{monthName}</div></div>
+                    <div style={{ fontSize: 13, color: C.white, textTransform: "capitalize" }}>{monthName}</div>
                     <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
                       <div style={{ textAlign: "right" }}><div style={{ fontFamily: MN, fontSize: 11, color: C.accent }}>{fmtBRL(d.receita)}</div><div style={{ fontSize: 9, color: C.textMuted }}>receita</div></div>
                       <div style={{ textAlign: "right" }}><div style={{ fontFamily: MN, fontSize: 11, color: d.lucro >= 0 ? C.accent : C.red }}>{fmtBRL(d.lucro)}</div><div style={{ fontSize: 9, color: C.textMuted }}>lucro</div></div>
@@ -425,6 +481,17 @@ export default function MeuNegocio({ user }) {
   return (
     <div>
       {showUpgrade && <PremiumGate onClose={() => setShowUpgrade(false)} context="diagnostico" />}
+
+      {/* INPUT OCULTO FOTO */}
+      <input
+        ref={fotoInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        style={{ display: "none" }}
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFotoComprovante(f); e.target.value = ""; }}
+      />
+
       <div style={{ marginBottom: 20 }}>
         <button onClick={() => { setView("list"); setActiveId(null); setViewMonth(curMonth()); }} style={{ background: "none", border: "none", color: C.textDim, fontSize: 12, cursor: "pointer", fontFamily: FN, marginBottom: 8 }}>← Voltar aos negócios</button>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
@@ -443,7 +510,9 @@ export default function MeuNegocio({ user }) {
           </div>
         </div>
       </div>
+
       <BannerNegocio />
+
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 16 }}>
         <button onClick={() => { const [y, m] = displayMonth.split("-").map(Number); const d = new Date(y, m - 2, 1); setViewMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`); }} style={{ background: "none", border: "none", color: C.textDim, fontSize: 16, cursor: "pointer", padding: "4px 8px" }}>←</button>
         <div style={{ fontFamily: MN, fontSize: 13, color: isCurrentMonth ? C.accent : C.white, minWidth: 100, textAlign: "center" }}>
@@ -451,13 +520,15 @@ export default function MeuNegocio({ user }) {
         </div>
         <button onClick={() => { if (!isCurrentMonth) { const [y, m] = displayMonth.split("-").map(Number); const d = new Date(y, m, 1); setViewMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`); } }} style={{ background: "none", border: "none", color: isCurrentMonth ? C.textMuted : C.textDim, fontSize: 16, cursor: isCurrentMonth ? "default" : "pointer", padding: "4px 8px" }}>→</button>
       </div>
+
       <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 18, marginBottom: 14 }}>
         <div style={{ fontSize: 11, color: C.textMuted, fontFamily: MN, letterSpacing: "1px", marginBottom: 4 }}>SALDO INICIAL DO MÊS</div>
-        <div style={{ fontSize: 12, color: C.textDim, lineHeight: 1.55, marginBottom: 10 }}>Capital de giro, sobra do mês anterior ou valor em caixa. Entra no saldo final sem alterar receitas ou despesas.</div>
+        <div style={{ fontSize: 12, color: C.textDim, lineHeight: 1.55, marginBottom: 10 }}>Capital de giro, sobra do mês anterior ou valor em caixa.</div>
         <input type="number" value={saldoInicialMes}
           onChange={(e) => { const value = Number(e.target.value || 0); updateActive((n) => ({ ...n, saldoInicial: { ...(n.saldoInicial || {}), [displayMonth]: value } })); }}
           placeholder="0" style={{ width: "100%", padding: "11px 13px", background: C.cardAlt, border: `1px solid ${C.border}`, borderRadius: 10, color: C.white, fontSize: 14, fontFamily: MN, outline: "none", boxSizing: "border-box" }} />
       </div>
+
       {active.meta > 0 && (
         <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "14px 18px", marginBottom: 12 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, marginBottom: 6, flexWrap: "wrap" }}>
@@ -465,10 +536,11 @@ export default function MeuNegocio({ user }) {
             <span style={{ ...moneyCompactStyle, fontSize: "clamp(12px, 3.4vw, 14px)", color: totalR >= active.meta ? C.accent : C.text }}>{fmtBRL(totalR)} / {fmtBRL(active.meta)}</span>
           </div>
           <div style={{ height: 5, background: C.cardAlt, borderRadius: 3 }}>
-            <div style={{ height: "100%", width: `${Math.min((totalR / active.meta) * 100, 100)}%`, background: C.accent, borderRadius: 3, transition: "width 0.3s" }} />
+            <div style={{ height: "100%", width: `${Math.min((totalR / active.meta) * 100, 100)}%`, background: C.accent, borderRadius: 3 }} />
           </div>
         </div>
       )}
+
       <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: 20, marginBottom: 16 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 14 }}>
           <div>
@@ -495,7 +567,9 @@ export default function MeuNegocio({ user }) {
           ))}
         </div>
       </div>
+
       <RelatorioPremium negocio={active} mes={displayMonth} isPremium={isPremium} onUpgrade={() => setShowUpgrade(true)} />
+
       {despPorCat.length > 0 && (
         <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 20, marginBottom: 16, marginTop: 10 }}>
           <div style={{ fontSize: 11, color: C.textMuted, fontFamily: MN, letterSpacing: "1px", marginBottom: 12 }}>DESPESAS POR CATEGORIA</div>
@@ -508,13 +582,24 @@ export default function MeuNegocio({ user }) {
                   <span style={{ fontFamily: MN, fontSize: 11, color: C.textDim }}>{fmtBRL(val)} ({fmtPct(pct)})</span>
                 </div>
                 <div style={{ height: 4, background: C.cardAlt, borderRadius: 2 }}>
-                  <div style={{ height: "100%", width: `${Math.min(pct, 100)}%`, background: pct > 30 ? C.yellow : C.accent, borderRadius: 2, transition: "width 0.3s" }} />
+                  <div style={{ height: "100%", width: `${Math.min(pct, 100)}%`, background: pct > 30 ? C.yellow : C.accent, borderRadius: 2 }} />
                 </div>
               </div>
             );
           })}
         </div>
       )}
+
+      {/* BOTÃO CÂMERA + RECEITAS/DESPESAS */}
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+        <button
+          onClick={() => { setShowFotoModal(true); setFotoResultado(null); setFotoError(null); }}
+          style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 20px", borderRadius: 10, fontSize: 12, fontFamily: MN, cursor: "pointer", background: `${C.accent}15`, color: C.accent, border: `1px solid ${C.accent}40`, fontWeight: 700 }}
+        >
+          📷 Lançar por foto
+        </button>
+      </div>
+
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 12, marginBottom: 12 }}>
         <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 20 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
@@ -525,7 +610,10 @@ export default function MeuNegocio({ user }) {
           {recMes.length === 0 && <div style={{ textAlign: "center", padding: "16px 0", color: C.textMuted, fontSize: 12 }}>Nenhuma receita neste mês</div>}
           {recMes.map((r) => (
             <div key={r.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
-              <div><div style={{ fontSize: 12, color: C.text }}>{r.desc}</div><div style={{ fontSize: 10, color: C.textMuted, fontFamily: MN }}>{r.categoria}</div></div>
+              <div>
+                <div style={{ fontSize: 12, color: C.text }}>{r.desc}{r.viaFoto && <span style={{ fontSize: 9, color: C.accent, marginLeft: 4 }}>📷</span>}</div>
+                <div style={{ fontSize: 10, color: C.textMuted, fontFamily: MN }}>{r.categoria}</div>
+              </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ fontFamily: MN, fontSize: 12, color: C.accent }}>{fmtBRL(r.valor)}</span>
                 <button onClick={() => removeItem("receitas", r.id)} style={{ background: "none", border: "none", color: C.textMuted, cursor: "pointer", fontSize: 14 }}>×</button>
@@ -542,7 +630,10 @@ export default function MeuNegocio({ user }) {
           {despMes.length === 0 && <div style={{ textAlign: "center", padding: "16px 0", color: C.textMuted, fontSize: 12 }}>Nenhuma despesa neste mês</div>}
           {despMes.map((d) => (
             <div key={d.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
-              <div><div style={{ fontSize: 12, color: C.text }}>{d.desc}</div><div style={{ fontSize: 10, color: C.textMuted, fontFamily: MN }}>{d.categoria}</div></div>
+              <div>
+                <div style={{ fontSize: 12, color: C.text }}>{d.desc}{d.viaFoto && <span style={{ fontSize: 9, color: C.accent, marginLeft: 4 }}>📷</span>}</div>
+                <div style={{ fontSize: 10, color: C.textMuted, fontFamily: MN }}>{d.categoria}</div>
+              </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ fontFamily: MN, fontSize: 12, color: C.red }}>{fmtBRL(d.valor)}</span>
                 <button onClick={() => removeItem("despesas", d.id)} style={{ background: "none", border: "none", color: C.textMuted, cursor: "pointer", fontSize: 14 }}>×</button>
@@ -551,6 +642,7 @@ export default function MeuNegocio({ user }) {
           ))}
         </div>
       </div>
+
       <SponsorSlot id="negocio-bottom" />
       {recMes.length === 0 && despMes.length === 0 && (
         <div style={{ textAlign: "center", padding: "24px 20px" }}>
@@ -558,6 +650,9 @@ export default function MeuNegocio({ user }) {
           <div style={{ fontSize: 12, color: C.textDim, lineHeight: 1.7 }}>Categorias preparadas para {seg?.label}.</div>
         </div>
       )}
+      <p style={{ textAlign: "center", fontSize: 10, color: C.textMuted, lineHeight: 1.6, marginTop: 20 }}>Simulação educativa. Não substitui acompanhamento contábil.</p>
+
+      {/* MODAL LANÇAMENTO MANUAL */}
       {showModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 20 }} onClick={() => setShowModal(null)}>
           <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 400, background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: "24px 20px" }}>
@@ -586,7 +681,94 @@ export default function MeuNegocio({ user }) {
           </div>
         </div>
       )}
-      <p style={{ textAlign: "center", fontSize: 10, color: C.textMuted, lineHeight: 1.6, marginTop: 20 }}>Simulação educativa. Não substitui acompanhamento contábil.</p>
+
+      {/* MODAL FOTO */}
+      {showFotoModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.82)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1100, padding: 16 }} onClick={() => { if (!fotoLoading) setShowFotoModal(false); }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 360, background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: "24px 20px" }}>
+            <div style={{ fontFamily: MN, fontSize: 14, fontWeight: 800, color: C.white, marginBottom: 4 }}>Lançar por foto</div>
+            <div style={{ fontSize: 11, color: C.textDim, marginBottom: 18, lineHeight: 1.55 }}>Tire foto ou selecione o comprovante. A IA detecta valor, tipo e categoria automaticamente.</div>
+
+            {!fotoResultado && !fotoLoading && !fotoError && (
+              <button onClick={() => fotoInputRef.current?.click()}
+                style={{ width: "100%", padding: "32px 16px", borderRadius: 12, border: `2px dashed ${C.accent}50`, background: `${C.accent}08`, color: C.accent, fontSize: 13, fontFamily: MN, cursor: "pointer", marginBottom: 12 }}>
+                📷  Tirar foto ou selecionar imagem
+              </button>
+            )}
+
+            {fotoLoading && (
+              <div style={{ textAlign: "center", padding: "32px 0", color: C.textDim, fontSize: 13 }}>
+                <div style={{ fontSize: 28, marginBottom: 10 }}>🔍</div>
+                Analisando comprovante...
+              </div>
+            )}
+
+            {fotoError === "limite" && (
+              <div style={{ padding: 16, background: `${C.yellow}10`, border: `1px solid ${C.yellow}30`, borderRadius: 12, marginBottom: 12 }}>
+                <div style={{ fontSize: 13, color: C.yellow, fontWeight: 700, marginBottom: 4 }}>Limite mensal atingido</div>
+                <div style={{ fontSize: 11, color: C.textDim, marginBottom: 12 }}>Você usou suas 5 leituras gratuitas deste mês. Faça upgrade para usar sem limite.</div>
+                <button onClick={() => { setShowFotoModal(false); setShowUpgrade(true); }}
+                  style={{ width: "100%", padding: "10px", background: C.accent, color: C.bg, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, fontFamily: MN, cursor: "pointer" }}>
+                  Ver Premium
+                </button>
+              </div>
+            )}
+
+            {fotoError && fotoError !== "limite" && (
+              <div style={{ padding: 14, background: `${C.red}10`, border: `1px solid ${C.red}30`, borderRadius: 10, marginBottom: 12, fontSize: 12, color: C.red }}>{fotoError}</div>
+            )}
+
+            {fotoResultado && (
+              <div>
+                <div style={{ padding: 14, background: `${C.accent}0D`, border: `1px solid ${C.accent}30`, borderRadius: 12, marginBottom: 14 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                    <span style={{ fontSize: 11, color: C.textMuted }}>Tipo</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: fotoTipo === "receita" ? C.accent : C.red }}>{fotoTipo === "receita" ? "Receita" : "Despesa"}</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                    <span style={{ fontSize: 11, color: C.textMuted }}>Valor detectado</span>
+                    <span style={{ fontFamily: MN, fontSize: 15, fontWeight: 800, color: fotoTipo === "receita" ? C.accent : C.red }}>R$ {fotoResultado.valor?.toFixed(2)}</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                    <span style={{ fontSize: 11, color: C.textMuted }}>Descrição</span>
+                    <span style={{ fontSize: 12, color: C.white }}>{fotoResultado.descricao || fotoResultado.estabelecimento}</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                    <span style={{ fontSize: 11, color: C.textMuted }}>Categoria</span>
+                    <span style={{ fontSize: 12, color: C.white }}>{fotoResultado.categoria}</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ fontSize: 11, color: C.textMuted }}>Confiança</span>
+                    <span style={{ fontSize: 11, color: fotoResultado.confianca === "alta" ? C.accent : fotoResultado.confianca === "media" ? C.yellow : C.red }}>{fotoResultado.confianca}</span>
+                  </div>
+                </div>
+                {/* Toggle receita/despesa caso IA erre */}
+                <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
+                  <button onClick={() => setFotoTipo("despesa")} style={{ flex: 1, padding: "7px", borderRadius: 8, fontSize: 11, fontFamily: MN, cursor: "pointer", background: fotoTipo === "despesa" ? `${C.red}20` : C.cardAlt, color: fotoTipo === "despesa" ? C.red : C.textMuted, border: `1px solid ${fotoTipo === "despesa" ? C.red+"40" : C.border}` }}>Despesa</button>
+                  <button onClick={() => setFotoTipo("receita")} style={{ flex: 1, padding: "7px", borderRadius: 8, fontSize: 11, fontFamily: MN, cursor: "pointer", background: fotoTipo === "receita" ? `${C.accent}20` : C.cardAlt, color: fotoTipo === "receita" ? C.accent : C.textMuted, border: `1px solid ${fotoTipo === "receita" ? C.accentBorder : C.border}` }}>Receita</button>
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button onClick={confirmarLancamentoFoto}
+                    style={{ flex: 1, padding: "11px", background: C.accent, color: C.bg, border: "none", borderRadius: 10, fontSize: 13, fontWeight: 700, fontFamily: MN, cursor: "pointer" }}>
+                    Confirmar lançamento
+                  </button>
+                  <button onClick={() => { setFotoResultado(null); fotoInputRef.current?.click(); }}
+                    style={{ padding: "11px 14px", background: C.cardAlt, color: C.textDim, border: `1px solid ${C.border}`, borderRadius: 10, fontSize: 12, fontFamily: MN, cursor: "pointer" }}>
+                    Refazer
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {!fotoLoading && (
+              <button onClick={() => setShowFotoModal(false)}
+                style={{ width: "100%", marginTop: 10, padding: "8px", background: "transparent", border: `1px solid ${C.border}`, borderRadius: 8, color: C.textMuted, fontSize: 11, cursor: "pointer" }}>
+                Fechar
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
