@@ -137,6 +137,11 @@ export default function GestaoAtiva({ user, targetUser = null, adminMode = false
   const [fotoLoading, setFotoLoading] = useState(false);
   const [fotoResultado, setFotoResultado] = useState(null);
   const [fotoError, setFotoError] = useState(null);
+  // Campos editáveis pós-IA
+  const [fotoValor, setFotoValor] = useState("");
+  const [fotoDesc, setFotoDesc] = useState("");
+  const [fotoCat, setFotoCat] = useState("");
+  const [fotoDataHora] = useState(() => new Date().toISOString());
   const fotoInputRef = React.useRef(null);
 
   const isPremium = user?.is_premium || user?.is_admin;
@@ -187,7 +192,23 @@ export default function GestaoAtiva({ user, targetUser = null, adminMode = false
         else setFotoError(json.message || "Erro ao analisar imagem.");
         return;
       }
-      setFotoResultado(json.data);
+      const d = json.data;
+      setFotoResultado(d);
+      setFotoValor(String(d.valor || ""));
+      setFotoDesc(d.descricao || d.estabelecimento || "");
+      // Mapeia categoria sugerida
+      const catMap = {
+        "Mercado / Alimentação": "mercado",
+        "Transporte / Gasolina": "transporte",
+        "Diversão / Lazer": "diversao",
+        "Saúde / Farmácia": "saude",
+        "Pets": "pets",
+        "Cursos e Livros": "cursos",
+        "Outros": "outros",
+      };
+      const catId = catMap[d.categoria] || "outros";
+      const catExiste = categories.find((c) => c.id === catId);
+      setFotoCat(catExiste ? catId : (categories[0]?.id || ""));
     } catch {
       setFotoError("Erro ao processar imagem. Tente novamente.");
     } finally {
@@ -196,20 +217,9 @@ export default function GestaoAtiva({ user, targetUser = null, adminMode = false
   }
 
   function confirmarLancamentoFoto() {
-    if (!fotoResultado) return;
-    const catMap = {
-      "Mercado / Alimentação": "mercado",
-      "Transporte / Gasolina": "transporte",
-      "Diversão / Lazer": "diversao",
-      "Saúde / Farmácia": "saude",
-      "Pets": "pets",
-      "Cursos e Livros": "cursos",
-      "Outros": "outros",
-    };
-    const catId = catMap[fotoResultado.categoria] || "outros";
-    const catExiste = categories.find((c) => c.id === catId);
-    const targetCatId = catExiste ? catId : (categories[0]?.id || null);
-    if (!targetCatId) {
+    if (!fotoResultado || !fotoCat) return;
+    const targetCat = categories.find((c) => c.id === fotoCat);
+    if (!targetCat) {
       setFotoError("Nenhuma categoria cadastrada. Adicione uma categoria primeiro.");
       return;
     }
@@ -217,9 +227,9 @@ export default function GestaoAtiva({ user, targetUser = null, adminMode = false
       ...prev,
       expenses: [...(prev.expenses || []), {
         id: Date.now(),
-        categoryId: targetCatId,
-        value: fotoResultado.valor || 0,
-        desc: fotoResultado.descricao || fotoResultado.estabelecimento || "Gasto via foto",
+        categoryId: fotoCat,
+        value: parseFloat(fotoValor) || 0,
+        desc: fotoDesc.trim() || "Gasto via foto",
         date: new Date().toISOString(),
         viaFoto: true,
       }],
@@ -301,7 +311,7 @@ export default function GestaoAtiva({ user, targetUser = null, adminMode = false
       {canEdit && categories.length > 0 && (
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
           <button
-            onClick={() => { setShowFotoModal(true); setFotoResultado(null); setFotoError(null); }}
+            onClick={() => { setShowFotoModal(true); setFotoResultado(null); setFotoError(null); setFotoValor(""); setFotoDesc(""); setFotoCat(""); }}
             style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 20px", borderRadius: 10, fontSize: 12, fontFamily: MN, cursor: "pointer", background: `${C.accent}15`, color: C.accent, border: `1px solid ${C.accent}40`, fontWeight: 700 }}
           >
             📷 Lançar por foto
@@ -311,12 +321,12 @@ export default function GestaoAtiva({ user, targetUser = null, adminMode = false
 
       {/* INPUT OCULTO */}
       <input
-  ref={fotoInputRef}
-  type="file"
-  accept="image/*,application/pdf"
-  style={{ display: "none" }}
-  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFotoComprovante(f); e.target.value = ""; }}
-/>
+        ref={fotoInputRef}
+        type="file"
+        accept="image/*,application/pdf"
+        style={{ display: "none" }}
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFotoComprovante(f); e.target.value = ""; }}
+      />
 
       {!isPremium && (
         <PremiumNotice context="gestaoAtiva" onClick={() => setShowUpgrade(true)} />
@@ -330,7 +340,7 @@ export default function GestaoAtiva({ user, targetUser = null, adminMode = false
         </div>
       </div>
 
-      {categories.map((cat) => { const spent = catTotals[cat.id] || 0; const rem = cat.limit - spent; const pct = cat.limit > 0 ? (spent/cat.limit)*100 : 0; const exps = expenses.filter((e) => e.categoryId === cat.id).sort((a, b) => new Date(b.date) - new Date(a.date)); return (<div key={cat.id} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: 14, marginBottom: 6 }}><div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}><div style={{ display: "flex", alignItems: "center", gap: 6 }}><span style={{ fontSize: 16 }}><ResolveIcon iconId={cat.iconId} /></span><div><div style={{ fontFamily: MN, fontSize: 11, fontWeight: 700, color: C.white }}>{cat.label}</div><div style={{ fontSize: 9, color: C.textMuted }}>Limite: R$ {numFmt(cat.limit, 2)}</div></div></div><div style={{ textAlign: "right" }}><div style={{ fontFamily: MN, fontSize: 14, fontWeight: 800, color: rem >= 0 ? cat.color : C.red }}>R$ {numFmt(Math.abs(rem), 2)}</div><div style={{ fontSize: 8, color: rem >= 0 ? C.textMuted : C.red }}>{rem >= 0 ? "restante" : "estourado"}</div></div></div><div style={{ height: 3, background: C.border, borderRadius: 2, marginBottom: 6, overflow: "hidden" }}><div style={{ width: `${Math.min(100, pct)}%`, height: "100%", borderRadius: 2, background: pct > 90 ? C.red : pct > 70 ? C.yellow : cat.color }} /></div><div style={{ display: "flex", gap: 6, marginBottom: exps.length > 0 ? 6 : 0 }}>{canEdit && <button onClick={() => { setSelectedCat(cat.id); setShowAddExp(true); }} style={{ padding: "4px 10px", borderRadius: 5, fontSize: 9, fontFamily: MN, cursor: "pointer", background: `${cat.color}15`, color: cat.color, border: `1px solid ${cat.color}30` }}>+ Gasto</button>} {canManageCats && <button onClick={() => { if (confirm(`Remover a categoria "${cat.label}" e todos os ${exps.length} gasto(s) dela?`)) { setData((p) => ({ ...p, categories: p.categories.filter((c) => c.id !== cat.id), expenses: p.expenses.filter((e) => e.categoryId !== cat.id) })); } }} style={{ padding: "4px 8px", borderRadius: 5, fontSize: 9, cursor: "pointer", background: "transparent", color: C.textMuted, border: `1px solid ${C.border}` }}>Remover</button>}</div>{exps.map((exp) => (<div key={exp.id} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", borderTop: `1px solid ${C.border}` }}><span style={{ fontSize: 10, color: C.text }}>{exp.desc || "Gasto"}{exp.viaFoto && <span style={{ fontSize: 8, color: C.accent, marginLeft: 4 }}>📷</span>} <span style={{ color: C.textMuted, fontSize: 8 }}>{new Date(exp.date).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}</span></span><div style={{ display: "flex", gap: 4, alignItems: "center" }}><span style={{ fontFamily: MN, fontSize: 10, color: C.red }}>-R$ {numFmt(exp.value, 2)}</span>{canEdit && <button onClick={() => { if (confirm("Excluir este gasto?")) { setData((p) => ({ ...p, expenses: p.expenses.filter((e) => e.id !== exp.id) })); } }} style={{ background: "none", border: "none", color: C.textMuted, cursor: "pointer", fontSize: 10 }}>×</button>}</div></div>))}</div>); })}
+      {categories.map((cat) => { const spent = catTotals[cat.id] || 0; const rem = cat.limit - spent; const pct = cat.limit > 0 ? (spent/cat.limit)*100 : 0; const exps = expenses.filter((e) => e.categoryId === cat.id).sort((a, b) => new Date(b.date) - new Date(a.date)); return (<div key={cat.id} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: 14, marginBottom: 6 }}><div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}><div style={{ display: "flex", alignItems: "center", gap: 6 }}><span style={{ fontSize: 16 }}><ResolveIcon iconId={cat.iconId} /></span><div><div style={{ fontFamily: MN, fontSize: 11, fontWeight: 700, color: C.white }}>{cat.label}</div><div style={{ fontSize: 9, color: C.textMuted }}>Limite: R$ {numFmt(cat.limit, 2)}</div></div></div><div style={{ textAlign: "right" }}><div style={{ fontFamily: MN, fontSize: 14, fontWeight: 800, color: rem >= 0 ? cat.color : C.red }}>R$ {numFmt(Math.abs(rem), 2)}</div><div style={{ fontSize: 8, color: rem >= 0 ? C.textMuted : C.red }}>{rem >= 0 ? "restante" : "estourado"}</div></div></div><div style={{ height: 3, background: C.border, borderRadius: 2, marginBottom: 6, overflow: "hidden" }}><div style={{ width: `${Math.min(100, pct)}%`, height: "100%", borderRadius: 2, background: pct > 90 ? C.red : pct > 70 ? C.yellow : cat.color }} /></div><div style={{ display: "flex", gap: 6, marginBottom: exps.length > 0 ? 6 : 0 }}>{canEdit && <button onClick={() => { setSelectedCat(cat.id); setShowAddExp(true); }} style={{ padding: "4px 10px", borderRadius: 5, fontSize: 9, fontFamily: MN, cursor: "pointer", background: `${cat.color}15`, color: cat.color, border: `1px solid ${cat.color}30` }}>+ Gasto</button>} {canManageCats && <button onClick={() => { if (confirm(`Remover a categoria "${cat.label}" e todos os ${exps.length} gasto(s) dela?`)) { setData((p) => ({ ...p, categories: p.categories.filter((c) => c.id !== cat.id), expenses: p.expenses.filter((e) => e.categoryId !== cat.id) })); } }} style={{ padding: "4px 8px", borderRadius: 5, fontSize: 9, cursor: "pointer", background: "transparent", color: C.textMuted, border: `1px solid ${C.border}` }}>Remover</button>}</div>{exps.map((exp) => (<div key={exp.id} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", borderTop: `1px solid ${C.border}` }}><span style={{ fontSize: 10, color: C.text }}>{exp.desc || "Gasto"}{exp.viaFoto && <span style={{ fontSize: 8, color: C.accent, marginLeft: 4 }}>📷</span>} <span style={{ color: C.textMuted, fontSize: 8 }}>{new Date(exp.date).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })} {new Date(exp.date).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span></span><div style={{ display: "flex", gap: 4, alignItems: "center" }}><span style={{ fontFamily: MN, fontSize: 10, color: C.red }}>-R$ {numFmt(exp.value, 2)}</span>{canEdit && <button onClick={() => { if (confirm("Excluir este gasto?")) { setData((p) => ({ ...p, expenses: p.expenses.filter((e) => e.id !== exp.id) })); } }} style={{ background: "none", border: "none", color: C.textMuted, cursor: "pointer", fontSize: 10 }}>×</button>}</div></div>))}</div>); })}
 
       {categories.length === 0 && (<div style={{ textAlign: "center", padding: "30px 16px", background: C.card, border: `1px solid ${C.border}`, borderRadius: 12 }}><div style={{ fontSize: 32, marginBottom: 8 }}></div><div style={{ fontSize: 13, fontWeight: 600, color: C.white, marginBottom: 6 }}>{isAluno ? "Aguardando configuração" : "Comece sua gestão ativa"}</div><div style={{ fontSize: 11, color: C.textDim, lineHeight: 1.6, marginBottom: 14 }}>{isAluno ? "As categorias do seu Gestão Ativa serão configuradas pelo seu consultor. Em breve você poderá lançar seus gastos aqui." : "Adicione categorias de despesas variáveis e controle seus gastos."}</div>{canManageCats && <button onClick={() => setShowAddCat(true)} style={{ padding: "10px 18px", borderRadius: 10, fontSize: 12, fontFamily: MN, cursor: "pointer", background: C.accent, color: C.bg, border: "none", fontWeight: 700 }}>+ Adicionar categoria</button>}</div>)}
 
@@ -346,7 +356,7 @@ export default function GestaoAtiva({ user, targetUser = null, adminMode = false
       {/* MODAL FOTO */}
       {showFotoModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.82)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1100, padding: 16 }} onClick={() => { if (!fotoLoading) setShowFotoModal(false); }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 360, background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: "24px 20px" }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 360, background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: "24px 20px", maxHeight: "90vh", overflowY: "auto" }}>
             <div style={{ fontFamily: MN, fontSize: 14, fontWeight: 800, color: C.white, marginBottom: 4 }}>Lançar por foto</div>
             <div style={{ fontSize: 11, color: C.textDim, marginBottom: 18, lineHeight: 1.55 }}>Tire foto ou selecione o comprovante. A IA detecta o valor e categoria automaticamente.</div>
 
@@ -381,31 +391,67 @@ export default function GestaoAtiva({ user, targetUser = null, adminMode = false
 
             {fotoResultado && (
               <div>
-                <div style={{ padding: 14, background: `${C.accent}0D`, border: `1px solid ${C.accent}30`, borderRadius: 12, marginBottom: 14 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                    <span style={{ fontSize: 11, color: C.textMuted }}>Valor detectado</span>
-                    <span style={{ fontFamily: MN, fontSize: 15, fontWeight: 800, color: C.accent }}>R$ {fotoResultado.valor?.toFixed(2)}</span>
+                {/* Data/hora — cinza pequeno */}
+                <div style={{ fontSize: 10, color: C.textMuted, fontFamily: MN, textAlign: "right", marginBottom: 10 }}>
+                  {new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })} às {new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                </div>
+
+                <div style={{ display: "grid", gap: 10, marginBottom: 14 }}>
+                  {/* Valor editável */}
+                  <div>
+                    <div style={{ fontSize: 9, color: C.textMuted, fontFamily: MN, marginBottom: 4 }}>VALOR (R$)</div>
+                    <input
+                      type="number"
+                      value={fotoValor}
+                      onChange={(e) => setFotoValor(e.target.value)}
+                      style={{ width: "100%", padding: "10px 12px", background: C.cardAlt, border: `1px solid ${C.accentBorder}`, borderRadius: 8, color: C.accent, fontSize: 16, fontFamily: MN, fontWeight: 800, outline: "none", boxSizing: "border-box" }}
+                    />
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                    <span style={{ fontSize: 11, color: C.textMuted }}>Descrição</span>
-                    <span style={{ fontSize: 12, color: C.white }}>{fotoResultado.descricao || fotoResultado.estabelecimento}</span>
+
+                  {/* Descrição editável */}
+                  <div>
+                    <div style={{ fontSize: 9, color: C.textMuted, fontFamily: MN, marginBottom: 4 }}>DESCRIÇÃO</div>
+                    <input
+                      value={fotoDesc}
+                      onChange={(e) => setFotoDesc(e.target.value)}
+                      placeholder="Ex: Compra no mercado"
+                      style={{ width: "100%", padding: "9px 12px", background: C.cardAlt, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, fontSize: 13, fontFamily: FN, outline: "none", boxSizing: "border-box" }}
+                    />
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                    <span style={{ fontSize: 11, color: C.textMuted }}>Categoria</span>
-                    <span style={{ fontSize: 12, color: C.white }}>{fotoResultado.categoria}</span>
+
+                  {/* Categoria editável — select */}
+                  <div>
+                    <div style={{ fontSize: 9, color: C.textMuted, fontFamily: MN, marginBottom: 4 }}>CATEGORIA</div>
+                    <select
+                      value={fotoCat}
+                      onChange={(e) => setFotoCat(e.target.value)}
+                      style={{ width: "100%", padding: "9px 12px", background: C.cardAlt, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, fontSize: 13, fontFamily: FN, outline: "none", appearance: "auto" }}
+                    >
+                      {categories.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+                    </select>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: 11, color: C.textMuted }}>Confiança</span>
-                    <span style={{ fontSize: 11, color: fotoResultado.confianca === "alta" ? C.accent : fotoResultado.confianca === "media" ? C.yellow : C.red }}>{fotoResultado.confianca}</span>
+
+                  {/* Confiança — só info */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontSize: 10, color: C.textMuted }}>Confiança da IA</span>
+                    <span style={{ fontSize: 11, fontFamily: MN, color: fotoResultado.confianca === "alta" ? C.accent : fotoResultado.confianca === "media" ? C.yellow : C.red }}>
+                      {fotoResultado.confianca}
+                    </span>
                   </div>
                 </div>
+
                 <div style={{ display: "flex", gap: 8 }}>
-                  <button onClick={confirmarLancamentoFoto}
-                    style={{ flex: 1, padding: "11px", background: C.accent, color: C.bg, border: "none", borderRadius: 10, fontSize: 13, fontWeight: 700, fontFamily: MN, cursor: "pointer" }}>
+                  <button
+                    onClick={confirmarLancamentoFoto}
+                    disabled={!fotoValor || !fotoCat}
+                    style={{ flex: 1, padding: "11px", background: fotoValor && fotoCat ? C.accent : C.border, color: fotoValor && fotoCat ? C.bg : C.textMuted, border: "none", borderRadius: 10, fontSize: 13, fontWeight: 700, fontFamily: MN, cursor: fotoValor && fotoCat ? "pointer" : "not-allowed" }}
+                  >
                     Confirmar lançamento
                   </button>
-                  <button onClick={() => { setFotoResultado(null); fotoInputRef.current?.click(); }}
-                    style={{ padding: "11px 14px", background: C.cardAlt, color: C.textDim, border: `1px solid ${C.border}`, borderRadius: 10, fontSize: 12, fontFamily: MN, cursor: "pointer" }}>
+                  <button
+                    onClick={() => { setFotoResultado(null); setFotoValor(""); setFotoDesc(""); setFotoCat(""); fotoInputRef.current?.click(); }}
+                    style={{ padding: "11px 14px", background: C.cardAlt, color: C.textDim, border: `1px solid ${C.border}`, borderRadius: 10, fontSize: 12, fontFamily: MN, cursor: "pointer" }}
+                  >
                     Refazer
                   </button>
                 </div>

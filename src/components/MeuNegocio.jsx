@@ -81,7 +81,11 @@ export default function MeuNegocio({ user }) {
   const [fotoLoading, setFotoLoading] = useState(false);
   const [fotoResultado, setFotoResultado] = useState(null);
   const [fotoError, setFotoError] = useState(null);
-  const [fotoTipo, setFotoTipo] = useState("despesa"); // despesa | receita
+  const [fotoTipo, setFotoTipo] = useState("despesa");
+  // Campos editáveis pós-IA
+  const [fotoValor, setFotoValor] = useState("");
+  const [fotoDesc, setFotoDesc] = useState("");
+  const [fotoCatNome, setFotoCatNome] = useState("");
   const fotoInputRef = React.useRef(null);
 
   const isPremium = user?.is_premium || user?.is_admin;
@@ -182,8 +186,17 @@ export default function MeuNegocio({ user }) {
         else setFotoError(json.message || "Erro ao analisar imagem.");
         return;
       }
-      setFotoTipo(json.data.tipo === "receita" ? "receita" : "despesa");
-      setFotoResultado(json.data);
+      const d = json.data;
+      setFotoTipo(d.tipo === "receita" ? "receita" : "despesa");
+      setFotoResultado(d);
+      setFotoValor(String(d.valor || ""));
+      setFotoDesc(d.descricao || d.estabelecimento || "");
+      // Tenta mapear categoria da IA para lista do segmento
+      if (seg) {
+        const listaCats = d.tipo === "receita" ? seg.receitas : seg.despesas;
+        const catMatch = listaCats.find(c => c.toLowerCase().includes((d.categoria || "").toLowerCase().split("/")[0].trim())) || listaCats[0];
+        setFotoCatNome(catMatch || "");
+      }
     } catch {
       setFotoError("Erro ao processar imagem. Tente novamente.");
     } finally {
@@ -193,15 +206,13 @@ export default function MeuNegocio({ user }) {
 
   function confirmarLancamentoFoto() {
     if (!fotoResultado || !active || !seg) return;
-    const categoriaIA = fotoResultado.categoria || "";
-    // Tenta mapear para categoria do segmento, senão usa a primeira disponível
     const listaCats = fotoTipo === "receita" ? seg.receitas : seg.despesas;
-    const catMatch = listaCats.find(c => c.toLowerCase().includes(categoriaIA.toLowerCase().split("/")[0].trim())) || listaCats[0];
+    const catFinal = fotoCatNome || listaCats[0];
     const item = {
       id: Date.now(),
-      desc: fotoResultado.descricao || fotoResultado.estabelecimento || "Lançamento via foto",
-      valor: fotoResultado.valor || 0,
-      categoria: catMatch,
+      desc: fotoDesc.trim() || "Lançamento via foto",
+      valor: parseFloat(fotoValor) || 0,
+      categoria: catFinal,
       month: displayMonth,
       viaFoto: true,
     };
@@ -484,12 +495,12 @@ export default function MeuNegocio({ user }) {
 
       {/* INPUT OCULTO FOTO */}
       <input
-  ref={fotoInputRef}
-  type="file"
-  accept="image/*,application/pdf"
-  style={{ display: "none" }}
-  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFotoComprovante(f); e.target.value = ""; }}
-/>
+        ref={fotoInputRef}
+        type="file"
+        accept="image/*,application/pdf"
+        style={{ display: "none" }}
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFotoComprovante(f); e.target.value = ""; }}
+      />
 
       <div style={{ marginBottom: 20 }}>
         <button onClick={() => { setView("list"); setActiveId(null); setViewMonth(curMonth()); }} style={{ background: "none", border: "none", color: C.textDim, fontSize: 12, cursor: "pointer", fontFamily: FN, marginBottom: 8 }}>← Voltar aos negócios</button>
@@ -589,10 +600,10 @@ export default function MeuNegocio({ user }) {
         </div>
       )}
 
-      {/* BOTÃO CÂMERA + RECEITAS/DESPESAS */}
+      {/* BOTÃO CÂMERA */}
       <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
         <button
-          onClick={() => { setShowFotoModal(true); setFotoResultado(null); setFotoError(null); }}
+          onClick={() => { setShowFotoModal(true); setFotoResultado(null); setFotoError(null); setFotoValor(""); setFotoDesc(""); setFotoCatNome(""); }}
           style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 20px", borderRadius: 10, fontSize: 12, fontFamily: MN, cursor: "pointer", background: `${C.accent}15`, color: C.accent, border: `1px solid ${C.accent}40`, fontWeight: 700 }}
         >
           📷 Lançar por foto
@@ -611,7 +622,7 @@ export default function MeuNegocio({ user }) {
             <div key={r.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
               <div>
                 <div style={{ fontSize: 12, color: C.text }}>{r.desc}{r.viaFoto && <span style={{ fontSize: 9, color: C.accent, marginLeft: 4 }}>📷</span>}</div>
-                <div style={{ fontSize: 10, color: C.textMuted, fontFamily: MN }}>{r.categoria}</div>
+                <div style={{ fontSize: 9, color: C.textMuted, fontFamily: MN }}>{r.categoria} {r.month && <span>· {new Date(r.id).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })} {new Date(r.id).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>}</div>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ fontFamily: MN, fontSize: 12, color: C.accent }}>{fmtBRL(r.valor)}</span>
@@ -631,7 +642,7 @@ export default function MeuNegocio({ user }) {
             <div key={d.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
               <div>
                 <div style={{ fontSize: 12, color: C.text }}>{d.desc}{d.viaFoto && <span style={{ fontSize: 9, color: C.accent, marginLeft: 4 }}>📷</span>}</div>
-                <div style={{ fontSize: 10, color: C.textMuted, fontFamily: MN }}>{d.categoria}</div>
+                <div style={{ fontSize: 9, color: C.textMuted, fontFamily: MN }}>{d.categoria} {d.id && <span>· {new Date(d.id).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })} {new Date(d.id).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>}</div>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ fontFamily: MN, fontSize: 12, color: C.red }}>{fmtBRL(d.valor)}</span>
@@ -684,7 +695,7 @@ export default function MeuNegocio({ user }) {
       {/* MODAL FOTO */}
       {showFotoModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.82)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1100, padding: 16 }} onClick={() => { if (!fotoLoading) setShowFotoModal(false); }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 360, background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: "24px 20px" }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 360, background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: "24px 20px", maxHeight: "90vh", overflowY: "auto" }}>
             <div style={{ fontFamily: MN, fontSize: 14, fontWeight: 800, color: C.white, marginBottom: 4 }}>Lançar por foto</div>
             <div style={{ fontSize: 11, color: C.textDim, marginBottom: 18, lineHeight: 1.55 }}>Tire foto ou selecione o comprovante. A IA detecta valor, tipo e categoria automaticamente.</div>
 
@@ -719,40 +730,73 @@ export default function MeuNegocio({ user }) {
 
             {fotoResultado && (
               <div>
-                <div style={{ padding: 14, background: `${C.accent}0D`, border: `1px solid ${C.accent}30`, borderRadius: 12, marginBottom: 14 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                    <span style={{ fontSize: 11, color: C.textMuted }}>Tipo</span>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: fotoTipo === "receita" ? C.accent : C.red }}>{fotoTipo === "receita" ? "Receita" : "Despesa"}</span>
+                {/* Data/hora — cinza pequeno */}
+                <div style={{ fontSize: 10, color: C.textMuted, fontFamily: MN, textAlign: "right", marginBottom: 10 }}>
+                  {new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })} às {new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                </div>
+
+                <div style={{ display: "grid", gap: 10, marginBottom: 14 }}>
+                  {/* Toggle tipo */}
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button onClick={() => { setFotoTipo("despesa"); if (seg) { setFotoCatNome(seg.despesas[0] || ""); } }} style={{ flex: 1, padding: "7px", borderRadius: 8, fontSize: 11, fontFamily: MN, cursor: "pointer", background: fotoTipo === "despesa" ? `${C.red}20` : C.cardAlt, color: fotoTipo === "despesa" ? C.red : C.textMuted, border: `1px solid ${fotoTipo === "despesa" ? C.red+"40" : C.border}` }}>Despesa</button>
+                    <button onClick={() => { setFotoTipo("receita"); if (seg) { setFotoCatNome(seg.receitas[0] || ""); } }} style={{ flex: 1, padding: "7px", borderRadius: 8, fontSize: 11, fontFamily: MN, cursor: "pointer", background: fotoTipo === "receita" ? `${C.accent}20` : C.cardAlt, color: fotoTipo === "receita" ? C.accent : C.textMuted, border: `1px solid ${fotoTipo === "receita" ? C.accentBorder : C.border}` }}>Receita</button>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                    <span style={{ fontSize: 11, color: C.textMuted }}>Valor detectado</span>
-                    <span style={{ fontFamily: MN, fontSize: 15, fontWeight: 800, color: fotoTipo === "receita" ? C.accent : C.red }}>R$ {fotoResultado.valor?.toFixed(2)}</span>
+
+                  {/* Valor editável */}
+                  <div>
+                    <div style={{ fontSize: 9, color: C.textMuted, fontFamily: MN, marginBottom: 4 }}>VALOR (R$)</div>
+                    <input
+                      type="number"
+                      value={fotoValor}
+                      onChange={(e) => setFotoValor(e.target.value)}
+                      style={{ width: "100%", padding: "10px 12px", background: C.cardAlt, border: `1px solid ${fotoTipo === "receita" ? C.accentBorder : C.red+"50"}`, borderRadius: 8, color: fotoTipo === "receita" ? C.accent : C.red, fontSize: 16, fontFamily: MN, fontWeight: 800, outline: "none", boxSizing: "border-box" }}
+                    />
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                    <span style={{ fontSize: 11, color: C.textMuted }}>Descrição</span>
-                    <span style={{ fontSize: 12, color: C.white }}>{fotoResultado.descricao || fotoResultado.estabelecimento}</span>
+
+                  {/* Descrição editável */}
+                  <div>
+                    <div style={{ fontSize: 9, color: C.textMuted, fontFamily: MN, marginBottom: 4 }}>DESCRIÇÃO</div>
+                    <input
+                      value={fotoDesc}
+                      onChange={(e) => setFotoDesc(e.target.value)}
+                      placeholder="Ex: Venda de produtos"
+                      style={{ width: "100%", padding: "9px 12px", background: C.cardAlt, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, fontSize: 13, fontFamily: FN, outline: "none", boxSizing: "border-box" }}
+                    />
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                    <span style={{ fontSize: 11, color: C.textMuted }}>Categoria</span>
-                    <span style={{ fontSize: 12, color: C.white }}>{fotoResultado.categoria}</span>
+
+                  {/* Categoria — select do segmento */}
+                  <div>
+                    <div style={{ fontSize: 9, color: C.textMuted, fontFamily: MN, marginBottom: 4 }}>CATEGORIA</div>
+                    <select
+                      value={fotoCatNome}
+                      onChange={(e) => setFotoCatNome(e.target.value)}
+                      style={{ width: "100%", padding: "9px 12px", background: C.cardAlt, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, fontSize: 13, fontFamily: FN, outline: "none", appearance: "auto" }}
+                    >
+                      {(fotoTipo === "receita" ? seg?.receitas : seg?.despesas)?.map((c) => <option key={c} value={c}>{c}</option>)}
+                    </select>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: 11, color: C.textMuted }}>Confiança</span>
-                    <span style={{ fontSize: 11, color: fotoResultado.confianca === "alta" ? C.accent : fotoResultado.confianca === "media" ? C.yellow : C.red }}>{fotoResultado.confianca}</span>
+
+                  {/* Confiança */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontSize: 10, color: C.textMuted }}>Confiança da IA</span>
+                    <span style={{ fontSize: 11, fontFamily: MN, color: fotoResultado.confianca === "alta" ? C.accent : fotoResultado.confianca === "media" ? C.yellow : C.red }}>
+                      {fotoResultado.confianca}
+                    </span>
                   </div>
                 </div>
-                {/* Toggle receita/despesa caso IA erre */}
-                <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
-                  <button onClick={() => setFotoTipo("despesa")} style={{ flex: 1, padding: "7px", borderRadius: 8, fontSize: 11, fontFamily: MN, cursor: "pointer", background: fotoTipo === "despesa" ? `${C.red}20` : C.cardAlt, color: fotoTipo === "despesa" ? C.red : C.textMuted, border: `1px solid ${fotoTipo === "despesa" ? C.red+"40" : C.border}` }}>Despesa</button>
-                  <button onClick={() => setFotoTipo("receita")} style={{ flex: 1, padding: "7px", borderRadius: 8, fontSize: 11, fontFamily: MN, cursor: "pointer", background: fotoTipo === "receita" ? `${C.accent}20` : C.cardAlt, color: fotoTipo === "receita" ? C.accent : C.textMuted, border: `1px solid ${fotoTipo === "receita" ? C.accentBorder : C.border}` }}>Receita</button>
-                </div>
+
                 <div style={{ display: "flex", gap: 8 }}>
-                  <button onClick={confirmarLancamentoFoto}
-                    style={{ flex: 1, padding: "11px", background: C.accent, color: C.bg, border: "none", borderRadius: 10, fontSize: 13, fontWeight: 700, fontFamily: MN, cursor: "pointer" }}>
+                  <button
+                    onClick={confirmarLancamentoFoto}
+                    disabled={!fotoValor}
+                    style={{ flex: 1, padding: "11px", background: fotoValor ? C.accent : C.border, color: fotoValor ? C.bg : C.textMuted, border: "none", borderRadius: 10, fontSize: 13, fontWeight: 700, fontFamily: MN, cursor: fotoValor ? "pointer" : "not-allowed" }}
+                  >
                     Confirmar lançamento
                   </button>
-                  <button onClick={() => { setFotoResultado(null); fotoInputRef.current?.click(); }}
-                    style={{ padding: "11px 14px", background: C.cardAlt, color: C.textDim, border: `1px solid ${C.border}`, borderRadius: 10, fontSize: 12, fontFamily: MN, cursor: "pointer" }}>
+                  <button
+                    onClick={() => { setFotoResultado(null); setFotoValor(""); setFotoDesc(""); setFotoCatNome(""); fotoInputRef.current?.click(); }}
+                    style={{ padding: "11px 14px", background: C.cardAlt, color: C.textDim, border: `1px solid ${C.border}`, borderRadius: 10, fontSize: 12, fontFamily: MN, cursor: "pointer" }}
+                  >
                     Refazer
                   </button>
                 </div>
