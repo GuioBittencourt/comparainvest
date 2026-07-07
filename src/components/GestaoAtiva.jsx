@@ -311,13 +311,12 @@ export default function GestaoAtiva({ user, targetUser = null, adminMode = false
 
       {/* INPUT OCULTO */}
       <input
-        ref={fotoInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        style={{ display: "none" }}
-        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFotoComprovante(f); e.target.value = ""; }}
-      />
+  ref={fotoInputRef}
+  type="file"
+  accept="image/*,application/pdf"
+  style={{ display: "none" }}
+  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFotoComprovante(f); e.target.value = ""; }}
+/>
 
       {!isPremium && (
         <PremiumNotice context="gestaoAtiva" onClick={() => setShowUpgrade(true)} />

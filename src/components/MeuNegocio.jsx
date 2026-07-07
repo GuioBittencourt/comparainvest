@@ -484,13 +484,12 @@ export default function MeuNegocio({ user }) {
 
       {/* INPUT OCULTO FOTO */}
       <input
-        ref={fotoInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        style={{ display: "none" }}
-        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFotoComprovante(f); e.target.value = ""; }}
-      />
+  ref={fotoInputRef}
+  type="file"
+  accept="image/*,application/pdf"
+  style={{ display: "none" }}
+  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFotoComprovante(f); e.target.value = ""; }}
+/>
 
       <div style={{ marginBottom: 20 }}>
         <button onClick={() => { setView("list"); setActiveId(null); setViewMonth(curMonth()); }} style={{ background: "none", border: "none", color: C.textDim, fontSize: 12, cursor: "pointer", fontFamily: FN, marginBottom: 8 }}>← Voltar aos negócios</button>
