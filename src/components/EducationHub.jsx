@@ -63,9 +63,9 @@ export default function EducationHub({ onBack, onTrack, user, targetUser = null,
         onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.accent; e.currentTarget.style.transform = "translateY(-1px)"; }}
         onMouseLeave={(e) => { e.currentTarget.style.borderColor = C.accentBorder; e.currentTarget.style.transform = "translateY(0)"; }}
       >
-        <div style={{ width: 44, height: 44, borderRadius: 12, background: `${C.accent}20`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>
-          🎓
-        </div>
+        <div style={{ width: 44, height: 44, borderRadius: "50%", flexShrink: 0, overflow: "hidden", boxShadow: `0 0 0 2px ${C.accentBorder}, 0 4px 16px rgba(0,229,160,0.25)` }}>
+  <img src="/foto-guilherme.png" alt="Guilherme Bittencourt" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+</div>
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
             <span style={{ fontFamily: FN, fontSize: 15, fontWeight: 700, color: C.accent }}>Aulas</span>
