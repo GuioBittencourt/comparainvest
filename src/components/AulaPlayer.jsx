@@ -4,7 +4,7 @@ import { supabase } from "../lib/supabase";
 import { C, MN, FN } from "../lib/theme";
 import { AULAS } from "./AulasHub";
 
-const WA_LINK = "https://wa.me/5512996657178?text=Ol%C3%A1%20Guilherme%2C%20vim%20pelo%20comparainvest!";
+const WA_LINK = "https://wa.me/5512996657178";
 
 export default function AulaPlayer({ aulaId, onBack, onAula, user }) {
   const aula = AULAS.find((a) => a.id === aulaId);
