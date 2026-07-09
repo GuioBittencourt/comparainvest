@@ -128,7 +128,7 @@ export default function AulaPlayer({ aulaId, onBack, onAula, user }) {
           </button>
 
           
-            href={WA_LINK}
+            <a href={WA_LINK}
             target="_blank"
             rel="noopener noreferrer"
             style={{
