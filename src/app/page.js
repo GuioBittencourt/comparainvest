@@ -615,22 +615,90 @@ const navItems = [
         </button>
       ))}
 
-      {/* Card Alavancagem */}
-      <button
-        onClick={async () => {
-          if (user?.id) {
-            await fetch('/api/notificar-clique', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ userId: user.id, linkId: 'alavancagem' }),
-            })
-          }
-          window.open('https://canalaovivo.com.br/replay', '_blank')
-        }}
-        style={{ padding: 0, border: 'none', cursor: 'pointer', borderRadius: 16, overflow: 'hidden', gridColumn: 'span 2' }}
-      >
-        <img src="/card-alavancagem.png" alt="Alavancagem Patrimonial" style={{ width: '100%', height: 'auto', display: 'block', borderRadius: 16 }} />
-      </button>
+     {/* Card Alavancagem */}
+<button
+  onClick={async () => {
+    if (user?.id) {
+      await fetch('/api/notificar-clique', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, linkId: 'alavancagem' }),
+      })
+    }
+    window.open('https://canalaovivo.com.br/replay', '_blank')
+  }}
+  style={{
+    padding: 0, border: '1px solid #00E5A020',
+    cursor: 'pointer', borderRadius: 16, overflow: 'hidden',
+    gridColumn: 'span 2', background: '#0D1117',
+    display: 'flex', alignItems: 'stretch', minHeight: 110,
+    transition: 'border-color 0.18s',
+    textAlign: 'left',
+  }}
+  onMouseEnter={(e) => e.currentTarget.style.borderColor = '#00E5A050'}
+  onMouseLeave={(e) => e.currentTarget.style.borderColor = '#00E5A020'}
+>
+  {/* Thumbnail com foto */}
+  <div style={{
+    width: 130, flexShrink: 0, position: 'relative', overflow: 'hidden',
+  }}>
+    <img
+      src="/thumb-alavancagem.png"
+      alt="Alavancagem Patrimonial"
+      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+    />
+    {/* Overlay escuro */}
+    <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)' }} />
+    {/* Badge */}
+    <div style={{
+      position: 'absolute', top: 8, left: 8,
+      background: '#00E5A0', color: '#06090F',
+      fontSize: 8, fontFamily: MN, fontWeight: 800,
+      padding: '3px 7px', borderRadius: 4, letterSpacing: '0.08em',
+    }}>
+      AULA GRATUITA
+    </div>
+    {/* Play button */}
+    <div style={{
+      position: 'absolute', inset: 0,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <div style={{
+        width: 36, height: 36, borderRadius: '50%',
+        background: 'rgba(255,255,255,0.92)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <span style={{ color: '#06090F', fontSize: 14, marginLeft: 2 }}>▶</span>
+      </div>
+    </div>
+    {/* Label rodapé */}
+    <div style={{
+      position: 'absolute', bottom: 8, left: 8, right: 8,
+      display: 'flex', alignItems: 'center', gap: 4,
+    }}>
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="#00E5A0">
+        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+        <polyline points="16 7 22 7 22 13" />
+      </svg>
+      <span style={{ fontSize: 8, color: '#00E5A0', fontFamily: MN, fontWeight: 700 }}>
+        Alavancagem Patrimonial
+      </span>
+    </div>
+  </div>
+
+  {/* Texto */}
+  <div style={{ flex: 1, padding: '16px 16px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 6 }}>
+    <div style={{ fontSize: 14, fontWeight: 700, color: C.white, lineHeight: 1.35 }}>
+      Como alavancar seu patrimônio com método
+    </div>
+    <div style={{ fontSize: 11, color: C.textDim, lineHeight: 1.5 }}>
+      Estratégia objetiva para crescer com consistência.
+    </div>
+    <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+      <span style={{ fontSize: 10, color: '#00E5A0', fontFamily: MN, fontWeight: 700 }}>Assistir agora →</span>
+    </div>
+  </div>
+</button>
     </div>
   </div>
 )}
