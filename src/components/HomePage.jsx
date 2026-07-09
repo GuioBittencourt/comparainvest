@@ -246,14 +246,31 @@ export default function HomePage({ user, onTrack }) {
         </main>
 
         <aside className="ci-home-aside">
-          <SponsorSlot id="home-top" compact />
-          <SponsorSlot id="home-bottom" compact />
-          <div style={{ textAlign: "center", padding: "13px", borderTop: `1px solid ${C.border}`, marginTop: 4 }}>
-            <p style={{ fontSize: 10.5, color: C.textMuted, margin: 0 }}>
-              comparainvest — Simulação educativa, não constitui recomendação de investimento.
-            </p>
-          </div>
-        </aside>
+  {/* Card Consórcio */}
+  <button
+    onClick={async () => {
+      if (user?.id) {
+        await fetch('/api/notificar-clique', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id, linkId: 'consorcio' }),
+        })
+      }
+      window.open('https://wa.me/5512996657178?text=Ol%C3%A1%20Guilherme%2C%20vim%20pelo%20comparainvest%20e%20quero%20saber%20mais%20sobre%20cons%C3%B3rcio%20imobili%C3%A1rio!', '_blank')
+    }}
+    style={{ width: '100%', border: 'none', padding: 0, cursor: 'pointer', marginBottom: 12, borderRadius: 16, overflow: 'hidden', display: 'block' }}
+  >
+    <img src="/card-consorcio.png" alt="Consórcio Imobiliário" style={{ width: '100%', height: 'auto', display: 'block', borderRadius: 16 }} />
+  </button>
+
+  <SponsorSlot id="home-top" compact />
+  <SponsorSlot id="home-bottom" compact />
+  <div style={{ textAlign: "center", padding: "13px", borderTop: `1px solid ${C.border}`, marginTop: 4 }}>
+    <p style={{ fontSize: 10.5, color: C.textMuted, margin: 0 }}>
+      comparainvest — Simulação educativa, não constitui recomendação de investimento.
+    </p>
+  </div>
+</aside>
       </div>
     </div>
   );

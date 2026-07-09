@@ -583,42 +583,57 @@ const navItems = [
         )}
 
         {tab === "comparadores" && (
-          <div style={{ padding: "32px 0" }}>
-            <h2 style={{ fontFamily: FN, fontSize: 28, fontWeight: 600, letterSpacing: "-0.04em", color: C.white, margin: "0 0 8px" }}>Hub de Comparação</h2>
-            <p style={{ color: C.textDim, fontSize: 13, marginBottom: 24, lineHeight: 1.7 }}>
-              Escolha o tipo de ativo que deseja comparar.
-              {!user?.philosophy && <span style={{ display: "block", marginTop: 8 }}><button onClick={() => setTab("quiz")} style={{ background: "none", border: "none", color: C.accent, fontSize: 13, cursor: "pointer", fontFamily: FN, padding: 0, textDecoration: "underline" }}>Faça o quiz de filosofia</button> para receber sugestões personalizadas de carteira.</span>}
-            </p>
+  <div style={{ padding: "32px 0" }}>
+    <h2 style={{ fontFamily: FN, fontSize: 28, fontWeight: 600, letterSpacing: "-0.04em", color: C.white, margin: "0 0 8px" }}>Hub de Comparação</h2>
+    <p style={{ color: C.textDim, fontSize: 13, marginBottom: 24, lineHeight: 1.7 }}>
+      Escolha o tipo de ativo que deseja comparar.
+      {!user?.philosophy && <span style={{ display: "block", marginTop: 8 }}><button onClick={() => setTab("quiz")} style={{ background: "none", border: "none", color: C.accent, fontSize: 13, cursor: "pointer", fontFamily: FN, padding: 0, textDecoration: "underline" }}>Faça o quiz de filosofia</button> para receber sugestões personalizadas de carteira.</span>}
+    </p>
 
-            <BannerRiqueza />
+    <BannerRiqueza />
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12, maxWidth: 700, margin: "0 auto" }}>
-              {[
-                { id: "acoes", title: "Ações", desc: "12 indicadores R2A", color: C.accent },
-                { id: "fiis", title: "Fundos Imobiliários", desc: "11 indicadores", color: C.blue },
-                { id: "rf", title: "Renda Fixa", desc: "8 indicadores", color: C.accent },
-                { id: "cripto", title: "Cripto", desc: "Em breve", color: C.textDim, disabled: true },
-              ].map((c) => (
-                <button key={c.id} onClick={() => !c.disabled && setTab(c.id)}
-                  style={{
-                    padding: "28px 20px", borderRadius: 16, textAlign: "center", minHeight: 110, display: "flex", flexDirection: "column", justifyContent: "center",
-                    background: C.card, border: `1px solid ${c.disabled ? C.border : `${c.color}30`}`,
-                    cursor: c.disabled ? "not-allowed" : "pointer", opacity: c.disabled ? 0.5 : 1,
-                    transition: "all 0.2s",
-                  }}
-                  onMouseEnter={(e) => { if (!c.disabled) e.currentTarget.style.borderColor = c.color; }}
-                  onMouseLeave={(e) => { if (!c.disabled) e.currentTarget.style.borderColor = `${c.color}30`; }}
-                >
-                  
-                  <div style={{ fontFamily: FN, fontSize: 14, fontWeight: 600, color: C.white }}>{c.title}</div>
-                  <div style={{ fontSize: 11, color: C.textDim, marginTop: 4 }}>{c.desc}</div>
-                  {c.disabled && <div style={{ fontSize: 9, color: C.yellow, fontFamily: MN, marginTop: 8 }}>Em breve</div>}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12, maxWidth: 700, margin: "0 auto" }}>
+      {[
+        { id: "acoes", title: "Ações", desc: "12 indicadores R2A", color: C.accent },
+        { id: "fiis", title: "Fundos Imobiliários", desc: "11 indicadores", color: C.blue },
+        { id: "rf", title: "Renda Fixa", desc: "8 indicadores", color: C.accent },
+        { id: "cripto", title: "Cripto", desc: "Em breve", color: C.textDim, disabled: true },
+      ].map((c) => (
+        <button key={c.id} onClick={() => !c.disabled && setTab(c.id)}
+          style={{
+            padding: "28px 20px", borderRadius: 16, textAlign: "center", minHeight: 110, display: "flex", flexDirection: "column", justifyContent: "center",
+            background: C.card, border: `1px solid ${c.disabled ? C.border : `${c.color}30`}`,
+            cursor: c.disabled ? "not-allowed" : "pointer", opacity: c.disabled ? 0.5 : 1,
+            transition: "all 0.2s",
+          }}
+          onMouseEnter={(e) => { if (!c.disabled) e.currentTarget.style.borderColor = c.color; }}
+          onMouseLeave={(e) => { if (!c.disabled) e.currentTarget.style.borderColor = `${c.color}30`; }}
+        >
+          <div style={{ fontFamily: FN, fontSize: 14, fontWeight: 600, color: C.white }}>{c.title}</div>
+          <div style={{ fontSize: 11, color: C.textDim, marginTop: 4 }}>{c.desc}</div>
+          {c.disabled && <div style={{ fontSize: 9, color: C.yellow, fontFamily: MN, marginTop: 8 }}>Em breve</div>}
+        </button>
+      ))}
 
+      {/* Card Alavancagem */}
+      <button
+        onClick={async () => {
+          if (user?.id) {
+            await fetch('/api/notificar-clique', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userId: user.id, linkId: 'alavancagem' }),
+            })
+          }
+          window.open('https://canalaovivo.com.br/replay', '_blank')
+        }}
+        style={{ padding: 0, border: 'none', cursor: 'pointer', borderRadius: 16, overflow: 'hidden', gridColumn: 'span 2' }}
+      >
+        <img src="/card-alavancagem.png" alt="Alavancagem Patrimonial" style={{ width: '100%', height: 'auto', display: 'block', borderRadius: 16 }} />
+      </button>
+    </div>
+  </div>
+)}
         {tab === "acoes" && (
           <ComparatorPage
             db={dbAcoes} indicators={IND_ACOES} assetLabel="ação"
