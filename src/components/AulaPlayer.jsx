@@ -133,14 +133,15 @@ export default function AulaPlayer({ aulaId, onBack, onAula, user }) {
             target="_blank"
             rel="noopener noreferrer"
             style={{
-              display: "flex", alignItems: "center", gap: 6,
-              padding: "8px 16px", borderRadius: 10, border: `1px solid #25D16620`,
-              background: "#25D16612", color: "#25D166",
-              fontSize: 12, fontFamily: MN, textDecoration: "none",
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "8px 16px", borderRadius: 10,
+                border: "1px solid #25D16620",
+                background: "#25D16612", color: "#25D166",
+                fontSize: 12, fontFamily: MN, textDecoration: "none",
             }}
-          >
-            💬 Falar com Guilherme
-          </a>
+         >
+            {"💬 Falar com Guilherme"}
+         </a>
         </div>
       </div>
 
