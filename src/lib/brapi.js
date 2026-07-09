@@ -7,32 +7,33 @@ const CACHE_META_KEY = "comparai_brapi_live_meta";
 const MAX_TICKERS = 20;
 const CACHE_TIME_MS = 15 * 60 * 1000; // 15 minutos
 
+// Tickers padrão — sempre buscados mesmo sem histórico de searches
+const DEFAULT_TICKERS = [
+  "PETR4", "VALE3", "ITUB4", "BBDC4", "WEGE3",
+  "RENT3", "ABEV3", "MGLU3", "LREN3", "BBAS3",
+  "HGLG11", "MXRF11", "KNRI11", "XPML11", "VISC11",
+];
+
 function isBrowser() {
   return typeof window !== "undefined" && typeof localStorage !== "undefined";
 }
 
 export function isMarketHours() {
   const now = new Date();
-  const day = now.getDay(); // 0=Dom, 6=Sáb
+  const day = now.getDay();
   if (day === 0 || day === 6) return false;
   const hour = now.getHours();
-  return hour >= 10 && hour < 18; // pregão regular aproximado
+  return hour >= 10 && hour < 18;
 }
 
 function getCacheMeta() {
   if (!isBrowser()) return null;
-  try {
-    return JSON.parse(localStorage.getItem(CACHE_META_KEY));
-  } catch {
-    return null;
-  }
+  try { return JSON.parse(localStorage.getItem(CACHE_META_KEY)); } catch { return null; }
 }
 
 function setCacheMeta(meta) {
   if (!isBrowser()) return;
-  try {
-    localStorage.setItem(CACHE_META_KEY, JSON.stringify(meta));
-  } catch {}
+  try { localStorage.setItem(CACHE_META_KEY, JSON.stringify(meta)); } catch {}
 }
 
 function isCacheFresh() {
@@ -68,32 +69,34 @@ function normalizeTicker(ticker) {
 
 async function getTopTickers(extraTickers = []) {
   const extras = extraTickers.map(normalizeTicker).filter(Boolean);
+  const counts = {};
+
+  // Garante que defaults sempre entram
+  DEFAULT_TICKERS.forEach((ticker) => {
+    counts[ticker] = (counts[ticker] || 0) + 1;
+  });
+
+  // Extra tickers têm prioridade máxima
+  extras.forEach((ticker) => {
+    counts[ticker] = (counts[ticker] || 0) + 9999;
+  });
 
   try {
     const { data } = await supabase.from("searches").select("ticker");
-    const counts = {};
-
-    extras.forEach((ticker) => {
-      counts[ticker] = (counts[ticker] || 0) + 9999; // força ticker recém-pesquisado a entrar
-    });
-
     if (data && data.length > 0) {
       data.forEach((s) => {
         const ticker = normalizeTicker(s.ticker);
-        if (ticker) counts[ticker] = (counts[ticker] || 0) + 1;
+        if (ticker) counts[ticker] = (counts[ticker] || 0) + 10;
       });
     }
-
-    const tickers = Object.entries(counts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, MAX_TICKERS)
-      .map(([ticker]) => ticker);
-
-    return tickers.length ? tickers : null;
   } catch (e) {
-    console.log("Failed to get top tickers:", e.message);
-    return extras.length ? extras.slice(0, MAX_TICKERS) : null;
+    console.log("Searches fetch failed, using defaults:", e.message);
   }
+
+  return Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, MAX_TICKERS)
+    .map(([ticker]) => ticker);
 }
 
 async function fetchFromBrapi(tickers) {
@@ -114,7 +117,6 @@ async function fetchFromBrapi(tickers) {
     json.results.forEach((r) => {
       const symbol = normalizeTicker(r.symbol);
       if (!symbol) return;
-
       data[symbol] = {
         regularMarketPrice: r.regularMarketPrice,
         dividendYield: r.dividendYield,
@@ -128,16 +130,17 @@ async function fetchFromBrapi(tickers) {
   return data;
 }
 
-// Atualiza em ciclos curtos durante pregão. Fora do pregão, usa cache.
 export async function smartBrapiFetch(options = {}) {
   const { force = false, extraTickers = [] } = options;
   const cache = getLiveCache();
 
+  // Cache fresco → retorna sem buscar
   if (!force && isCacheFresh()) return cache;
+
+  // Fora do pregão → retorna cache sem buscar (mas agora cache sempre tem dados)
   if (!force && !isMarketHours()) return cache;
 
   const topTickers = await getTopTickers(extraTickers);
-  if (!topTickers || topTickers.length === 0) return cache;
 
   try {
     const brapiData = await fetchFromBrapi(topTickers);
@@ -157,25 +160,14 @@ export async function smartBrapiFetch(options = {}) {
 
 export function mergeWithBrapi(mockDB, brapiData) {
   if (!brapiData) return mockDB;
-
   const merged = { ...mockDB };
 
   Object.entries(brapiData).forEach(([symbol, api]) => {
     if (merged[symbol]) {
       const next = { ...merged[symbol] };
-
-      if (api.regularMarketPrice != null && api.regularMarketPrice > 0) {
-        next.regularMarketPrice = api.regularMarketPrice;
-      }
-
-      if (api.dividendYield != null && api.dividendYield > 0) {
-        next.dividendYield = api.dividendYield;
-      }
-
-      if (api.regularMarketChangePercent != null) {
-        next.regularMarketChangePercent = api.regularMarketChangePercent;
-      }
-
+      if (api.regularMarketPrice != null && api.regularMarketPrice > 0) next.regularMarketPrice = api.regularMarketPrice;
+      if (api.dividendYield != null && api.dividendYield > 0) next.dividendYield = api.dividendYield;
+      if (api.regularMarketChangePercent != null) next.regularMarketChangePercent = api.regularMarketChangePercent;
       next.brapiUpdatedAt = api.updatedAt || new Date().toISOString();
       merged[symbol] = next;
     }
