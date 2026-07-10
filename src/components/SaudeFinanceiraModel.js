@@ -70,7 +70,8 @@ export function novoModeloSaude() {
     },
     consignados: [],
     contasFixas: {
-      moradia: { tipo: "aluguel", valor: 0, motivoZero: null },
+  moradia: { tipo: "aluguel", valor: 0, motivoZero: null },
+  contasExtras: [],
       condominio: 0,
       agua: 0,
       luz: 0,
