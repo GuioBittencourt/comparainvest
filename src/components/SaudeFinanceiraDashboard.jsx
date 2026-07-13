@@ -1,12 +1,11 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { C, MN, FN } from "../lib/theme";
-import { formatarBRL, calcularScoreSaude, novoModeloSaude } from "./SaudeFinanceiraModel";
+import { formatarBRL, novoModeloSaude } from "./SaudeFinanceiraModel";
+import { calcularScoreSaude } from "./SaudeFinanceiraScore";
+import { calcularDistribuicaoSaude } from "./SaudeFinanceiraDistribuicao";
 import { gerarExtratoFuturo } from "./ExtratoFuturoEngine";
-import SaudeFinanceiraScore from "./SaudeFinanceiraScore";
 import SaudeFinanceiraInsights from "./SaudeFinanceiraInsights";
-import SaudeFinanceiraDiagnostico from "./SaudeFinanceiraDiagnostico";
-import SaudeFinanceiraDistribuicao from "./SaudeFinanceiraDistribuicao";
 import ExtratoFuturo from "./ExtratoFuturo";
 import SaudeFinanceiraResumo from "./SaudeFinanceiraResumo";
 
