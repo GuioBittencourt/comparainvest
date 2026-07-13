@@ -126,7 +126,25 @@ export default function SaudeFinanceiraDashboard({
   return (
     <div>
       {/* Score */}
-      <SaudeFinanceiraScore score={calcularScoreSaude(data)} />
+      {(() => {
+  const s = calcularScoreSaude(data);
+  const cor = s.nivel === "saudavel" ? C.accent : s.nivel === "atencao" ? C.yellow : C.red;
+  return (
+    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 16, marginBottom: 14 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+        <div style={{ fontSize: 10, color: C.textMuted, fontFamily: MN, letterSpacing: 1 }}>SCORE DE SAÚDE FINANCEIRA</div>
+        <div style={{ fontFamily: MN, fontSize: 22, fontWeight: 800, color: cor }}>{s.score}</div>
+      </div>
+      <div style={{ height: 6, background: C.border, borderRadius: 3, marginBottom: 8, overflow: "hidden" }}>
+        <div style={{ width: `${s.score}%`, height: "100%", background: cor, borderRadius: 3, transition: "width 0.6s ease" }} />
+      </div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: cor, marginBottom: s.motivos?.length ? 6 : 0 }}>{s.label}</div>
+      {s.motivos?.map((m, i) => (
+        <div key={i} style={{ fontSize: 11, color: C.textDim, lineHeight: 1.5 }}>• {m}</div>
+      ))}
+    </div>
+  );
+})()}
 
 
       {/* Abas */}
@@ -219,11 +237,47 @@ export default function SaudeFinanceiraDashboard({
           )}
 
           {/* DIAGNÓSTICO */}
-          <SaudeFinanceiraDiagnostico data={data} linhaMes={linhaMes} />
+          {(() => {
+  const s = calcularScoreSaude(data);
+  if (!s.motivos?.length) return null;
+  return (
+    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 16, marginTop: 12 }}>
+      <div style={{ fontSize: 10, color: C.textMuted, fontFamily: MN, letterSpacing: 1, marginBottom: 10 }}>DIAGNÓSTICO FINANCEIRO</div>
+      {s.motivos.map((m, i) => (
+        <div key={i} style={{ padding: "8px 12px", background: C.cardAlt, borderRadius: 8, marginBottom: 6, fontSize: 12, color: C.textDim, lineHeight: 1.5 }}>• {m}</div>
+      ))}
+    </div>
+  );
+})()}
         </div>
       )}
 
-      {aba === "distribuicao" && <SaudeFinanceiraDistribuicao data={data} />}
+      {aba === "distribuicao" && (() => {
+  const dist = calcularDistribuicaoSaude(data);
+  return (
+    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 16 }}>
+      <div style={{ fontSize: 10, color: C.textMuted, fontFamily: MN, letterSpacing: 1, marginBottom: 14 }}>ANÁLISE DE DISTRIBUIÇÃO</div>
+      {dist.linhas.map((l) => {
+        const cor = l.status === "saudavel" ? C.accent : l.status === "atencao" ? C.yellow : C.red;
+        return (
+          <div key={l.key} style={{ marginBottom: 14 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+              <span style={{ fontSize: 12, color: C.white }}>{l.label}</span>
+              <span style={{ fontSize: 11, color: cor, fontFamily: MN }}>{l.label_status || l.label}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+              <span style={{ fontSize: 10, color: C.textMuted }}>Ideal: {formatarBRL(l.ideal)}</span>
+              <span style={{ fontSize: 10, color: C.textMuted }}>Atual: {formatarBRL(l.atual)}</span>
+            </div>
+            <div style={{ height: 5, background: C.border, borderRadius: 3, overflow: "hidden" }}>
+              <div style={{ width: `${Math.min(100, dist.entradas > 0 ? (l.atual / dist.entradas) * 100 : 0)}%`, height: "100%", background: cor, borderRadius: 3 }} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+})()}
       {aba === "extrato" && <ExtratoFuturo data={data} readOnly={readOnly} isAdmin={isAdmin} isAluno={isAluno} targetUserId={targetUserId} />}
       {aba === "resumo" && <SaudeFinanceiraResumo data={data} />}
     </div>
