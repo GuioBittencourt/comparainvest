@@ -133,10 +133,11 @@ export function gerarExtratoFuturo(data = {}, ajustes = {}, quantidadeMeses = 13
     const mes = mesKey(dataMes);
     const a = ajustes[mes] || {};
 
-    const entradas = base.entradas + aumentoFolhaMensal;
-    const diversaoBase = base.diversao;
-    let fixas = base.fixas;
-    let diversao = diversaoBase;
+    const entradasBase = base.entradas + aumentoFolhaMensal;
+const entradas = a.entradasManual ? n(a.entradas) : entradasBase;
+const diversaoBase = base.diversao;
+let fixas = base.fixas;
+let diversao = a.diversaoManual ? n(a.diversao) : diversaoBase;
 
     // ── MÊS VIGENTE (i=0): aplica integração com Gestão Ativa ──────────────
     let gaIntegracao = null;
