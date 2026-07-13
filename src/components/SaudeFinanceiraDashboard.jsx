@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { C, MN, FN } from "../lib/theme";
-import { formatarBRL, calcularScore, novoModeloSaude } from "./SaudeFinanceiraModel";
+import { formatarBRL, calcularScoreSaude, novoModeloSaude } from "./SaudeFinanceiraModel";
 import { gerarExtratoFuturo } from "./ExtratoFuturoEngine";
 import SaudeFinanceiraScore from "./SaudeFinanceiraScore";
 import SaudeFinanceiraInsights from "./SaudeFinanceiraInsights";
@@ -127,7 +127,8 @@ export default function SaudeFinanceiraDashboard({
   return (
     <div>
       {/* Score */}
-      <SaudeFinanceiraScore score={calcularScore(data)} />
+      <SaudeFinanceiraScore score={calcularScoreSaude(data)} />
+
 
       {/* Abas */}
       <div style={{ display: "flex", gap: 6, overflowX: "auto", marginBottom: 16, paddingBottom: 4 }}>
