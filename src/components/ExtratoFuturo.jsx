@@ -104,6 +104,7 @@ function MesFiltradoCard({ linha, ajustes, setInvestimentoManual, setEntradasMan
 export default function ExtratoFuturo({ data, readOnly = false, isAdmin = false, isAluno = false, targetUserId = null, userId = null }) {
   const [ajustes, setAjustes] = useState({});
 const uid = userId || targetUserId;
+console.log("ExtratoFuturo uid:", uid, "userId:", userId, "targetUserId:", targetUserId);
 
 useEffect(() => {
   if (!uid) return;
