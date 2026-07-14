@@ -1,268 +1,220 @@
-import { calcularSaudeFinanceira, valorSeguro } from "./SaudeFinanceiraEngine";
-import { lerGestaoAtivaMesAtual, aplicarIntegracaoGA } from "../lib/gestaoAtivaIntegracao";
+// src/components/ExtratoFuturoEngine.js
+import { calcularSaudeFinanceira } from "./SaudeFinanceiraEngine";
 
-function mesLabel(date) {
-  return date.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" }).replace(".", "");
+const n = (v) => Number(v) || 0;
+
+const MESES = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+function labelMes(date) {
+  return `${MESES[date.getMonth()]} de ${date.getFullYear()}`;
 }
-
 function mesKey(date) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}`;
 }
 
-function n(value) {
-  return valorSeguro ? valorSeguro(value) : Number(value || 0);
-}
+function calcularBaseDoMes(data, offset) {
+  const s = calcularSaudeFinanceira(data);
+  const cartoes = data.cartoes || [];
+  const outrasContas = data.outrasContas || [];
+  const consignados = data.consignados || [];
+  const agiotas = data.agiotas || [];
+  const contasAtrasadas = data.contasAtrasadas || [];
+  const fixas = data.contasFixas || {};
 
-function valorQuitacaoEstimado(item = {}) {
-  return n(item.valorQuitacao) || n(item.valorTotal) || (n(item.parcela) || n(item.valor)) * n(item.restantes || item.mesesRestantes || 1);
-}
+  // Entradas
+  const entradas = n(s.entradas);
 
-function parcelaMensal(item = {}) {
-  return n(item.parcela) || n(item.valorConta) || n(item.valor) || n(item.valorParcela);
-}
+  // Fixas
+  const totalFixas = n(s.fixas);
 
-export function listarDividasQuitaveis(data = {}) {
-  const quitaveis = [];
-
-  (data.outrasContas || []).forEach((d, idx) => {
-    const valor = valorQuitacaoEstimado(d);
-    if (valor > 0 || parcelaMensal(d) > 0) {
-      quitaveis.push({ id: d.id || `outra-${idx}`, nome: d.nome || d.tipo || "Conta quitável", tipo: d.tipo || "outra conta", parcela: parcelaMensal(d), valorQuitacao: valor, prioridade: 2, origem: "outrasContas" });
-    }
-  });
-
-  (data.contasFixas?.outros || []).filter((d) => d.quitavel).forEach((d, idx) => {
-    const valor = valorQuitacaoEstimado(d);
-    quitaveis.push({ id: d.id || `fixa-quitavel-${idx}`, nome: d.nome || "Conta com prazo para acabar", tipo: "fixa quitável", parcela: parcelaMensal(d), valorQuitacao: valor, prioridade: 2, origem: "contasFixas.outros" });
-  });
-
-  (data.consignados || []).forEach((d, idx) => {
-    const valor = valorQuitacaoEstimado(d);
-    quitaveis.push({ id: d.id || `consignado-${idx}`, nome: d.nome || "Consignado", tipo: d.descontaFolha ? "consignado em folha" : "consignado", parcela: parcelaMensal(d), valorQuitacao: valor, prioridade: d.descontaFolha ? 1 : 2, origem: "consignados", descontaFolha: !!d.descontaFolha });
-  });
-
-  (data.agiotas || []).forEach((d, idx) => {
-    const jurosMensal = d.juros?.tipo === "percentual" ? (n(d.valorQuitacao) * n(d.juros.valor)) / 100 : n(d.juros?.valor);
-    quitaveis.push({ id: d.id || `agiota-${idx}`, nome: d.nome || "Agiota", tipo: "agiota / juros mensais", parcela: jurosMensal, valorQuitacao: n(d.valorQuitacao), prioridade: 0, origem: "agiotas" });
-  });
-
-  (data.contasAtrasadas || []).forEach((d, idx) => {
-    const valor = n(d.valorTotal) || n(d.valorConta);
-    if (valor > 0) quitaveis.push({ id: d.id || `atrasada-${idx}`, nome: d.nome || "Conta atrasada", tipo: "conta atrasada", parcela: n(d.valorConta), valorQuitacao: valor, prioridade: 1, origem: "contasAtrasadas" });
-  });
-
-  (data.cartoes || []).forEach((cartao, idx) => {
-    const valor = n(cartao.faturaAtual);
-    if (valor > 0) quitaveis.push({ id: cartao.id || `cartao-${idx}`, nome: cartao.nome || `Cartão ${idx + 1}`, tipo: "cartão de crédito", parcela: valor, valorQuitacao: valor, prioridade: 1, origem: "cartoes" });
-  });
-
-  return quitaveis
-    .filter((d) => n(d.valorQuitacao) > 0 || n(d.parcela) > 0)
-    .sort((a, b) => {
-      if (a.prioridade !== b.prioridade) return a.prioridade - b.prioridade;
-      const liberacaoA = n(a.parcela) / Math.max(n(a.valorQuitacao), 1);
-      const liberacaoB = n(b.parcela) / Math.max(n(b.valorQuitacao), 1);
-      return liberacaoB - liberacaoA || n(a.valorQuitacao) - n(b.valorQuitacao);
-    });
-}
-
-function projetarCartoesFuturos(data = {}, mesIndex = 0, dividasQuitadasIds = new Set()) {
-  return (data.cartoes || []).reduce((total, cartao, idx) => {
-    const idCartao = cartao.id || `cartao-${idx}`;
-    if (dividasQuitadasIds.has(idCartao)) return total;
-    const faturas = cartao.faturasProxMeses || {};
-    const keys = Object.keys(faturas).sort();
-    if (keys[mesIndex]) return total + n(faturas[keys[mesIndex]]);
-    const parcelas = (cartao.parcelasFixas || []).reduce((s, p) => s + (n(p.mesesRestantes) > mesIndex ? n(p.valorParcela) : 0), 0);
-    const recorrentes = (cartao.recorrentes || []).reduce((s, r) => s + n(r.valor), 0);
-    return total + parcelas + recorrentes;
-  }, 0);
-}
-
-function parcelaDividasAtivas(dividas = [], quitadas = new Set()) {
-  return dividas.reduce((s, d) => {
-    if (quitadas.has(d.id)) return s;
-    if (d.descontaFolha) return s;
-    return s + n(d.parcela);
-  }, 0);
-}
-
-/**
- * Calcula contas fixas EXCLUINDO as variáveis controladas pelo Gestão Ativa
- * (mercado, transporte, uber, pet, farmácia, cabelo)
- * Estas serão substituídas pelos limites do GA quando ativo
- */
-function calcularFixasNaoVariaveis(data = {}) {
-  const f = data?.contasFixas || {};
-  const n = (v) => typeof v === "object" && v !== null && "valor" in v ? Number(v.valor) || 0 : Number(v || 0);
-  const outrosFixos = (f.outros || []).filter((item) => !item.quitavel && !item.noCartao).reduce((s, item) => s + n(item.valor), 0);
-  return (
-    n(f.moradia) +
-    n(f.condominio) +
-    n(f.agua) +
-    n(f.luz) +
-    n(f.gas) +
-    n(f.celular) +
-    n(f.internet) +
-    (f.convenio?.descontaFolha ? 0 : n(f.convenio)) +
-    (f.streaming?.noCartao ? 0 : n(f.streaming)) +
-    (f.academia?.noCartao ? 0 : n(f.academia)) +
-    n(f.pensaoPaga) +
-    n(f.educacao) +
-    (f.seguro?.noCartao ? 0 : n(f.seguro)) +
-    outrosFixos
-  );
-  // Excluídos: mercado, transporte, uber, pet, farmacia, cabelo (controlados pelo GA)
-}
-
-export function gerarExtratoFuturo(data = {}, ajustes = {}, quantidadeMeses = 13) {
-  const base = calcularSaudeFinanceira(data);
-  const hoje = new Date();
-  const reservaMinima = n(ajustes.__config?.reservaMinima) || 200;
-  let saldoInicial = base.saldoAtual || 0;
-  let investimentoAcumulado = base.investimentos || 0;
-  const quitadas = new Set();
-  let aumentoFolhaMensal = 0;
-  const dividas = listarDividasQuitaveis(data);
-
-  // Integração com Gestão Ativa — lê dados do mês vigente
-  const gaData = lerGestaoAtivaMesAtual();
-
-  return Array.from({ length: quantidadeMeses }, (_, i) => {
-    const dataMes = new Date(hoje.getFullYear(), hoje.getMonth() + i, 1);
-    const mes = mesKey(dataMes);
-    const a = ajustes[mes] || {};
-
-    const entradasBase = base.entradas + aumentoFolhaMensal;
-const entradas = a.entradasManual ? n(a.entradas) : entradasBase;
-const diversaoBase = base.diversao;
-let fixas = base.fixas;
-let diversao = a.diversaoManual ? n(a.diversao) : diversaoBase;
-
-    // ── MÊS VIGENTE (i=0): aplica integração com Gestão Ativa ──────────────
-    let gaIntegracao = null;
-    let precisaExtra = false;
-
-    if (i === 0 && gaData && (gaData.categories || []).length > 0) {
-      const investimentoBase = n(a.investimento) || 0;
-      gaIntegracao = aplicarIntegracaoGA(base, gaData, diversaoBase, investimentoBase);
-
-      if (gaIntegracao.gaAtivo) {
-        // Gestão Ativa prevalece: totalLimite substitui variáveis nas fixas
-        // Fixas = (fixas do questionário - variáveis do questionário) + limites do GA
-        // Simplificado: usa base.fixas mas substitui pelo totalGA
-        fixas = calcularFixasNaoVariaveis(data) + gaIntegracao.totalGA;
-
-        // Deduz gastos já lançados do saldo inicial (já saíram do bolso)
-        saldoInicial = Math.max(saldoInicial - gaIntegracao.gastoGA, 0);
-
-        // Ajusta diversão pelo excesso
-        diversao = Math.max(0, diversaoBase - gaIntegracao.ajusteDiversao);
-
-        precisaExtra = gaIntegracao.precisaExtra;
-      }
-    }
-
-    const cartoes = projetarCartoesFuturos(data, i, quitadas);
-    const outrasContas = parcelaDividasAtivas(dividas.filter((d) => d.origem !== "cartoes"), quitadas);
-
-    // Linhas extras ADM — somadas como saídas (valores positivos = despesa, negativos = receita extra)
-    const linhasExtras = (ajustes.__linhasExtras || []).reduce((s, linha) => {
-      const valorMes = n(linha.valores?.[mes] || 0);
-      return s + valorMes;
-    }, 0);
-
-    let saldoAntesEstrategia = saldoInicial + entradas - fixas - cartoes - outrasContas - diversao - linhasExtras;
-
-    // Ajuste de investimento pelo excesso GA (só no mês vigente)
-    let investimentoAjusteGA = 0;
-    if (i === 0 && gaIntegracao?.gaAtivo) {
-      investimentoAjusteGA = gaIntegracao.ajusteInvestimento;
-    }
-
-    let quitacoes = [];
-    let valorQuitacoes = 0;
-
-    if (Array.isArray(a.quitarIds) && a.quitarIds.length) {
-      a.quitarIds.forEach((id) => {
-        const d = dividas.find((item) => item.id === id);
-        if (d && !quitadas.has(d.id)) {
-          quitadas.add(d.id);
-          valorQuitacoes += n(d.valorQuitacao);
-          quitacoes.push(d);
+  // Cartões — fatura do mês atual ou parcelas
+  let totalCartoes = 0;
+  cartoes.forEach((c) => {
+    if (offset === 0) {
+      totalCartoes += n(c.faturaAtual);
+    } else if (c.veFaturasApp && c.faturasProxMeses?.[offset]) {
+      totalCartoes += n(c.faturasProxMeses[offset]);
+    } else {
+      const parcelasFixas = c.parcelasFixas || [];
+      parcelasFixas.forEach((p) => {
+        if (offset <= n(p.mesesRestantes)) {
+          totalCartoes += n(p.valorParcela);
         }
       });
-    } else if (n(a.quitar) > 0) {
-      valorQuitacoes = n(a.quitar);
+      // Recorrentes do cartão
+      const recorrentes = c.recorrentes || [];
+      recorrentes.forEach((r) => { totalCartoes += n(r.valor); });
+    }
+  });
+
+  // Outras contas — respeita mesPagamento
+  let totalOutras = 0;
+  const hoje = new Date();
+  const mesRef = new Date(hoje.getFullYear(), hoje.getMonth() + offset, 1);
+  const mesRefKey = mesKey(mesRef);
+
+  outrasContas.forEach((o) => {
+    const restantes = n(o.restantes);
+    if (restantes <= 1 && o.mesPagamento) {
+      // Conta sem parcela — só entra no mês correto
+      if (o.mesPagamento === mesRefKey) {
+        totalOutras += n(o.parcela) || n(o.valorTotal);
+      }
+    } else if (restantes === 0 || offset <= restantes) {
+      totalOutras += n(o.parcela);
+    }
+  });
+
+  // Consignados
+  let totalConsignados = 0;
+  consignados.forEach((c) => {
+    if (!c.descontaFolha && offset <= n(c.restantes)) {
+      totalConsignados += n(c.parcela);
+    }
+  });
+
+  // Agiotas
+  let totalAgiotas = 0;
+  agiotas.forEach((a) => {
+    if (a.juros?.tipo === "percentual") {
+      totalAgiotas += (n(a.valorQuitacao) * n(a.juros.valor)) / 100;
     } else {
-      const disponivelParaQuitar = saldoAntesEstrategia - reservaMinima;
-      const candidata = dividas.find((d) => !quitadas.has(d.id) && n(d.valorQuitacao) > 0 && n(d.valorQuitacao) <= disponivelParaQuitar);
-      if (candidata) {
-        quitadas.add(candidata.id);
-        valorQuitacoes = n(candidata.valorQuitacao);
-        quitacoes.push(candidata);
+      totalAgiotas += n(a.juros?.valor);
+    }
+  });
+
+  // Atrasadas
+  let totalAtrasadas = 0;
+  contasAtrasadas.forEach((c) => { totalAtrasadas += n(c.valorConta); });
+
+  const totalOutrasContas = totalOutras + totalConsignados + totalAgiotas + totalAtrasadas;
+
+  // Diversão
+  const diversao = n(s.diversao) || entradas * 0.1;
+
+  // Gestão Ativa
+  const gestaoAtiva = n(s.gestaoAtiva);
+
+  return {
+    entradas,
+    fixas: totalFixas,
+    cartoes: totalCartoes,
+    outrasContas: totalOutrasContas,
+    diversao,
+    gestaoAtiva,
+  };
+}
+
+export function gerarExtratoFuturo(data, ajustes = {}) {
+  const MESES_TOTAL = 13;
+  const linhas = [];
+  const hoje = new Date();
+  let saldoRolando = n(data.saldo?.especie) + (data.saldo?.bancos || []).reduce((s, b) => s + n(b.valor), 0);
+  const linhasExtras = ajustes.__linhasExtras || [];
+
+  // Reserva mínima = 1 mês de fixas
+  const base0 = calcularBaseDoMes(data, 0);
+  const reservaMinima = base0.fixas * 0.5;
+
+  // Dívidas quitáveis ordenadas por menor valor
+  const quitaveis = [
+    ...(data.outrasContas || []).filter(o => !o.mesPagamento || true).map(o => ({ id: o.id, nome: o.nome || o.tipo, valorQuitacao: n(o.valorTotal) || n(o.parcela) * n(o.restantes), parcela: n(o.parcela), restantes: n(o.restantes) })),
+    ...(data.consignados || []).map(c => ({ id: c.id, nome: c.nome || "Consignado", valorQuitacao: n(c.valorQuitacao), parcela: n(c.parcela), restantes: n(c.restantes) })),
+  ].filter(q => q.valorQuitacao > 0 && q.restantes > 0).sort((a, b) => a.valorQuitacao - b.valorQuitacao);
+
+  const quitadas = new Set();
+
+  for (let i = 0; i < MESES_TOTAL; i++) {
+    const d = new Date(hoje.getFullYear(), hoje.getMonth() + i, 1);
+    const mes = mesKey(d);
+    const label = labelMes(d);
+    const aj = ajustes[mes] || {};
+
+    const base = calcularBaseDoMes(data, i);
+
+    // Aplica ajustes manuais
+    const entradas = aj.entradasManual ? n(aj.entradas) : base.entradas;
+    const diversao = aj.diversaoManual ? n(aj.diversao) : base.diversao;
+    const fixas = base.fixas;
+    const cartoes = base.cartoes;
+    const outrasContas = base.outrasContas;
+    const gestaoAtiva = base.gestaoAtiva;
+
+    // Linhas extras do ADM
+    let extraReceita = 0, extraDespesa = 0, extraQuitacao = 0;
+    linhasExtras.forEach((le) => {
+      const val = n(le.valores?.[mes]);
+      if (!val) return;
+      if (le.tipo === "receita") extraReceita += val;
+      else if (le.tipo === "quitacao") extraQuitacao += val;
+      else extraDespesa += val;
+    });
+
+    // Saldo antes de quitações e investimento
+    const saldoAntesQuit = saldoRolando + entradas + extraReceita - fixas - cartoes - outrasContas - diversao - gestaoAtiva - extraDespesa;
+
+    // Quitações automáticas
+    let valorQuitacoes = extraQuitacao;
+    const quitacoesDoMes = [];
+    if (saldoAntesQuit > reservaMinima) {
+      let saldoDisp = saldoAntesQuit - reservaMinima;
+      for (const q of quitaveis) {
+        if (quitadas.has(q.id)) continue;
+        if (saldoDisp >= q.valorQuitacao) {
+          saldoDisp -= q.valorQuitacao;
+          valorQuitacoes += q.valorQuitacao;
+          quitacoesDoMes.push(q);
+          quitadas.add(q.id);
+        }
       }
     }
 
-    const saldoAposQuitacao = saldoAntesEstrategia - valorQuitacoes;
-    let investimento = n(a.investimento);
-
-    if (!a.investimentoManual) {
-      const sobraParaInvestir = saldoAposQuitacao - reservaMinima - investimentoAjusteGA;
-      investimento = sobraParaInvestir > 0 ? Math.floor(sobraParaInvestir / 50) * 50 : 0;
-      // Reduz pelo ajuste GA
-      investimento = Math.max(0, investimento - investimentoAjusteGA);
+    // Investimento
+    let investimento = 0;
+    const saldoAposQuit = saldoAntesQuit - valorQuitacoes;
+    if (aj.investimentoManual) {
+      investimento = Math.min(n(aj.investimento), Math.max(0, saldoAposQuit - reservaMinima));
+    } else if (saldoAposQuit > reservaMinima) {
+      investimento = saldoAposQuit - reservaMinima;
     }
 
-    const saldoFinal = saldoAposQuitacao - investimento;
-    investimentoAcumulado += investimento;
+    const saldoFinal = saldoAposQuit - investimento;
 
-    const aumentoFolhaGerado = quitacoes.reduce((s, q) => s + (q.descontaFolha ? n(q.parcela) : 0), 0);
+    // Precisou de extra?
+    const precisaExtra = saldoFinal < 0;
 
-    const linha = {
+    linhas.push({
       mes,
-      label: mesLabel(dataMes),
-      saldoInicial,
+      label,
+      offset: i,
+      zonaArrebentacao: i < 3,
+      saldoInicial: saldoRolando,
       entradas,
       fixas,
       cartoes,
       outrasContas,
       diversao,
-      linhasExtras,
-      quitacoes,
+      gestaoAtiva,
       valorQuitacoes,
       investimento,
       saldoFinal,
-      investimentoAcumulado,
-      zonaArrebentacao: i < 3,
-      virada: saldoInicial < 0 && saldoFinal >= 0,
-      gaIntegracao: i === 0 ? gaIntegracao : null,
-      precisaExtra: i === 0 ? precisaExtra : false,
-    };
+      quitacoes: quitacoesDoMes,
+      precisaExtra,
+    });
 
-    saldoInicial = saldoFinal;
-    aumentoFolhaMensal += aumentoFolhaGerado;
-    return linha;
-  });
+    saldoRolando = saldoFinal;
+  }
+
+  return linhas;
 }
 
-export function resumoExtratoFuturo(data = {}, ajustes = {}) {
+export function resumoExtratoFuturo(data, ajustes = {}) {
   const linhas = gerarExtratoFuturo(data, ajustes);
-  const ultimo = linhas[linhas.length - 1] || {};
-  const primeiroMesPositivo = linhas.find((l) => l.saldoFinal >= 0)?.label || null;
-  const totalQuitado = linhas.reduce((s, l) => s + n(l.valorQuitacoes), 0);
-  const totalInvestido = Math.max(0, n(ultimo.investimentoAcumulado));
-  return { linhas, ultimo, primeiroMesPositivo, totalQuitado, totalInvestido };
-}
-
-export function projetarIndependencia({ aporteInicial = 0, aporteMensal = 0, taxaAnual = 15, anos = 35 } = {}) {
-  const taxaMensal = Math.pow(1 + taxaAnual / 100, 1 / 12) - 1;
-  return Array.from({ length: anos }, (_, i) => {
-    const ano = i + 1;
-    const meses = ano * 12;
-    const futuroInicial = n(aporteInicial) * Math.pow(1 + taxaMensal, meses);
-    const futuroAportes = taxaMensal > 0 ? n(aporteMensal) * ((Math.pow(1 + taxaMensal, meses) - 1) / taxaMensal) : n(aporteMensal) * meses;
-    const patrimonio = futuroInicial + futuroAportes;
-    return { ano, patrimonio, rendaMensal: patrimonio * taxaMensal };
-  });
+  const totalQuitado = linhas.reduce((s, l) => s + l.valorQuitacoes, 0);
+  const totalInvestido = linhas.reduce((s, l) => s + l.investimento, 0);
+  const primeiroMesPositivo = linhas.find((l) => l.saldoFinal >= 0 && l.offset > 0);
+  return {
+    totalQuitado,
+    totalInvestido,
+    primeiroMesPositivo: primeiroMesPositivo ? primeiroMesPositivo.label : null,
+  };
 }
