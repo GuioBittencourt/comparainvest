@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState, useEffect, useCallback } from "react";
+import { useMemo, useState, useEffect } from "react";
 import SaudeFinanceiraMesVigente from "./SaudeFinanceiraMesVigente";
 import { C, FN, MN } from "../lib/theme";
 import { formatarBRL } from "./SaudeFinanceiraModel";
@@ -35,38 +35,65 @@ function MiniCard({ label, value }) {
 
 function MesFiltradoCard({ linha, ajustes, setInvestimentoManual, setEntradasManual, setDiversaoManual }) {
   const isBold = (k) => ["saldoInicial","saldoFinal"].includes(k);
+
   return (
     <div style={{ marginTop: 12 }}>
-      <div style={{ display: "inline-block", marginBottom: 12, padding: "4px 12px", borderRadius: 999, background: linha.zonaArrebentacao ? `${C.yellow}15` : `${C.accent}10`, border: `1px solid ${linha.zonaArrebentacao ? C.yellow+"50" : C.accentBorder}`, color: linha.zonaArrebentacao ? C.yellow : C.accent, fontSize: 11, fontFamily: MN, fontWeight: 700 }}>
+      <div style={{
+        display: "inline-block", marginBottom: 12,
+        padding: "4px 12px", borderRadius: 999,
+        background: linha.zonaArrebentacao ? `${C.yellow}15` : `${C.accent}10`,
+        border: `1px solid ${linha.zonaArrebentacao ? C.yellow+"50" : C.accentBorder}`,
+        color: linha.zonaArrebentacao ? C.yellow : C.accent,
+        fontSize: 11, fontFamily: MN, fontWeight: 700,
+      }}>
         {linha.label}{linha.zonaArrebentacao ? " — ATENÇÃO" : ""}
       </div>
+
       <div style={{ background: C.cardAlt, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden" }}>
         {ROWS.map((row) => (
           <div key={row.key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 16px", borderBottom: `1px solid ${C.border}` }}>
-            <span style={{ fontSize: 13, color: isBold(row.key) ? C.white : C.textDim, fontWeight: isBold(row.key) ? 700 : 400 }}>{row.label}</span>
+            <span style={{ fontSize: 13, color: isBold(row.key) ? C.white : C.textDim, fontWeight: isBold(row.key) ? 700 : 400 }}>
+              {row.label}
+            </span>
             {row.editavel ? (
               <input
                 type="number"
                 defaultValue={Math.round(linha[row.key] || 0)}
-                onBlur={(e) => {
+                onChange={(e) => {
                   if (row.key === "entradas") setEntradasManual(linha.mes, e.target.value);
                   if (row.key === "diversao") setDiversaoManual(linha.mes, e.target.value);
                 }}
                 style={{ width: 110, background: C.bg, border: `1px solid ${C.accentBorder}`, borderRadius: 8, color: C.accent, padding: "5px 8px", fontFamily: MN, fontSize: 13, textAlign: "right" }}
               />
             ) : (
-              <span style={{ fontFamily: MN, fontSize: 13, fontWeight: isBold(row.key) ? 700 : 500, color: getCellColor(row.key, linha[row.key]) }}>{formatarBRL(linha[row.key])}</span>
+              <span style={{ fontFamily: MN, fontSize: 13, fontWeight: isBold(row.key) ? 700 : 500, color: getCellColor(row.key, linha[row.key]) }}>
+                {formatarBRL(linha[row.key])}
+              </span>
             )}
           </div>
         ))}
+
+        {/* Ajustar investimento */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 16px", borderBottom: `1px solid ${C.border}` }}>
           <span style={{ fontSize: 13, color: C.textDim }}>Ajustar investimento</span>
-          <input type="number" value={ajustes[linha.mes]?.investimentoManual ? ajustes[linha.mes]?.investimento : ""} onChange={(e) => setInvestimentoManual(linha.mes, e.target.value)} placeholder={String(Math.round(linha.investimento || 0))} style={{ width: 110, background: C.bg, border: `1px solid ${C.border}`, borderRadius: 8, color: C.white, padding: "5px 8px", fontFamily: MN, fontSize: 13, textAlign: "right" }} />
+          <input
+            type="number"
+            value={ajustes[linha.mes]?.investimentoManual ? ajustes[linha.mes]?.investimento : ""}
+            onChange={(e) => setInvestimentoManual(linha.mes, e.target.value)}
+            placeholder={String(Math.round(linha.investimento || 0))}
+            style={{ width: 110, background: C.bg, border: `1px solid ${C.border}`, borderRadius: 8, color: C.white, padding: "5px 8px", fontFamily: MN, fontSize: 13, textAlign: "right" }}
+          />
         </div>
+
+        {/* Ação estratégica */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 16px" }}>
           <span style={{ fontSize: 13, color: C.textDim }}>Ação estratégica</span>
           <span style={{ fontSize: 13, fontFamily: MN, color: linha.quitacoes?.length ? C.accent : linha.investimento > 0 ? C.blue : C.textMuted, textAlign: "right", maxWidth: "60%" }}>
-            {linha.quitacoes?.length ? `Quitar ${linha.quitacoes.map((q) => q.nome).join(", ")}${linha.investimento > 0 ? ` e Investir ${formatarBRL(linha.investimento)}` : ""}` : linha.investimento > 0 ? `Investir ${formatarBRL(linha.investimento)}` : "Segurar caixa"}
+            {linha.quitacoes?.length
+              ? `Quitar ${linha.quitacoes.map((q) => q.nome).join(", ")}${linha.investimento > 0 ? ` e Investir ${formatarBRL(linha.investimento)}` : ""}`
+              : linha.investimento > 0
+                ? `Investir ${formatarBRL(linha.investimento)}`
+                : "Segurar caixa"}
           </span>
         </div>
       </div>
@@ -74,31 +101,11 @@ function MesFiltradoCard({ linha, ajustes, setInvestimentoManual, setEntradasMan
   );
 }
 
-export default function ExtratoFuturo({ data, readOnly = false, isAdmin = false, isAluno = false, targetUserId = null, userId = null }) {
-  const uid = userId || targetUserId;
+export default function ExtratoFuturo({ data, readOnly = false, isAdmin = false, isAluno = false, targetUserId = null }) {
   const [ajustes, setAjustes] = useState({});
   const [filtroMes, setFiltroMes] = useState(null);
   const [linhasExtras, setLinhasExtras] = useState([]);
   const [editandoLinhas, setEditandoLinhas] = useState(false);
-
-  // Carrega ajustes do Supabase
-  useEffect(() => {
-    if (!uid) return;
-    import("../lib/supabase").then(({ supabase }) => {
-      supabase.from("profiles").select("extrato_ajustes").eq("id", uid).single().then(({ data: p }) => {
-        if (p?.extrato_ajustes && Object.keys(p.extrato_ajustes).length > 0) {
-          setAjustes(p.extrato_ajustes);
-        }
-      });
-    });
-  }, [uid]);
-
-  // Salva ajustes no Supabase
-  const salvarAjustes = useCallback(async (novosAjustes) => {
-    if (!uid) return;
-    const { supabase } = await import("../lib/supabase");
-    await supabase.from("profiles").update({ extrato_ajustes: novosAjustes }).eq("id", uid);
-  }, [uid]);
 
   useEffect(() => {
     if (!isAdmin || !targetUserId) return;
@@ -145,36 +152,20 @@ export default function ExtratoFuturo({ data, readOnly = false, isAdmin = false,
   const linhas = useMemo(() => gerarExtratoFuturo(data, ajustesComExtras), [data, ajustesComExtras]);
   const resumo = useMemo(() => resumoExtratoFuturo(data, ajustesComExtras), [data, ajustesComExtras]);
 
-  const setInvestimentoManual = (mes, valor) => {
-    setAjustes((p) => {
-      const novo = { ...p, [mes]: { ...(p[mes] || {}), investimento: Number(valor) || 0, investimentoManual: true } };
-      salvarAjustes(novo);
-      return novo;
-    });
-  };
+  const setInvestimentoManual = (mes, valor) => setAjustes((p) => ({ ...p, [mes]: { ...(p[mes] || {}), investimento: Number(valor) || 0, investimentoManual: true } }));
 
-  const setEntradasManual = (mes, valor) => {
-    setAjustes((p) => {
-      const novo = { ...p, [mes]: { ...(p[mes] || {}), entradas: Number(valor) || 0, entradasManual: true } };
-      salvarAjustes(novo);
-      return novo;
-    });
-  };
+  const setEntradasManual = (mes, valor) => setAjustes((p) => ({ ...p, [mes]: { ...(p[mes] || {}), entradas: Number(valor) || 0, entradasManual: true } }));
 
-  const setDiversaoManual = (mes, valor) => {
-    setAjustes((p) => {
-      const novo = { ...p, [mes]: { ...(p[mes] || {}), diversao: Number(valor) || 0, diversaoManual: true } };
-      salvarAjustes(novo);
-      return novo;
-    });
-  };
+  const setDiversaoManual = (mes, valor) => setAjustes((p) => ({ ...p, [mes]: { ...(p[mes] || {}), diversao: Number(valor) || 0, diversaoManual: true } }));
 
   const linhaFiltrada = filtroMes ? linhas.find((l) => l.mes === filtroMes) : null;
 
   return (
     <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: 18, boxSizing: "border-box", width: "100%", overflow: "hidden" }}>
       <h3 style={{ color: C.white, margin: 0, fontSize: 22 }}>Extrato Futuro</h3>
-      <p style={{ color: C.textDim, fontSize: 13, lineHeight: 1.7, marginTop: 6 }}>Projeção estratégica de 13 meses. O saldo final de um mês vira automaticamente o saldo inicial do mês seguinte.</p>
+      <p style={{ color: C.textDim, fontSize: 13, lineHeight: 1.7, marginTop: 6 }}>
+        Projeção estratégica de 13 meses. O saldo final de um mês vira automaticamente o saldo inicial do mês seguinte.
+      </p>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 10, marginTop: 14 }}>
         <MiniCard label="Quitações planejadas" value={formatarBRL(resumo.totalQuitado)} />
@@ -196,7 +187,9 @@ export default function ExtratoFuturo({ data, readOnly = false, isAdmin = false,
               <button onClick={() => setEditandoLinhas(e => !e)} style={{ padding: "4px 10px", borderRadius: 6, fontSize: 10, fontFamily: MN, cursor: "pointer", background: editandoLinhas ? `${C.accent}15` : "transparent", color: editandoLinhas ? C.accent : C.textMuted, border: `1px solid ${editandoLinhas ? C.accentBorder : C.border}` }}>
                 {editandoLinhas ? "Fechar" : "Editar"}
               </button>
-              {editandoLinhas && <button onClick={adicionarLinhaExtra} style={{ padding: "4px 10px", borderRadius: 6, fontSize: 10, fontFamily: MN, cursor: "pointer", background: `${C.accent}15`, color: C.accent, border: `1px solid ${C.accentBorder}` }}>+ Linha</button>}
+              {editandoLinhas && (
+                <button onClick={adicionarLinhaExtra} style={{ padding: "4px 10px", borderRadius: 6, fontSize: 10, fontFamily: MN, cursor: "pointer", background: `${C.accent}15`, color: C.accent, border: `1px solid ${C.accentBorder}` }}>+ Linha</button>
+              )}
             </div>
           </div>
           {editandoLinhas && linhasExtras.length > 0 && (
@@ -213,17 +206,33 @@ export default function ExtratoFuturo({ data, readOnly = false, isAdmin = false,
                 <tbody>
                   {linhasExtras.map(linha => (
                     <tr key={linha.id}>
-                      <td style={tdLeft}><input value={linha.nome} onChange={e => atualizarLinhaExtra(linha.id, "nome", e.target.value)} style={{ width: 140, background: C.bg, border: `1px solid ${C.border}`, borderRadius: 6, color: C.white, padding: "4px 6px", fontFamily: FN, fontSize: 11 }} /></td>
-                      <td style={td}><select value={linha.tipo || "despesa"} onChange={e => atualizarLinhaExtra(linha.id, "tipo", e.target.value)} style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 6, color: C.white, padding: "4px 6px", fontFamily: MN, fontSize: 10 }}><option value="despesa">Despesa</option><option value="receita">Receita</option><option value="quitacao">Quitação</option></select></td>
-                      {linhas.map(l => <td key={`${linha.id}-${l.mes}`} style={td}><input type="number" value={linha.valores?.[l.mes] || ""} onChange={e => atualizarValorMes(linha.id, l.mes, e.target.value)} placeholder="0" style={{ ...inputMini, width: 70 }} /></td>)}
-                      <td style={td}><button onClick={() => { if (confirm(`Remover "${linha.nome}"?`)) removerLinhaExtra(linha.id); }} style={{ padding: "3px 7px", borderRadius: 5, fontSize: 9, cursor: "pointer", background: `${C.red}15`, color: C.red, border: `1px solid ${C.red}30` }}>×</button></td>
+                      <td style={tdLeft}>
+                        <input value={linha.nome} onChange={e => atualizarLinhaExtra(linha.id, "nome", e.target.value)} style={{ width: 140, background: C.bg, border: `1px solid ${C.border}`, borderRadius: 6, color: C.white, padding: "4px 6px", fontFamily: FN, fontSize: 11 }} />
+                      </td>
+                      <td style={td}>
+                        <select value={linha.tipo || "despesa"} onChange={e => atualizarLinhaExtra(linha.id, "tipo", e.target.value)} style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 6, color: C.white, padding: "4px 6px", fontFamily: MN, fontSize: 10 }}>
+                          <option value="despesa">Despesa</option>
+                          <option value="receita">Receita</option>
+                          <option value="quitacao">Quitação</option>
+                        </select>
+                      </td>
+                      {linhas.map(l => (
+                        <td key={`${linha.id}-${l.mes}`} style={td}>
+                          <input type="number" value={linha.valores?.[l.mes] || ""} onChange={e => atualizarValorMes(linha.id, l.mes, e.target.value)} placeholder="0" style={{ ...inputMini, width: 70 }} />
+                        </td>
+                      ))}
+                      <td style={td}>
+                        <button onClick={() => { if (confirm(`Remover "${linha.nome}"?`)) removerLinhaExtra(linha.id); }} style={{ padding: "3px 7px", borderRadius: 5, fontSize: 9, cursor: "pointer", background: `${C.red}15`, color: C.red, border: `1px solid ${C.red}30` }}>×</button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           )}
-          {!editandoLinhas && linhasExtras.length > 0 && <div style={{ fontSize: 11, color: C.textDim }}>{linhasExtras.map(l => l.nome).join(", ")} — clique em Editar para ajustar valores</div>}
+          {!editandoLinhas && linhasExtras.length > 0 && (
+            <div style={{ fontSize: 11, color: C.textDim }}>{linhasExtras.map(l => l.nome).join(", ")} — clique em Editar para ajustar valores</div>
+          )}
         </div>
       )}
 
@@ -248,8 +257,16 @@ export default function ExtratoFuturo({ data, readOnly = false, isAdmin = false,
 
       {linhaFiltrada ? (
         <div>
-          <MesFiltradoCard linha={linhaFiltrada} ajustes={ajustes} setInvestimentoManual={setInvestimentoManual} setEntradasManual={setEntradasManual} setDiversaoManual={setDiversaoManual} />
-          {filtroMes === linhas[0]?.mes && <SaudeFinanceiraMesVigente data={data} linhaMesVigente={linhaFiltrada} readOnly={readOnly} />}
+          <MesFiltradoCard
+            linha={linhaFiltrada}
+            ajustes={ajustes}
+            setInvestimentoManual={setInvestimentoManual}
+            setEntradasManual={setEntradasManual}
+            setDiversaoManual={setDiversaoManual}
+          />
+          {filtroMes === linhas[0]?.mes && (
+            <SaudeFinanceiraMesVigente data={data} linhaMesVigente={linhaFiltrada} readOnly={readOnly} />
+          )}
         </div>
       ) : (
         <div style={{ overflowX: "auto", marginTop: 12 }}>
@@ -259,7 +276,8 @@ export default function ExtratoFuturo({ data, readOnly = false, isAdmin = false,
                 <th style={thLeft}>Categoria</th>
                 {linhas.map((l) => (
                   <th key={l.mes} style={{ ...th, background: l.zonaArrebentacao ? `${C.yellow}0D` : "transparent" }}>
-                    {l.label}{l.zonaArrebentacao && <div style={{ color: C.yellow, fontSize: 9, marginTop: 3 }}>atenção</div>}
+                    {l.label}
+                    {l.zonaArrebentacao && <div style={{ color: C.yellow, fontSize: 9, marginTop: 3 }}>atenção</div>}
                   </th>
                 ))}
               </tr>
@@ -274,7 +292,7 @@ export default function ExtratoFuturo({ data, readOnly = false, isAdmin = false,
                         <input
                           type="number"
                           defaultValue={Math.round(l[row.key] || 0)}
-                          onBlur={(e) => {
+                          onChange={(e) => {
                             if (row.key === "entradas") setEntradasManual(l.mes, e.target.value);
                             if (row.key === "diversao") setDiversaoManual(l.mes, e.target.value);
                           }}
@@ -298,7 +316,9 @@ export default function ExtratoFuturo({ data, readOnly = false, isAdmin = false,
               {linhasExtras.length > 0 && linhasExtras.map(le => (
                 <tr key={`extra-${le.id}`}>
                   <td style={{ ...tdLeft, color: le.tipo === "receita" ? C.accent : le.tipo === "quitacao" ? C.yellow : C.textDim }}>{le.nome} {le.tipo === "receita" ? "↑" : "↓"}</td>
-                  {linhas.map(l => <td key={`${le.id}-${l.mes}`} style={{ ...td, color: le.tipo === "receita" ? C.accent : C.textDim }}>{le.valores?.[l.mes] ? formatarBRL(le.valores[l.mes]) : "—"}</td>)}
+                  {linhas.map(l => (
+                    <td key={`${le.id}-${l.mes}`} style={{ ...td, color: le.tipo === "receita" ? C.accent : C.textDim }}>{le.valores?.[l.mes] ? formatarBRL(le.valores[l.mes]) : "—"}</td>
+                  ))}
                 </tr>
               ))}
               <tr>
@@ -328,3 +348,4 @@ const thLeft = { ...th, textAlign: "left", position: "sticky", left: 0, backgrou
 const td = { textAlign: "right", padding: "10px 8px", borderBottom: "1px solid rgba(255,255,255,0.06)", color: C.textDim, fontSize: 12, whiteSpace: "nowrap" };
 const tdLeft = { ...td, textAlign: "left", color: C.white, fontWeight: 800, position: "sticky", left: 0, background: C.card, zIndex: 1 };
 const inputMini = { width: 82, background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, color: C.white, padding: "8px 8px", fontFamily: MN, fontSize: 12, textAlign: "right" };
+const FN_var = "var(--font-sans, sans-serif)";
