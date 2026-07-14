@@ -103,28 +103,28 @@ function MesFiltradoCard({ linha, ajustes, setInvestimentoManual, setEntradasMan
 
 export default function ExtratoFuturo({ data, readOnly = false, isAdmin = false, isAluno = false, targetUserId = null, userId = null }) {
   const [ajustes, setAjustes] = useState({});
-const uid = userId || targetUserId;
-console.log("ExtratoFuturo uid:", uid, "userId:", userId, "targetUserId:", targetUserId);
+  const [ajustesCarregados, setAjustesCarregados] = useState(false);
+  const uid = userId || targetUserId;
 
-useEffect(() => {
-  if (!uid) return;
-  import("../lib/supabase").then(({ supabase }) => {
-    supabase.from("profiles").select("extrato_ajustes").eq("id", uid).single().then(({ data: p }) => {
-      if (p?.extrato_ajustes && Object.keys(p.extrato_ajustes).length > 0) {
-        setAjustes(p.extrato_ajustes);
-      }
+  useEffect(() => {
+    if (!uid) return;
+    import("../lib/supabase").then(({ supabase }) => {
+      supabase.from("profiles").select("extrato_ajustes").eq("id", uid).single().then(({ data: p }) => {
+        if (p?.extrato_ajustes && Object.keys(p.extrato_ajustes).length > 0) {
+          setAjustes(p.extrato_ajustes);
+        }
+        setAjustesCarregados(true);
+      });
     });
-  });
-}, [uid]);
+  }, [uid]);
 
-const salvarAjustes = useCallback(async (novosAjustes) => {
-  if (!uid) return;
-  const { supabase } = await import("../lib/supabase");
-  await supabase.from("profiles").update({ extrato_ajustes: novosAjustes }).eq("id", uid);
-}, [uid]);
+  const salvarAjustes = useCallback(async (novosAjustes) => {
+    if (!uid || !ajustesCarregados) return;
+    const { supabase } = await import("../lib/supabase");
+    await supabase.from("profiles").update({ extrato_ajustes: novosAjustes }).eq("id", uid);
+  }, [uid, ajustesCarregados]);
+
   const [filtroMes, setFiltroMes] = useState(null);
-  const [linhasExtras, setLinhasExtras] = useState([]);
-  const [editandoLinhas, setEditandoLinhas] = useState(false);
 
   useEffect(() => {
     if (!isAdmin || !targetUserId) return;
