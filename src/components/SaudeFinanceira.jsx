@@ -58,12 +58,15 @@ export default function SaudeFinanceira({ onBack, user, targetUser = null }) {
       </div>
       {data.questionarioCompleto ? (
         <SaudeFinanceiraDashboard
-          data={data}
-          setData={setData}
-          user={user}
-          targetUser={targetUser}
-          onEdit={() => setData((p) => ({ ...p, questionarioCompleto: false, stepAtual: "entradas" }))}
-        />
+  data={sfData}
+  setData={setSfDataESalvar}
+  onEdit={() => setEtapa("entradas")}
+  readOnly={readOnly}
+  isAdmin={isAdmin}
+  isAluno={isAluno}
+  targetUserId={targetUserId}
+  userId={userId}
+/>
       ) : (
         <>
           <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 12, marginBottom: 16 }}>
