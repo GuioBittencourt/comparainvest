@@ -278,7 +278,7 @@ export default function SaudeFinanceiraDashboard({
     </div>
   );
 })()}
-      {aba === "extrato" && <ExtratoFuturo data={data} readOnly={readOnly} isAdmin={isAdmin} isAluno={isAluno} targetUserId={targetUserId} />}
+      {aba === "extrato" && <ExtratoFuturo data={data} readOnly={readOnly} isAdmin={isAdmin} isAluno={isAluno} targetUserId={targetUserId} userId={userId} />}
       {aba === "resumo" && <SaudeFinanceiraResumo data={data} />}
     </div>
   );

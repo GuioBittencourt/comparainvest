@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import SaudeFinanceiraMesVigente from "./SaudeFinanceiraMesVigente";
 import { C, FN, MN } from "../lib/theme";
 import { formatarBRL } from "./SaudeFinanceiraModel";
@@ -101,8 +101,26 @@ function MesFiltradoCard({ linha, ajustes, setInvestimentoManual, setEntradasMan
   );
 }
 
-export default function ExtratoFuturo({ data, readOnly = false, isAdmin = false, isAluno = false, targetUserId = null }) {
+export default function ExtratoFuturo({ data, readOnly = false, isAdmin = false, isAluno = false, targetUserId = null, userId = null }) {
   const [ajustes, setAjustes] = useState({});
+const uid = userId || targetUserId;
+
+useEffect(() => {
+  if (!uid) return;
+  import("../lib/supabase").then(({ supabase }) => {
+    supabase.from("profiles").select("extrato_ajustes").eq("id", uid).single().then(({ data: p }) => {
+      if (p?.extrato_ajustes && Object.keys(p.extrato_ajustes).length > 0) {
+        setAjustes(p.extrato_ajustes);
+      }
+    });
+  });
+}, [uid]);
+
+const salvarAjustes = useCallback(async (novosAjustes) => {
+  if (!uid) return;
+  const { supabase } = await import("../lib/supabase");
+  await supabase.from("profiles").update({ extrato_ajustes: novosAjustes }).eq("id", uid);
+}, [uid]);
   const [filtroMes, setFiltroMes] = useState(null);
   const [linhasExtras, setLinhasExtras] = useState([]);
   const [editandoLinhas, setEditandoLinhas] = useState(false);
@@ -152,12 +170,27 @@ export default function ExtratoFuturo({ data, readOnly = false, isAdmin = false,
   const linhas = useMemo(() => gerarExtratoFuturo(data, ajustesComExtras), [data, ajustesComExtras]);
   const resumo = useMemo(() => resumoExtratoFuturo(data, ajustesComExtras), [data, ajustesComExtras]);
 
-  const setInvestimentoManual = (mes, valor) => setAjustes((p) => ({ ...p, [mes]: { ...(p[mes] || {}), investimento: Number(valor) || 0, investimentoManual: true } }));
-
-  const setEntradasManual = (mes, valor) => setAjustes((p) => ({ ...p, [mes]: { ...(p[mes] || {}), entradas: Number(valor) || 0, entradasManual: true } }));
-
-  const setDiversaoManual = (mes, valor) => setAjustes((p) => ({ ...p, [mes]: { ...(p[mes] || {}), diversao: Number(valor) || 0, diversaoManual: true } }));
-
+  const setInvestimentoManual = (mes, valor) => {
+  setAjustes((p) => {
+    const novo = { ...p, [mes]: { ...(p[mes] || {}), investimento: Number(valor) || 0, investimentoManual: true } };
+    salvarAjustes(novo);
+    return novo;
+  });
+};
+const setEntradasManual = (mes, valor) => {
+  setAjustes((p) => {
+    const novo = { ...p, [mes]: { ...(p[mes] || {}), entradas: Number(valor) || 0, entradasManual: true } };
+    salvarAjustes(novo);
+    return novo;
+  });
+};
+const setDiversaoManual = (mes, valor) => {
+  setAjustes((p) => {
+    const novo = { ...p, [mes]: { ...(p[mes] || {}), diversao: Number(valor) || 0, diversaoManual: true } };
+    salvarAjustes(novo);
+    return novo;
+  });
+};
   const linhaFiltrada = filtroMes ? linhas.find((l) => l.mes === filtroMes) : null;
 
   return (
