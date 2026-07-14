@@ -1,7 +1,8 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
-import { C, FN, heroStyle } from "../lib/theme";
-import { BLOCOS_SAUDE, carregarSaudeFinanceira, carregarSaudeFinanceiraAsync, salvarSaudeFinanceira } from "./SaudeFinanceiraModel";
+import { useState, useEffect, useCallback } from "react";
+import { C, MN, FN } from "../lib/theme";
+import { novoModeloSaude } from "./SaudeFinanceiraModel";
+import { supabase } from "../lib/supabase";
 import SaudeFinanceiraEntradas from "./SaudeFinanceiraEntradas";
 import SaudeFinanceiraMoradia from "./SaudeFinanceiraMoradia";
 import SaudeFinanceiraEstiloVida from "./SaudeFinanceiraEstiloVida";
@@ -11,78 +12,91 @@ import SaudeFinanceiraSaldo from "./SaudeFinanceiraSaldo";
 import SaudeFinanceiraResumo from "./SaudeFinanceiraResumo";
 import SaudeFinanceiraDashboard from "./SaudeFinanceiraDashboard";
 
-const ORDEM = BLOCOS_SAUDE.map((b) => b.id);
+const ETAPAS = ["entradas","moradia","estilo","cartoes","dividas","saldo","resumo","dashboard"];
 
-export default function SaudeFinanceira({ onBack, user, targetUser = null }) {
-  const userId = user?.id || null;
-  const [data, setData] = useState(() => carregarSaudeFinanceira());
+export default function SaudeFinanceira({ user, targetUser = null, adminMode = false, readOnly = false }) {
+  const effectiveUser = targetUser || user;
+  const userId = effectiveUser?.id || null;
+  const isAdmin = !!(user?.is_admin && adminMode);
+  const isAluno = !!(effectiveUser?.is_aluno && !user?.is_admin);
+  const targetUserId = targetUser?.id || null;
+
+  const [etapa, setEtapa] = useState("dashboard");
+  const [sfData, setSfData] = useState(() => novoModeloSaude());
   const [carregado, setCarregado] = useState(false);
+  const [salvando, setSalvando] = useState(false);
 
+  // Carregar dados do Supabase
   useEffect(() => {
-    carregarSaudeFinanceiraAsync(userId).then((remoto) => {
-      setData(remoto);
+    if (!userId) { setCarregado(true); return; }
+    supabase.from("profiles").select("saude_financeira").eq("id", userId).single().then(({ data: p }) => {
+      if (p?.saude_financeira && Object.keys(p.saude_financeira).length > 0) {
+        setSfData(p.saude_financeira);
+      }
       setCarregado(true);
     });
   }, [userId]);
 
-  const idx = Math.max(0, ORDEM.indexOf(data.stepAtual || "entradas"));
-  const blocoAtual = ORDEM[idx] || "entradas";
-  const progresso = Math.round(((idx + 1) / ORDEM.length) * 100);
+  // Salvar no Supabase
+  const salvar = useCallback(async (dados) => {
+    if (!userId || readOnly) return;
+    setSalvando(true);
+    await supabase.from("profiles").update({ saude_financeira: dados }).eq("id", userId);
+    setSalvando(false);
+  }, [userId, readOnly]);
 
-  useEffect(() => {
-    if (!carregado) return;
-    salvarSaudeFinanceira(data, userId);
-  }, [data, userId, carregado]);
+  const setDataESalva = useCallback((fn) => {
+    setSfData((prev) => {
+      const novo = typeof fn === "function" ? fn(prev) : fn;
+      salvar(novo);
+      return novo;
+    });
+  }, [salvar]);
 
-  const setStep = (step) => setData((p) => ({ ...p, stepAtual: step }));
-  const next = () => setStep(ORDEM[Math.min(idx + 1, ORDEM.length - 1)]);
-  const back = () => setStep(ORDEM[Math.max(idx - 1, 0)]);
+  const avancar = () => {
+    const idx = ETAPAS.indexOf(etapa);
+    if (idx < ETAPAS.length - 1) setEtapa(ETAPAS[idx + 1]);
+  };
 
-  const conteudo = useMemo(() => {
-    const props = { data, setData, onNext: next, onBack: back, user };
-    if (blocoAtual === "entradas") return <SaudeFinanceiraEntradas {...props} />;
-    if (blocoAtual === "moradia") return <SaudeFinanceiraMoradia {...props} />;
-    if (blocoAtual === "estilo") return <SaudeFinanceiraEstiloVida {...props} />;
-    if (blocoAtual === "cartoes") return <SaudeFinanceiraCartoes {...props} />;
-    if (blocoAtual === "dividas") return <SaudeFinanceiraDividas {...props} />;
-    if (blocoAtual === "saldo") return <SaudeFinanceiraSaldo {...props} />;
-    return <SaudeFinanceiraResumo data={data} setData={setData} onBack={back} user={user} />;
-  }, [blocoAtual, data, user]);
+  const voltar = () => {
+    const idx = ETAPAS.indexOf(etapa);
+    if (idx > 0) setEtapa(ETAPAS[idx - 1]);
+  };
+
+  if (!carregado) {
+    return <div style={{ textAlign: "center", padding: 40, color: C.textDim, fontSize: 13 }}>Carregando...</div>;
+  }
+
+  if (etapa === "dashboard") {
+    return (
+      <SaudeFinanceiraDashboard
+        data={sfData}
+        setData={setDataESalva}
+        onEdit={() => setEtapa("entradas")}
+        readOnly={readOnly}
+        isAdmin={isAdmin}
+        isAluno={isAluno}
+        targetUserId={targetUserId}
+        userId={user?.id}
+      />
+    );
+  }
 
   return (
-    <div style={{ fontFamily: FN }}>
-      <button onClick={onBack} style={{ background: "none", border: "none", color: C.textDim, fontSize: 12, cursor: "pointer", fontFamily: FN, marginBottom: 20 }}>← Voltar para Educação Financeira</button>
-      <div style={{ marginBottom: 18 }}>
-        <h2 style={heroStyle}>Saúde Financeira</h2>
-        <p style={{ color: C.textDim, fontSize: 13, lineHeight: 1.7, margin: "8px 0 0" }}>Um mapa financeiro guiado para enxergar entradas, gastos, dívidas e saldo do mês com clareza.</p>
-      </div>
-      {data.questionarioCompleto ? (
-        <SaudeFinanceiraDashboard
-          data={data}
-          setData={setData}
-          user={user}
-          targetUser={targetUser}
-          onEdit={() => setData((p) => ({ ...p, questionarioCompleto: false, stepAtual: "entradas" }))}
-        />
-      ) : (
-        <>
-          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 12, marginBottom: 16 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-              <span style={{ color: C.textMuted, fontSize: 11 }}>Bloco {idx + 1} de {ORDEM.length}</span>
-              <span style={{ color: C.accent, fontSize: 11 }}>{progresso}%</span>
-            </div>
-            <div style={{ height: 6, borderRadius: 999, background: C.border, overflow: "hidden" }}>
-              <div style={{ width: `${progresso}%`, height: "100%", background: `linear-gradient(90deg, ${C.accent}, #BFA46A)`, borderRadius: 999 }} />
-            </div>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
-              {BLOCOS_SAUDE.map((b, i) => (
-                <button key={b.id} onClick={() => setStep(b.id)} style={{ padding: "5px 8px", borderRadius: 999, border: `1px solid ${i === idx ? C.accentBorder : C.border}`, background: i === idx ? `${C.accent}12` : "transparent", color: i === idx ? C.accent : C.textMuted, cursor: "pointer", fontSize: 10 }}>{b.label}</button>
-              ))}
-            </div>
-          </div>
-          {conteudo}
-        </>
+    <div style={{ maxWidth: 600, margin: "0 auto" }}>
+      {salvando && (
+        <div style={{ textAlign: "center", padding: "6px", fontSize: 10, color: C.textMuted, fontFamily: "monospace" }}>
+          salvando...
+        </div>
       )}
+
+      {etapa === "entradas" && <SaudeFinanceiraEntradas data={sfData} setData={setDataESalva} onNext={avancar} onBack={() => setEtapa("dashboard")} />}
+      {etapa === "moradia" && <SaudeFinanceiraMoradia data={sfData} setData={setDataESalva} onNext={avancar} onBack={voltar} />}
+      {etapa === "estilo" && <SaudeFinanceiraEstiloVida data={sfData} setData={setDataESalva} onNext={avancar} onBack={voltar} />}
+      {etapa === "cartoes" && <SaudeFinanceiraCartoes data={sfData} setData={setDataESalva} onNext={avancar} onBack={voltar} />}
+      {etapa === "dividas" && <SaudeFinanceiraDividas data={sfData} setData={setDataESalva} onNext={avancar} onBack={voltar} />}
+      {etapa === "saldo" && <SaudeFinanceiraSaldo data={sfData} setData={setDataESalva} onNext={avancar} onBack={voltar} />}
+      {etapa === "resumo" && <SaudeFinanceiraResumo data={sfData} onNext={avancar} onBack={voltar} />}
     </div>
   );
 }
