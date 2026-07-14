@@ -53,10 +53,7 @@ function CheckPago({ label, valor, pago, onChange, cartao = false }) {
   );
 }
 
-export default function SaudeFinanceiraDashboard({
-  data, setData, onEdit,
-  readOnly = false, isAdmin = false, isAluno = false, targetUserId = null,
-}) {
+export default function SaudeFinanceiraDashboard({ data, setData, onEdit, readOnly = false, isAdmin = false, isAluno = false, targetUserId = null, userId = null }) {
   const [aba, setAba] = useState("financeiro");
   const mes = mesAtual();
 
