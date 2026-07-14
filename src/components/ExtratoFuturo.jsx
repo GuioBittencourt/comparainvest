@@ -125,6 +125,8 @@ export default function ExtratoFuturo({ data, readOnly = false, isAdmin = false,
   }, [uid, ajustesCarregados]);
 
   const [filtroMes, setFiltroMes] = useState(null);
+const [linhasExtras, setLinhasExtras] = useState([]);
+const [editandoLinhas, setEditandoLinhas] = useState(false);
 
   useEffect(() => {
     if (!isAdmin || !targetUserId) return;
